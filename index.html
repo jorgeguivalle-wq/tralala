@@ -337,8 +337,8 @@
               <input type="text" id="catalogo-peca-modelo" placeholder="Ex: Rústico, Luxo, Painel Redondo">
             </div>
             <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 11px;">Link/URL da Imagem:</label>
-              <input type="url" id="catalogo-peca-imagem" placeholder="https://linkdafoto.com/foto.jpg">
+              <label style="font-size: 11px;">Tirar Foto da Peça / Upload:</label>
+              <input type="file" id="catalogo-peca-imagem" accept="image/*" capture="environment" style="padding: 10px;">
             </div>
           </div>
           <button type="button" id="btn-adicionar-peca" class="btn btn-primary" style="margin-top: 5px;">Salvar Peça no Acervo</button>
@@ -1152,31 +1152,49 @@ ${nome} (CONTRATANTE)
       const qtd = parseInt(document.getElementById("catalogo-peca-qtd").value) || 0;
       const categoria = document.getElementById("catalogo-peca-categoria").value;
       const modelo = document.getElementById("catalogo-peca-modelo").value.trim();
-      const imgUrl = document.getElementById("catalogo-peca-imagem").value.trim() || "https://placehold.co/100x100?text=Sem+Foto";
+      const fileInput = document.getElementById("catalogo-peca-imagem");
 
       if(!nome) {
         alert("Preencha ao menos o nome do Item/Tema!");
         return;
       }
 
-      CloudDB.buscar("estoque", [], (estoque) => {
-        estoque.push({ 
-          nome: nome, 
-          quantidade: qtd,
-          categoria: categoria || "Outros", 
-          modelo: modelo || "Tema Geral", 
-          imagem: imgUrl 
+      const processarSalvar = (imgUrl) => {
+        CloudDB.buscar("estoque", [], (estoque) => {
+          estoque.push({ 
+            nome: nome, 
+            quantidade: qtd,
+            categoria: categoria || "Outros", 
+            modelo: modelo || "Tema Geral", 
+            imagem: imgUrl 
+          });
+          CloudDB.salvar("estoque", estoque, () => {
+            alert("Item salvo com sucesso!");
+            document.getElementById("catalogo-peca-nome").value = "";
+            document.getElementById("catalogo-peca-qtd").value = "1";
+            document.getElementById("catalogo-peca-modelo").value = "";
+            document.getElementById("catalogo-peca-imagem").value = "";
+            renderizarTemas();
+            alimentarSeletoresMontagemEstoque();
+          });
         });
-        CloudDB.salvar("estoque", estoque, () => {
-          alert("Item salvo com sucesso!");
-          document.getElementById("catalogo-peca-nome").value = "";
-          document.getElementById("catalogo-peca-qtd").value = "1";
-          document.getElementById("catalogo-peca-modelo").value = "";
-          document.getElementById("catalogo-peca-imagem").value = "";
-          renderizarTemas();
-          alimentarSeletoresMontagemEstoque();
-        });
-      });
+      };
+
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const base64Data = e.target.result;
+          CloudDB.buscar("fotos_acervo", [], (fotos) => {
+            fotos.push({ nome: nome, data: base64Data, timestamp: new Date().toISOString() });
+            CloudDB.salvar("fotos_acervo", fotos, () => {
+              processarSalvar(base64Data);
+            });
+          });
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        processarSalvar("https://placehold.co/100x100?text=Sem+Foto");
+      }
     });
 
     function renderizarTemas() {
@@ -1208,20 +1226,20 @@ ${nome} (CONTRATANTE)
           return;
         }
 
-        const categoriasMap = {};
+        const categoriesMap = {};
         todosOsTemas.forEach((item, index) => {
           const cat = item.categoria || "Outros";
-          if (!categoriasMap[cat]) categoriasMap[cat] = [];
-          categoriasMap[cat].push({ ...item, originalIndex: index });
+          if (!categoriesMap[cat]) categoriesMap[cat] = [];
+          categoriesMap[cat].push({ ...item, originalIndex: index });
         });
 
-        Object.keys(categoriasMap).sort().forEach(cat => {
+        Object.keys(categoriesMap).sort().forEach(cat => {
           const trCat = document.createElement("tr");
           trCat.className = "categoria-header-linha";
-          trCat.innerHTML = `<td colspan="3" style="font-size: 13px; text-transform: uppercase;">📂 Categoria: ${cat} (${categoriasMap[cat].length})</td>`;
+          trCat.innerHTML = `<td colspan="3" style="font-size: 13px; text-transform: uppercase;">📂 Categoria: ${cat} (${categoriesMap[cat].length})</td>`;
           corpo.appendChild(trCat);
 
-          categoriasMap[cat].forEach(item => {
+          categoriesMap[cat].forEach(item => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
               <td><img src="${item.imagem}" class="catalogo-foto" alt="Foto"></td>
@@ -1249,7 +1267,6 @@ ${nome} (CONTRATANTE)
         const nomeAtual = item.nome || item.item || item.titulo || "Sem Nome";
         const qtdAtual = item.quantidade !== undefined ? item.quantidade : 1;
         const modeloAtual = item.modelo || "Tema Geral";
-        const imgAtual = item.imagem || "";
 
         const novoNome = prompt("Editar Nome do Item:", nomeAtual);
         if (novoNome === null) return; 
@@ -1260,13 +1277,9 @@ ${nome} (CONTRATANTE)
         const novoModelo = prompt("Editar Modelo/Estilo:", modeloAtual);
         if (novoModelo === null) return;
 
-        const novaImg = prompt("Editar URL da Imagem:", imgAtual);
-        if (novaImg === null) return;
-
         item.nome = novoNome.trim();
         item.quantidade = parseInt(novaQtd) || 0;
         item.modelo = novoModelo.trim();
-        item.imagem = novaImg.trim();
 
         temas[index] = item;
 
