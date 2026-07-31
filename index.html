@@ -302,14 +302,6 @@
           <span id="contador-catalogo-total" style="font-size: 13px; font-weight: normal; background: var(--primary); color: white; padding: 2px 8px; border-radius: 20px;">0 itens</span>
         </h3>
         
-        <div style="background: #fff8f9; border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-          <h4 style="margin: 0 0 10px 0; color: var(--primary); font-size: 14px;">📁 Criar Nova Categoria</h4>
-          <div style="display: flex; gap: 10px;">
-            <input type="text" id="nova-categoria-nome" placeholder="Ex: Batizado, Chá Revelação..." style="flex: 1; padding: 10px; border: 1.5px solid var(--border-color); border-radius: 8px;">
-            <button type="button" id="btn-criar-categoria" class="btn btn-primary" style="width: auto; padding: 10px 20px;">Criar</button>
-          </div>
-        </div>
-
         <div style="background: #ffffff; border: 1.5px solid var(--primary-light); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
           <h4 style="margin: 0 0 10px 0; color: var(--primary); font-size: 14px;">➕ Adicionar Peça / Tema ao Catálogo</h4>
           <div class="grid-3">
@@ -1133,34 +1125,6 @@ ${nome} (CONTRATANTE)
       }
     }
 
-    // CATEGORIAS
-    const btnCriarCategoria = document.getElementById("btn-criar-categoria");
-    const inputNovaCategoria = document.getElementById("nova-categoria-nome");
-    const selectPecaCategoria = document.getElementById("catalogo-peca-categoria");
-
-    function atualizarSelectCategorias() {
-      selectPecaCategoria.innerHTML = "";
-      categoriasAtivas.forEach(cat => {
-        const op = document.createElement("option");
-        op.value = cat;
-        op.innerText = cat;
-        selectPecaCategoria.appendChild(op);
-      });
-    }
-
-    btnCriarCategoria.addEventListener("click", () => {
-      const novaCat = inputNovaCategoria.value.trim();
-      if (!novaCat) return;
-      if (!categoriasAtivas.includes(novaCat)) {
-        categoriasAtivas.push(novaCat);
-        atualizarSelectCategorias();
-        alert(`Categoria "${novaCat}" criada com sucesso!`);
-        inputNovaCategoria.value = "";
-      } else {
-        alert("Esta categoria já existe.");
-      }
-    });
-
     // PRODUTOS DO ESTOQUE
     const btnAdicionarPeca = document.getElementById("btn-adicionar-peca");
     btnAdicionarPeca.addEventListener("click", () => {
@@ -1795,7 +1759,6 @@ ${nome} (CONTRATANTE)
     });
 
     function inicializarSistema() {
-      atualizarSelectCategorias();
       renderizarPontos();
       renderizarReservas();
       renderizarTemas();
