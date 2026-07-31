@@ -184,6 +184,20 @@
       box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     }
 
+    /* Caixa de pré visualização da foto */
+    .preview-foto-container {
+      margin-top: 10px;
+      display: none;
+      text-align: center;
+    }
+    .preview-foto-container img {
+      max-width: 120px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid var(--primary-light);
+    }
+
     @media (max-width: 600px) {
       .site-container { padding: 25px 20px; }
       .grid-2, .grid-3, .grid-kits { grid-template-columns: 1fr; }
@@ -336,8 +350,12 @@
               <input type="text" id="catalogo-peca-modelo" placeholder="Ex: Rústico, Luxo, Painel Redondo">
             </div>
             <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 11px;">Link/URL da Imagem:</label>
-              <input type="url" id="catalogo-peca-imagem" placeholder="https://linkdafoto.com/foto.jpg">
+              <label style="font-size: 11px;">Tirar Foto da Peça:</label>
+              <!-- Mudança feita aqui para capturar foto via câmera -->
+              <input type="file" id="catalogo-peca-imagem-file" accept="image/*" capture="environment" style="padding: 10px;">
+              <div id="preview-foto-box" class="preview-foto-container">
+                <img id="preview-foto-elemento" src="" alt="Miniatura">
+              </div>
             </div>
           </div>
           <button type="button" id="btn-adicionar-peca" class="btn btn-primary" style="margin-top: 5px;">Salvar Peça no Acervo</button>
@@ -699,6 +717,9 @@
     let categoriasAtivas = ["Infantil", "Casamento", "15 Anos", "Outros"];
     let chartInstance = null;
     const mesesAno = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    
+    // Variável para armazenar a string base64 da imagem fotografada
+    let fotoBase64Atual = "";
 
     try {
       if (!firebase.apps.length) {
@@ -745,6 +766,24 @@
       }
     };
 
+    // LÓGICA DE CAPTURA DA FOTO (CÂMERA)
+    const inputFoto = document.getElementById("catalogo-peca-imagem-file");
+    const previewBox = document.getElementById("preview-foto-box");
+    const previewImg = document.getElementById("preview-foto-elemento");
+
+    inputFoto.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          fotoBase64Atual = event.target.result;
+          previewImg.src = fotoBase64Atual;
+          previewBox.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
     // CONTROLES DE LOGIN
     const secaoLogin = document.getElementById("secao-login");
     const secaoVerificador = document.getElementById("secao-verificador");
@@ -770,7 +809,7 @@
     });
     btnFecharGerador.addEventListener("click", () => modalContrato.classList.remove("ativo"));
 
-    function atualizarListaPecasContrato() {
+    function actualizarListaPecasContrato() {
       const selectPecas = document.getElementById("c-pecas");
       selectPecas.innerHTML = "";
       todosOsTemas.forEach(tema => {
@@ -800,7 +839,6 @@
       const dataFmt = dataFesta.split("-").reverse().join("/");
       const pecasTexto = pecasSelecionadas.length > 0 ? pecasSelecionadas.join(", ") : "Nenhuma peça explicitada.";
 
-      // Estrutura do texto do contrato com base no modelo base fornecido
       const textoContratoCompleto = `
 CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO
 CONTRATADA: TRALALÁ DECORAÇÕES DE FESTAS
@@ -1151,7 +1189,9 @@ ${nome} (CONTRATANTE)
       const qtd = parseInt(document.getElementById("catalogo-peca-qtd").value) || 0;
       const categoria = document.getElementById("catalogo-peca-categoria").value;
       const modelo = document.getElementById("catalogo-peca-modelo").value.trim();
-      const imgUrl = document.getElementById("catalogo-peca-imagem").value.trim() || "https://placehold.co/100x100?text=Sem+Foto";
+      
+      // Validação da foto capturada ou atribuição de fallback
+      const imgUrl = fotoBase64Atual || "https://placehold.co/100x100?text=Sem+Foto";
 
       if(!nome) {
         alert("Preencha ao menos o nome do Item/Tema!");
@@ -1171,7 +1211,13 @@ ${nome} (CONTRATANTE)
           document.getElementById("catalogo-peca-nome").value = "";
           document.getElementById("catalogo-peca-qtd").value = "1";
           document.getElementById("catalogo-peca-modelo").value = "";
-          document.getElementById("catalogo-peca-imagem").value = "";
+          
+          // Limpa o input file e o preview da imagem
+          inputFoto.value = "";
+          previewBox.style.display = "none";
+          previewImg.src = "";
+          fotoBase64Atual = "";
+          
           renderizarTemas();
           alimentarSeletoresMontagemEstoque();
         });
@@ -1248,7 +1294,6 @@ ${nome} (CONTRATANTE)
         const nomeAtual = item.nome || item.item || item.titulo || "Sem Nome";
         const qtdAtual = item.quantidade !== undefined ? item.quantidade : 1;
         const modeloAtual = item.modelo || "Tema Geral";
-        const imgAtual = item.imagem || "";
 
         const novoNome = prompt("Editar Nome do Item:", nomeAtual);
         if (novoNome === null) return; 
@@ -1259,13 +1304,9 @@ ${nome} (CONTRATANTE)
         const novoModelo = prompt("Editar Modelo/Estilo:", modeloAtual);
         if (novoModelo === null) return;
 
-        const novaImg = prompt("Editar URL da Imagem:", imgAtual);
-        if (novaImg === null) return;
-
         item.nome = novoNome.trim();
         item.quantidade = parseInt(novaQtd) || 0;
         item.modelo = novoModelo.trim();
-        item.imagem = novaImg.trim();
 
         temas[index] = item;
 
@@ -1531,7 +1572,7 @@ ${nome} (CONTRATANTE)
         if(!dataEvento) return;
 
         const sinalPago = parseFloat(prompt("Qual o valor do Sinal Pago (R$)?", "0.00")) || 0;
-        const obs = prompt("Observações adicionais ou local da festa?", "") || "Nenhuma";
+        const obs = prompt("Observações adicionais or local da festa?", "") || "Nenhuma";
 
         CloudDB.buscar("reservas", [], (reservas) => {
           reservas.push({ cliente: item.cliente, data: dataEvento, tema: item.tema, kit: item.kit, preco: parseFloat(item.valor) || 0, sinal: sinalPago, frete: 0, obs });
