@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tralalá Festas - Sistema Pro</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    :root {
+      --primary: #a3536a;
+      --primary-light: #c26e85;
+      --primary-dark: #8e5868;
+      --bg-color: #fbe9eb;
+      --bg-panel: #ffffff;
+      --text-main: #2d3436;
+      --text-muted: #636e72;
+      --border-color: #e1cbd4;
+      --success: #27ae60;
+      --error: #e74c3c;
+      --shadow: 0 10px 30px rgba(163, 105, 122, 0.15);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body {
+      background-color: var(--bg-color); margin: 0; padding: 20px;
+      display: flex; justify-content: center; align-items: flex-start;
+      min-height: 100vh; color: var(--text-main);
+    }
+    .site-container {
+      width: 100%; max-width: 800px; background: var(--bg-panel);
+      padding: 40px;
+      box-shadow: var(--shadow); border-radius: var(--radius);
+      position: relative;
+    }
+    .fachada { text-align: center; margin-bottom: 25px; }
+    .logo-imagem { max-width: 180px; height: auto; display: block; margin: 0 auto; transition: transform 0.3s; }
+    .logo-imagem:hover { transform: scale(1.05); }
+    h2 { color: var(--primary); font-size: 24px; font-weight: 700; margin-top: 0; margin-bottom: 20px; }
+    h3 { color: var(--primary-dark); font-size: 18px; font-weight: 600; margin-bottom: 15px; }
+    .instrucao { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 25px; }
+    
+    .usuario-logado {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #fdf5f6; padding: 15px 20px; border-radius: var(--radius);
+      font-weight: 600; color: var(--primary); border: 1px solid #f9e1e5;
+      margin-bottom: 30px;
+    }
+    
+    .input-group { margin-bottom: 20px; position: relative; }
+    .input-group label { display: block; font-weight: 500; margin-bottom: 8px; color: var(--text-main); font-size: 14px; }
+    .input-group input, .input-group select, .input-group textarea {
+      width: 100%; padding: 14px 16px; border: 1.5px solid var(--border-color);
+      border-radius: 10px; font-size: 14px; color: var(--text-main); background-color: #fafafa;
+      transition: all 0.3s ease;
+    }
+    .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+      outline: none; border-color: var(--primary); background-color: #fff;
+      box-shadow: 0 0 0 4px rgba(163, 83, 106, 0.1);
+    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    
+    .busca-container { position: relative; margin-bottom: 8px; }
+    .busca-container input { padding-left: 40px !important; }
+    .busca-container::before {
+      content: "🔍"; position: absolute; left: 15px; top: 50%;
+      transform: translateY(-50%); font-size: 14px; pointer-events: none; z-index: 2;
+    }
+
+    .sugestoes-wrapper { position: relative; width: 100%; }
+    .lista-sugestoes {
+      position: absolute; top: 100%; left: 0; right: 0; background: #ffffff;
+      border: 1.5px solid var(--primary-light); border-radius: 10px; max-height: 200px;
+      overflow-y: auto; z-index: 999; box-shadow: 0 8px 20px rgba(163, 105, 122, 0.15);
+      margin-top: 5px; display: none;
+    }
+    .sugestao-item {
+      padding: 12px 16px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f9e1e5;
+      transition: background 0.2s; display: flex; justify-content: space-between; align-items: center;
+    }
+    .sugestao-item:hover { background-color: #fdf5f6; color: var(--primary); font-weight: 500; }
+
+    .btn {
+      padding: 14px 20px; font-size: 15px; font-weight: 600; border-radius: 10px;
+      cursor: pointer; transition: all 0.3s ease; border: none; width: 100%;
+      display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+    }
+    .btn-primary { background-color: var(--primary); color: #fff; box-shadow: 0 4px 15px rgba(163, 105, 122, 0.3); }
+    .btn-primary:hover { background-color: var(--primary-dark); transform: translateY(-2px); }
+    .btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); width: auto; padding: 8px 16px; font-size: 13px; cursor: pointer; }
+    .btn-outline:hover { background: var(--primary); color: #fff; }
+    .btn-danger { background-color: #fff5f6; color: var(--error); border: 1px solid #fadbd8; }
+    .btn-danger:hover { background-color: var(--error); color: #fff; }
+    
+    .painel-ponto {
+      background: #fffafb; border: 1px solid var(--border-color); padding: 20px;
+      border-radius: var(--radius); margin-bottom: 30px;
+    }
+    
+    .painel-relatorio-pontos {
+      background: #fdfbfc; border: 1px solid var(--primary-light); padding: 20px;
+      border-radius: var(--radius); margin-bottom: 30px; display: none;
+    }
+    .tabela-pontos { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+    .tabela-pontos th { background: var(--primary); color: white; padding: 10px; text-align: left; }
+    .tabela-pontos td { padding: 10px; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; }
+    
+    .categoria-header-linha { background-color: #fdf5f6 !important; font-weight: bold; color: var(--primary-dark) !important; }
+
+    .painel-kits { background: #fafafa; border: 1px solid var(--border-color); padding: 20px; border-radius: var(--radius); margin-bottom: 25px; }
+    .grid-kits { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .btn-kit-opcao {
+      padding: 12px; border: 1.5px solid var(--border-color); border-radius: 10px;
+      background: #ffffff; cursor: pointer; font-weight: 500; color: var(--text-muted);
+      font-size: 13px; transition: all 0.2s;
+    }
+    .btn-kit-opcao.ativo { background: var(--primary); border-color: var(--primary); color: #ffffff; }
+    
+    .card-reserva, .card-reuniao, .card-contrato {
+      background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--primary);
+      padding: 22px; border-radius: 12px; margin-bottom: 15px;
+    }
+    .card-reuniao { border-left-color: #3498db; }
+    .card-contrato { border-left-color: #e67e22; }
+
+    .painel-central-relatorios {
+      background: #fdfbfc; border: 1.5px solid var(--primary-light); padding: 22px;
+      border-radius: var(--radius); margin-bottom: 30px; box-shadow: var(--shadow);
+    }
+    .planilha-festa-simulada { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+    .planilha-festa-simulada th { background: #8e5868; color: white; padding: 8px; }
+    .planilha-festa-simulada td { border: 1px solid var(--border-color); padding: 8px; vertical-align: middle; }
+    .input-tabela { width: 100%; border: none; background: transparent; font-size: 12px; padding: 4px; }
+    .input-tabela:focus { outline: 1px solid var(--primary-light); background: #fff5f6; }
+    .seletor-kit-tabela { padding: 4px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 5px; width: 100%; }
+    
+    .catalogo-foto { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-color); }
+    
+    .calc-frete-box {
+      background: #fff3f5; border: 1px dashed var(--primary-light);
+      padding: 15px; border-radius: 10px; margin-top: 15px;
+    }
+    
+    .grafico-wrapper {
+      background: #ffffff; border: 1px solid var(--border-color);
+      padding: 15px; border-radius: 12px; margin-top: 15px;
+    }
+
+    .btn-acao-tabela {
+      padding: 5px 8px; font-size: 13px; border-radius: 6px; cursor: pointer; border: none;
+      display: inline-flex; align-items: center; justify-content: center; transition: transform 0.2s;
+    }
+    .btn-acao-tabela:hover { transform: scale(1.1); }
+    .btn-promover { background-color: #27ae60; color: white; margin-right: 5px; }
+    .btn-remover-orc { background-color: #e74c3c; color: white; }
+
+    .montagem-local-container {
+      background: #f4f6f9; border: 1.5px solid #dcdde1; border-radius: 10px; padding: 15px; margin-top: 15px; display: none;
+    }
+    .check-container { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--primary-dark); cursor: pointer; margin-bottom: 15px; }
+    .check-container input { width: 20px; height: 20px; cursor: pointer; }
+    .multi-select-box { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; max-height: 120px; overflow-y: auto; padding: 8px; }
+    .multi-select-item { display: flex; align-items: center; gap: 8px; padding: 4px; font-size: 13px; }
+    .multi-select-item input { width: 16px; height: 16px; }
+
+    /* Estilos do Modal de Contrato */
+    .modal-contrato {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
+      z-index: 10000; opacity: 0; pointer-events: none; transition: all 0.3s ease;
+    }
+    .modal-contrato.ativo { opacity: 1; pointer-events: auto; }
+    .modal-conteudo {
+      background: #fff; padding: 30px; border-radius: var(--radius);
+      width: 90%; max-width: 650px; max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    @media (max-width: 600px) {
+      .site-container { padding: 25px 20px; }
+      .grid-2, .grid-3, .grid-kits { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-container">
+    <header class="fachada">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" alt="Logo Tralalá" class="logo-imagem">
+    </header>
+    
+    <!-- SEÇÃO DE LOGIN -->
+    <section id="secao-login">
+      <h2 style="text-align: center;">Acesso ao Sistema</h2>
+      <p class="instrucao">Faça login para gerenciar reservas e estoque.</p>
+      <div class="input-group">
+        <label for="email">E-mail de Acesso:</label>
+        <input type="email" id="email" value="contato@tralala.com.br" autocomplete="off">
+      </div>
+      <div class="input-group">
+        <label for="senha">Senha Segura:</label>
+        <input type="password" id="senha" value="123456" placeholder="••••••••">
+      </div>
+      <button type="button" id="btn-login-direto" class="btn btn-primary">Entrar no Panel</button>
+    </section>
+    
+    <!-- CONTEÚDO PRINCIPAL (PÓS-LOGIN) -->
+    <section id="secao-verificador" style="display: none;">
+      <div class="usuario-logado">
+        <span id="nome-usuario"> 👤 Administrador (Tralalá)</span>
+        <button type="button" id="btn-logout-direto" class="btn btn-outline">Sair</button>
+      </div>
+   
+      <!-- PONTO ELETRÔNICO -->
+      <div id="painel-ponto-eletronico" class="painel-ponto">
+        <div class="ponto-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h3> ⏰ Ponto Eletrônico</h3>
+          <button type="button" id="btn-abrir-relatorio-pontos" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;"> 📋 Histórico</button>
+        </div>
+        <div class="grid-2">
+          <button type="button" id="btn-ponto-entrada" class="btn btn-primary" style="background-color: var(--success);"> 🟢 Registrar Entrada</button>
+          <button type="button" id="btn-ponto-saida" class="btn btn-primary" style="background-color: var(--error);"> 🔴 Registrar Saída</button>
+        </div>
+        <div id="ponto-status-hoje" class="ponto-status" style="font-size: 13px; color: var(--text-muted); text-align: center; margin-top: 12px; padding: 8px; background: #ffffff; border-radius: 8px; border: 1px dashed var(--border-color);">
+          Buscando registros do servidor...
+        </div>
+      </div>
+      
+      <!-- Tabela do Histórico de Pontos -->
+      <div id="painel-relatorio-pontos-geral" class="painel-relatorio-pontos">
+        <h3 style="margin-top: 0; border-bottom: 2px solid var(--primary-light); padding-bottom: 5px;"> 📊 Histórico de Pontos</h3>
+        <div style="overflow-x: auto; max-height: 200px;">
+          <table class="tabela-pontos">
+            <thead>
+              <tr>
+                <th>Funcionário</th>
+                <th>Data</th>
+                <th>Entrada</th>
+                <th>Saída</th>
+              </tr>
+            </thead>
+            <tbody id="lista-pontos-geral-corpo">
+              <tr><td colspan="4" style="text-align:center; color:#999;">Nenhum ponto registrado.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BOTÕES DE ATALHO PRINCIPAIS -->
+      <div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">
+        <button type="button" id="btn-abrir-central-relatorios" class="btn btn-primary" style="flex: 1; min-width: 140px; background-color: #3498db;"> 📊 Venda Mensal & Anual</button>
+        <button type="button" id="btn-abrir-reunioes-painel" class="btn btn-primary" style="flex: 1; min-width: 140px; background-color: #27ae60;"> 📅 Agendar Reuniões</button>
+        <button type="button" id="btn-abrir-orcamentos" class="btn btn-outline" style="flex: 1; min-width: 140px; background-color: #a3536a; color: white; border: none;"> 📋 Ver Orçamentos </button>
+        <button type="button" id="btn-abrir-catalogo-temas" class="btn btn-outline" style="flex: 1; min-width: 110px;"> 🎨 Ver Catálogo </button>
+        <button type="button" id="btn-abrir-gerador-contrato" class="btn btn-outline" style="flex: 1; min-width: 130px; border-color: #e67e22; color: #e67e22;"> ✍️ Gerar Contrato </button>
+      </div>
+
+      <!-- PAINEL DE AGENDAMENTO DE REUNIÕES -->
+      <div id="painel-reunioes-exclusivo" class="painel-central-relatorios" style="display: none; border-color: #27ae60;">
+        <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center; color: #27ae60;">
+          <span>📅 Painel de Reuniões com Clientes</span>
+          <button type="button" id="btn-fechar-reunioes" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px; border-color: #27ae60; color: #27ae60;">✕ Fechar</button>
+        </h3>
+        
+        <div style="background: #f4faf6; border: 1px solid #d4efdf; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 10px 0; color: #27ae60;">➕ Marcar Nova Reunião</h4>
+          <div class="grid-2">
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 12px;">Cliente / Noiva:</label>
+              <input type="text" id="reuniao-cliente" placeholder="Nome da Contratante">
+            </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 12px;">Data & Hora:</label>
+              <input type="datetime-local" id="reuniao-data-hora">
+            </div>
+          </div>
+          <div class="input-group" style="margin-bottom: 10px;">
+            <label style="font-size: 12px;">Pauta / Objetivo da Reunião:</label>
+            <input type="text" id="reuniao-pauta" placeholder="Ex: Escolha das flores, Ajuste do layout, Assinatura de contrato">
+          </div>
+          <button type="button" id="btn-salvar-reuniao-avulsa" class="btn btn-primary" style="background-color: #27ae60;">Agendar Reunião</button>
+        </div>
+
+        <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px;">📍 Reuniões Agendadas:</h4>
+        <div id="lista-reunioes-container" style="max-height: 250px; overflow-y: auto;">
+          <p style="color: #999; text-align: center;">Buscando reuniões da nuvem...</p>
+        </div>
+      </div>
+
+      <!-- CATÁLOGO DE TEMAS -->
+      <div id="painel-catalogo-temas" class="painel-relatorio-pontos" style="border-color: var(--primary); background: #ffffff;">
+        <h3 style="margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 5px; color: var(--primary); display: flex; justify-content: space-between; align-items: center;">
+          <span>🎨 Catálogo de Temas & Peças</span>
+          <span id="contador-catalogo-total" style="font-size: 13px; font-weight: normal; background: var(--primary); color: white; padding: 2px 8px; border-radius: 20px;">0 itens</span>
+        </h3>
+        
+        <div style="background: #fff8f9; border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+          <h4 style="margin: 0 0 10px 0; color: var(--primary); font-size: 14px;">📁 Criar Nova Categoria</h4>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="nova-categoria-nome" placeholder="Ex: Batizado, Chá Revelação..." style="flex: 1; padding: 10px; border: 1.5px solid var(--border-color); border-radius: 8px;">
+            <button type="button" id="btn-criar-categoria" class="btn btn-primary" style="width: auto; padding: 10px 20px;">Criar</button>
+          </div>
+        </div>
+
+        <div style="background: #ffffff; border: 1.5px solid var(--primary-light); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+          <h4 style="margin: 0 0 10px 0; color: var(--primary); font-size: 14px;">➕ Adicionar Peça / Tema ao Catálogo</h4>
+          <div class="grid-3">
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">Nome da Peça/Tema:</label>
+              <input type="text" id="catalogo-peca-nome" placeholder="Ex: Mesa Provençal Branca">
+            </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">Quantidade Disponível:</label>
+              <input type="number" id="catalogo-peca-qtd" value="1" min="0">
+            </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">Categoria:</label>
+              <select id="catalogo-peca-categoria">
+                <option value="Infantil">Infantil</option>
+                <option value="Casamento">Casamento</option>
+                <option value="15 Anos">15 Anos</option>
+                <option value="Outros">Outros</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">Modelo/Estilo:</label>
+              <input type="text" id="catalogo-peca-modelo" placeholder="Ex: Rústico, Luxo, Painel Redondo">
+            </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">Link/URL da Imagem:</label>
+              <input type="url" id="catalogo-peca-imagem" placeholder="https://linkdafoto.com/foto.jpg">
+            </div>
+          </div>
+          <button type="button" id="btn-adicionar-peca" class="btn btn-primary" style="margin-top: 5px;">Salvar Peça no Acervo</button>
+        </div>
+
+        <div style="overflow-x: auto; max-height: 350px;">
+          <table class="tabela-pontos">
+            <thead>
+              <tr style="background: var(--primary);">
+                <th style="background: var(--primary); width: 60px;">Imagem</th>
+                <th style="background: var(--primary);">Item / Modelo / Qtd</th>
+                <th style="background: var(--primary); width: 100px; text-align: center;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="lista-temas-gerenciados-corpo">
+              <tr><td colspan="3" style="text-align:center; color:#999; padding: 10px;">Buscando catálogo na nuvem...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CENTRAL DE RELATÓRIOS -->
+      <div id="secao-central-relatorios" class="painel-central-relatorios" style="display: none;">
+        <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center;">
+          <span>📊 Relatório de Vendas & Faturamento Mensal</span>
+          <button type="button" id="btn-fechar-central-relatorios" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;">✕ Fechar</button>
+        </h3>
+
+        <!-- Mês do Relatório + Gráficos -->
+        <div class="grid-2" style="margin-bottom: 15px; align-items: flex-end;">
+          <div class="input-group" style="margin-bottom: 0;">
+            <label>Selecione o Mês para Lançamento:</label>
+            <select id="seletor-mes-planilha">
+              <option value="Janeiro">Janeiro 2026</option>
+              <option value="Fevereiro">Fevereiro 2026</option>
+              <option value="Março">Março 2026</option>
+              <option value="Abril">Abril 2026</option>
+              <option value="Maio">Maio 2026</option>
+              <option value="Junho">Junho 2026</option>
+              <option value="Julho" selected>Julho 2026</option>
+              <option value="Agosto">Agosto 2026</option>
+              <option value="Setembro">Setembro 2026</option>
+              <option value="Outubro">Outubro 2026</option>
+              <option value="Novembro">Novembro 2026</option>
+              <option value="Dezembro">Dezembro 2026</option>
+            </select>
+          </div>
+          <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+            <button type="button" id="btn-transformar-grafico" class="btn btn-primary" style="background-color: #e74c3c; font-size: 11px; padding: 8px; width: auto;">📈 Transformar Planilha em Gráfico</button>
+            <button type="button" id="btn-toggle-grafico" class="btn btn-outline" style="border-color: #3498db; color: #3498db; font-size: 11px; padding: 8px;">📈 Gráfico Anual</button>
+            <button type="button" id="btn-gerar-resumo-mensal" class="btn btn-outline" style="border-color: #27ae60; color: #27ae60; font-size: 11px; padding: 8px;">📊 Relatório Mensal</button>
+          </div>
+        </div>
+
+        <!-- Seção do Gráfico Anual Acumulado -->
+        <div id="painel-grafico-faturamento" class="grafico-wrapper" style="display: none;">
+          <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📈 Desempenho Faturamento Anual (2026)</h4>
+          <canvas id="graficoAnual" style="max-height: 250px; width: 100%;"></canvas>
+        </div>
+
+        <div id="form-planilha-vendas" style="overflow-x: auto; margin-top: 15px;">
+          <!-- Aviso de Automação -->
+          <div style="background: #e8f4fd; border-left: 5px solid #3498db; padding: 10px; font-size: 11px; border-radius: 4px; margin-bottom: 10px; color: #2c3e50;">
+            ℹ️ <strong>Sincronização Ativa:</strong> Todas as Reservas Ativas são automaticamente lançadas na planilha com base no mês do evento.
+          </div>
+          
+          <table class="planilha-festa-simulada" id="tabela-planilha-corpo">
+            <thead>
+              <tr>
+                <th style="width: 35%;">Cliente</th>
+                <th style="width: 25%;">Modelo de Kit</th>
+                <th style="width: 25%;">Valor (R$)</th>
+                <th style="width: 15%;">Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Dinâmico -->
+            </tbody>
+          </table>
+
+          <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" id="btn-adicionar-linha-planilha" class="btn btn-outline" style="font-size: 12px; padding: 8px; flex: 1;">➕ Adicionar Avulso</button>
+            <button type="button" id="btn-salvar-dados-planilha" class="btn btn-outline" style="font-size: 12px; padding: 8px; border-color: #3498db; color: #3498db; flex: 1;">☁️ Salvar Alterações na Nuvem</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FORMULÁRIO DE NOVA RESERVA / EDIÇÃO -->
+      <h2 id="titulo-form-reserva">Agendar Nova Festa</h2>
+      <!-- Controle Interno de ID para Edição -->
+      <input type="hidden" id="editando-id-reserva" value="">
+      
+      <div class="grid-2">
+        <div class="input-group">
+          <label>Nome do Cliente:</label>
+          <input type="text" id="nome-cliente" placeholder="Ex: Maria Flor">
+        </div>
+        <div class="input-group">
+          <label>Data do Evento:</label>
+          <input type="date" id="data">
+        </div>
+      </div>
+
+      <!-- BUSCA NO CATÁLOGO -->
+      <div class="input-group">
+        <label id="label-busca-tema">Buscar e Selecionar Tema/Peça do Catálogo:</label>
+        <div class="sugestoes-wrapper">
+          <div class="busca-container">
+            <input type="text" id="filtro-tema-input" placeholder="Digite para buscar..." autocomplete="off">
+          </div>
+          <div id="wrapper-lista-sugestoes" class="lista-sugestoes"></div>
+        </div>
+        <input type="hidden" id="busca-tema-input" value="">
+      </div>
+   
+      <div class="painel-kits">
+        <label style="font-weight: 600; display: block; margin-bottom: 12px; color: var(--primary);"> 🛍️ Escolha o Modelo do Kit:</label>
+        <div id="grupo-kits-dinamico" class="grid-kits">
+          <button type="button" class="btn-kit-opcao" data-kit="Só um Bolinho"> 🧁 Só um Bolinho</button>
+          <button type="button" class="btn-kit-opcao" data-kit="Kit Básico"> 📦 Kit Básico</button>
+          <button type="button" class="btn-kit-opcao" data-kit="Kit Prata"> 🥈 Kit Prata</button>
+          <button type="button" class="btn-kit-opcao" data-kit="Kit Ouro"> 🥇 Kit Ouro</button>
+        </div>
+        
+        <!-- OPÇÃO MONTAR NO LOCAL (Dinâmica) -->
+        <div style="margin-top: 20px;">
+          <label class="check-container">
+            <input type="checkbox" id="chk-montar-local">
+            <span>🛠️ Montar no Local?</span>
+          </label>
+          
+          <div id="painel-montagem-local" class="montagem-local-container">
+            <h4 style="margin: 0 0 12px 0; color: var(--primary-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Perguntas de Montagem no Local:</h4>
+            
+            <div class="grid-2">
+              <div class="input-group" style="margin-bottom: 10px;">
+                <label style="font-size:12px;">Quantas peças vão?</label>
+                <input type="number" id="ml-qtd-pecas" value="0" min="0">
+              </div>
+              <div class="input-group" style="margin-bottom: 10px;">
+                <label style="font-size:12px;">Selecione quais peças vão (Estoque):</label>
+                <div id="ml-pecas-estoque" class="multi-select-box">
+                  <!-- Alimentado de forma integrada com estoque -->
+                </div>
+              </div>
+            </div>
+
+            <div class="grid-3">
+              <div class="input-group" style="margin-bottom: 10px;">
+                <label style="font-size:12px;">Vai LED?</label>
+                <select id="ml-led">
+                  <option value="Não">Não</option>
+                  <option value="Sim">Sim</option>
+                </select>
+              </div>
+              <div class="input-group" style="margin-bottom: 10px;">
+                <label style="font-size:12px;">Quantos cilindros?</label>
+                <input type="number" id="ml-qtd-cilindros" value="0" min="0">
+              </div>
+              <div class="input-group" style="margin-bottom: 10px;">
+                <label style="font-size:12px;">Quantas mesas?</label>
+                <input type="number" id="ml-qtd-mesas" value="0" min="0">
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="input-group" style="margin-bottom: 10px;">
+                <label style="font-size:12px;">Selecione quais mesas/cilindros vão (Estoque):</label>
+                <div id="ml-mesas-estoque" class="multi-select-box">
+                  <!-- Alimentado de forma integrada com estoque -->
+                </div>
+              </div>
+              <div class="input-group" style="margin-bottom: 10px;">
+                <label style="font-size:12px;">Vai Balão?</label>
+                <select id="ml-balao">
+                  <option value="Não">Não</option>
+                  <option value="Sim">Sim</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="input-group" style="margin-bottom: 10px;">
+                <label style="font-size:12px;">Vai Display Personalizado?</label>
+                <select id="ml-display">
+                  <option value="Não">Não</option>
+                  <option value="Sim">Sim</option>
+                </select>
+              </div>
+              <div class="input-group" style="margin-bottom: 10px;">
+                <label style="font-size:12px;">Vai Personalizados?</label>
+                <select id="ml-personalizados">
+                  <option value="Não">Não</option>
+                  <option value="Sim">Sim</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CALCULADORA DE FRETE -->
+        <div class="input-group" style="margin-top: 15px;">
+          <label style="font-weight: 600; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;"> 💰 Acerto Financeiro & Frete Inteligente</label>
+          
+          <div class="calc-frete-box">
+            <span style="font-size: 12px; font-weight: 600; color: var(--primary-dark);">🚗 Calculadora de Frete (Consumo: 9 km/L):</span>
+            <div class="grid-2" style="margin-top: 10px;">
+              <div>
+                <label style="font-size: 11px;">Quilometragem (KM ida e volta):</label>
+                <input type="number" id="calc-km" placeholder="Ex: 45" style="padding: 8px;">
+              </div>
+              <div>
+                <label style="font-size: 11px;">Preço Base do Combustível (R$):</label>
+                <input type="number" id="calc-valor-litro" value="32.00" step="0.01" style="padding: 8px;">
+              </div>
+            </div>
+            <div style="font-size: 12px; color: var(--text-main); margin-top: 8px; font-weight: 500;">
+              Combustível Base: <span id="calc-total-combustivel">R$ 0.00</span> | 
+              Manutenção (+20%): <span id="calc-manutencao">R$ 0.00</span> | 
+              <strong>Total do Frete a Cobrar: <span id="calc-cobrar-cliente" style="color: var(--success);">R$ 0.00</span></strong>
+            </div>
+          </div>
+
+          <!-- NOVO PAINEL DE ORÇAMENTOS INTEGRADO -->
+          <div id="card-orcamentos-integrado" style="background: #fdf5f6; border: 1.5px solid var(--primary-light); padding: 18px; border-radius: 12px; margin-top: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <h3 style="margin: 0; font-size: 16px; color: var(--primary);">📋 Orçamentos Salvos</h3>
+              <button type="button" id="btn-salvar-como-orcamento" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; font-weight: bold; border-color: var(--primary); color: var(--primary);">
+                💾 Salvar Orçamento
+              </button>
+            </div>
+            
+            <div style="overflow-x: auto; max-height: 250px; overflow-y: auto; margin-top: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: #ffffff;">
+              <table class="planilha-festa-simulada" style="width: 100%; border-collapse: collapse; margin-top: 0;">
+                <thead>
+                  <tr style="background: var(--primary); color: white;">
+                    <th style="padding: 8px; font-size: 11px; text-align: left;">Cliente</th>
+                    <th style="padding: 8px; font-size: 11px; text-align: left;">Tema / Kit</th>
+                    <th style="padding: 8px; font-size: 11px; text-align: left;">Valor (R$)</th>
+                    <th style="padding: 8px; font-size: 11px; text-align: center; width: 90px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="lista-orcamentos-interno-corpo">
+                  <tr><td colspan="4" style="text-align:center; color:#999; padding: 15px;">Buscando orçamentos da nuvem...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- INPUTS FINANCEIROS ATUALIZADOS -->
+          <div class="grid-3" style="margin-top: 15px;">
+            <div>
+              <label style="font-size: 12px;">Valor da Festa (R$):</label>
+              <input type="number" id="valor-festa" placeholder="0.00" step="0.01" value="0.00">
+            </div>
+            <div>
+              <label style="font-size: 12px;">Frete Calculado (R$):</label>
+              <input type="number" id="valor-frete" placeholder="0.00" step="0.01" readonly style="background: #fdf5f6; font-weight: bold; color: var(--primary);">
+            </div>
+            <div>
+              <label style="font-size: 12px;">Valor Total (Festa + Frete):</label>
+              <input type="number" id="valor-total" placeholder="0.00" step="0.01" readonly style="font-weight: bold; background: #ebfbf2;">
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-top: 15px;">
+            <div>
+              <label style="font-size: 12px;">Sinal Pago (Ex: 50%):</label>
+              <input type="number" id="valor-sinal" placeholder="0.00" step="0.01" value="0.00">
+            </div>
+            <div>
+              <label style="font-size: 12px; color: var(--error); font-weight: 600;">Resta Pagar (R$):</label>
+              <input type="number" id="valor-restante" placeholder="0.00" step="0.01" readonly style="background: #fff5f6; font-weight: bold; color: var(--error);">
+            </div>
+          </div>
+        </div>
+        
+        <div class="input-group" style="margin-bottom: 0;">
+          <label> ➕ Observações / Local da Festa:</label>
+          <input type="text" id="adicionais-festa" placeholder="Ex: Salão de Festas ou Detalhes adicionais">
+        </div>
+      </div>
+      
+      <button type="button" id="btn-confirmar-agendamento" class="btn btn-primary" style="padding: 18px; font-size: 16px;"> ✅ Confirmar e Salvar Reserva Ativa</button>
+      <button type="button" id="btn-cancelar-edicao" class="btn btn-danger" style="padding: 12px; font-size: 14px; margin-top: 10px; display: none;"> Cancelar Edição </button>
+      
+      <!-- Lista de Agendamentos Ativos -->
+      <div style="margin-top: 40px; border-top: 2px solid var(--border-color); padding-top: 30px;">
+        <h3 style="margin-bottom: 20px;"> 📋 Relatório de Agendamentos Ativos (Reservas)</h3>
+        <div id="lista-reservas-render">
+          <p style="text-align: center; color: #999;">Carregando agendamentos da nuvem...</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- INTERFACE DO MODAL GERADOR DE CONTRATOS -->
+  <div id="modal-gerador-contrato" class="modal-contrato">
+    <div class="modal-conteudo">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
+        <h3 style="margin:0; color:var(--primary);">✍️ Gerador de Contrato Tralalá</h3>
+        <button type="button" id="btn-fechar-modal-contrato" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
+      </div>
+      
+      <form id="form-contrato-avulso">
+        <div class="grid-2">
+          <div class="input-group">
+            <label>Nome do Contratante:</label>
+            <input type="text" id="c-nome" placeholder="Ex: Lenira Ribeiro">
+          </div>
+          <div class="input-group">
+            <label>CPF:</label>
+            <input type="text" id="c-cpf" placeholder="000.000.000-00">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="input-group">
+            <label>Data da Festa:</label>
+            <input type="date" id="c-data">
+          </div>
+          <div class="input-group">
+            <label>Horário de Início:</label>
+            <input type="time" id="c-horario">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="input-group">
+            <label>Valor Total da Locação (R$):</label>
+            <input type="number" id="c-valor" placeholder="600.00" step="0.01">
+          </div>
+          <div class="input-group">
+            <label>Selecione as Peças (Retiradas do Catálogo):</label>
+            <select id="c-pecas" multiple style="height:70px; padding:5px;"></select>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Local do Evento / Endereço:</label>
+          <input type="text" id="c-local" placeholder="Endereço Completo">
+        </div>
+        <button type="button" id="btn-gerar-salvar-contrato" class="btn btn-primary" style="background-color:#e67e22; margin-bottom:20px;">💾 Gerar e Salvar Contrato na Nuvem</button>
+      </form>
+
+      <div style="border-top:1px dashed var(--border-color); padding-top:20px;">
+        <h4 style="color:var(--primary-dark); margin-bottom:10px;">📄 Histórico de Contratos Salvos</h4>
+        <div id="historico-contratos-lista" style="max-height:200px; overflow-y:auto;">
+          <p style="color:#999; font-size:12px; text-align:center;">Nenhum contrato localizado.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      databaseURL: "https://tralala-d8ce2-default-rtdb.firebaseio.com/"
+    };
+    
+    let db = null;
+    let todosOsTemas = []; 
+    let categoriasAtivas = ["Infantil", "Casamento", "15 Anos", "Outros"];
+    let chartInstance = null;
+    const mesesAno = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      db = firebase.database();
+    } catch(err) {
+      console.error("Erro no Firebase:", err);
+    }
+
+    const CloudDB = {
+      salvar: (caminho, dados, callback) => {
+        if (db) {
+          db.ref(caminho).set(dados).then(() => { if(callback) callback(true); });
+        } else {
+          localStorage.setItem(caminho, JSON.stringify(dados));
+          if(callback) callback(true);
+        }
+      },
+      buscar: (caminho, defaultVal, callback) => {
+        if (db) {
+          db.ref(caminho).once('value').then((snapshot) => {
+            let data = snapshot.val();
+            if (data !== null) {
+              if (typeof data === 'object' && !Array.isArray(data)) {
+                const converted = Object.keys(data).map(k => {
+                  if (data[k] && typeof data[k] === 'object') {
+                    return { idFirebase: k, ...data[k] };
+                  }
+                  return data[k];
+                });
+                callback(converted);
+              } else {
+                callback(data);
+              }
+            } else {
+              callback(defaultVal);
+            }
+          });
+        } else {
+          const val = localStorage.getItem(caminho);
+          callback(val ? JSON.parse(val) : defaultVal);
+        }
+      }
+    };
+
+    // CONTROLES DE LOGIN
+    const secaoLogin = document.getElementById("secao-login");
+    const secaoVerificador = document.getElementById("secao-verificador");
+    document.getElementById("btn-login-direto").addEventListener("click", () => {
+      secaoLogin.style.display = "none";
+      secaoVerificador.style.display = "block";
+      inicializarSistema();
+    });
+    document.getElementById("btn-logout-direto").addEventListener("click", () => {
+      secaoVerificador.style.display = "none";
+      secaoLogin.style.display = "block";
+    });
+
+    // CONTROLE WINDOW MODAL DO CONTRATO
+    const btnAbrirGerador = document.getElementById("btn-abrir-gerador-contrato");
+    const btnFecharGerador = document.getElementById("btn-fechar-modal-contrato");
+    const modalContrato = document.getElementById("modal-gerador-contrato");
+
+    btnAbrirGerador.addEventListener("click", () => {
+      modalContrato.classList.add("ativo");
+      atualizarListaPecasContrato();
+      renderizarHistoricoContratos();
+    });
+    btnFecharGerador.addEventListener("click", () => modalContrato.classList.remove("ativo"));
+
+    function atualizarListaPecasContrato() {
+      const selectPecas = document.getElementById("c-pecas");
+      selectPecas.innerHTML = "";
+      todosOsTemas.forEach(tema => {
+        const opt = document.createElement("option");
+        opt.value = tema.nome;
+        opt.innerText = `${tema.nome} (${tema.modelo})`;
+        selectPecas.appendChild(opt);
+      });
+    }
+
+    // BOTÃO PARA GERAR E SALVAR CONTRATOS NO NÓ 'contratos'
+    document.getElementById("btn-gerar-salvar-contrato").addEventListener("click", () => {
+      const nome = document.getElementById("c-nome").value.trim();
+      const cpf = document.getElementById("c-cpf").value.trim();
+      const dataFesta = document.getElementById("c-data").value;
+      const horario = document.getElementById("c-horario").value;
+      const valor = parseFloat(document.getElementById("c-valor").value) || 0;
+      const local = document.getElementById("c-local").value.trim();
+      
+      const pecasSelecionadas = Array.from(document.getElementById("c-pecas").selectedOptions).map(option => option.value);
+
+      if(!nome || !cpf || !dataFesta || !local) {
+        alert("Preencha Nome, CPF, Data e Local para gerar o contrato!");
+        return;
+      }
+
+      const dataFmt = dataFesta.split("-").reverse().join("/");
+      const pecasTexto = pecasSelecionadas.length > 0 ? pecasSelecionadas.join(", ") : "Nenhuma peça explicitada.";
+
+      // Estrutura do texto do contrato com base no modelo base fornecido
+      const textoContratoCompleto = `
+CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO
+CONTRATADA: TRALALÁ DECORAÇÕES DE FESTAS
+CNPJ: 21.918.863/0001-12 | E-MAIL: tralaladecoracoes@gmail.com
+
+CONTRATANTE: ${nome}
+CPF: ${cpf}
+LOCAL DA FESTA: ${local}
+DATA DA FESTA: ${dataFmt} | HORÁRIO INÍCIO: ${horario}
+
+DO OBJETO DO CONTRATO
+Cláusula 1ª. É objeto do presente contrato a prestação de serviço de Aluguel das peças: ${pecasTexto}, para o evento que se realizará no dia ${dataFmt}.
+Primeiro. A alteração do local implica em prévia comunicação à CONTRATADA no prazo de 48 horas.
+Parágrafo Segundo. Caso haja alteração do local, poderá haver alteração do valor do frete.
+
+OBRIGAÇÃO DA CONTRATANTE
+Cláusula 2ª. A CONTRATANTE deverá fornecer todas as informações necessárias.
+Cláusula 3ª. É dever da CONTRATANTE devolver o(s) produto(s) no término da festa.
+
+OBRIGAÇÃO DA CONTRATADA
+Cláusula 4ª. A CONTRATADA entregará o material no dia ${dataFmt} no endereço especificado.
+
+VALOR E FORMA DE PAGAMENTO
+Cláusula 6ª. O serviço contratado no presente instrumento será remunerado pela quantia total de R$ ${valor.toFixed(2)}.
+CHAVE PIX CNPJ: 21.918.863/0001-12
+
+DA DEVOLUÇÃO E CANCELAMENTO
+Cláusula 8ª. Caso haja perda ou danos, a CONTRATANTE arcará com 50% de uma peça nova para reposição.
+Cláusula 9ª. Em caso de desistência a CONTRATANTE arcará com multa de 50% do valor total do contrato.
+
+Brasília-DF, ${new Date().toLocaleDateString('pt-BR')}.
+______________________________________________________
+TRALALÁ DECORAÇÕES DE FESTA (CONTRATADA)
+______________________________________________________
+${nome} (CONTRATANTE)
+      `.trim();
+
+      CloudDB.buscar("contratos", [], (contratosSalvos) => {
+        contratosSalvos.push({
+          nome, cpf, dataFesta, horario, valor, local,
+          pecas: pecasTexto,
+          textoContrato: textoContratoCompleto,
+          criadoEm: new Date().toLocaleString('pt-BR')
+        });
+
+        CloudDB.salvar("contratos", contratosSalvos, () => {
+          alert("Contrato gravado com sucesso no nó da nuvem 'contratos'!");
+          document.getElementById("form-contrato-avulso").reset();
+          renderizarHistoricoContratos();
+        });
+      });
+    });
+
+    function renderizarHistoricoContratos() {
+      CloudDB.buscar("contratos", [], (contratos) => {
+        const container = document.getElementById("historico-contratos-lista");
+        container.innerHTML = "";
+        
+        if(!contratos || contratos.length === 0) {
+          container.innerHTML = `<p style="color:#999; font-size:12px; text-align:center;">Nenhum contrato localizado.</p>`;
+          return;
+        }
+
+        contratos.forEach((c, idx) => {
+          const div = document.createElement("div");
+          div.className = "card-contrato";
+          div.style.padding = "12px";
+          div.innerHTML = `
+            <div style="display:flex; justify-content:space-between; font-size:12px;">
+              <strong>📄 ${c.nome}</strong>
+              <span style="color:#e67e22;">Val: R$ ${(c.valor || 0).toFixed(2)}</span>
+            </div>
+            <small style="color:#888; display:block; margin:4px 0;">Festa: ${c.dataFesta.split("-").reverse().join("/")} | Criado: ${c.criadoEm}</small>
+            <div style="margin-top:8px; display:flex; gap:10px;">
+              <button type="button" onclick="baixarContratoTexto(${idx})" class="btn btn-outline" style="font-size:11px; padding:4px 8px;">💾 Baixar Arquivo TXT</button>
+              <button type="button" onclick="imprimirContratoDireto(${idx})" class="btn btn-outline" style="font-size:11px; padding:4px 8px; border-color:#3498db; color:#3498db;">🖨️ Imprimir</button>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      });
+    }
+
+    window.baixarContratoTexto = function(index) {
+      CloudDB.buscar("contratos", [], (contratos) => {
+        const c = contratos[index];
+        if(!c) return;
+        const blob = new Blob([c.textoContrato], { type: "text/plain;charset=utf-8" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `Contrato_Tralala_${c.nome.replace(/\s+/g, '_')}.txt`;
+        link.click();
+      });
+    };
+
+    window.imprimirContratoDireto = function(index) {
+      CloudDB.buscar("contratos", [], (contratos) => {
+        const c = contratos[index];
+        if(!c) return;
+        const janelaImpressao = window.open('', '', 'width=800,height=600');
+        janelaImpressao.document.write(`<pre style="font-family:Courier,monospace; white-space:pre-wrap; padding:30px;">${c.textoContrato}</pre>`);
+        janelaImpressao.document.close();
+        janelaImpressao.print();
+      });
+    };
+
+    // SISTEMA DO PONTO ELETRÔNICO
+    function renderizarPontos() {
+      CloudDB.buscar("pontos", [], (pontos) => {
+        const corpo = document.getElementById("lista-pontos-geral-corpo");
+        corpo.innerHTML = "";
+        if (!pontos || pontos.length === 0) {
+          document.getElementById("ponto-status-hoje").innerText = "Sem marcações registradas no nó 'pontos'";
+          return;
+        }
+        const ultimo = pontos[pontos.length - 1];
+        document.getElementById("ponto-status-hoje").innerText = `Último registro: ${ultimo.tipo} às ${ultimo.hora} (${ultimo.data})`;
+        [...pontos].reverse().forEach(p => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>Administrador</td><td>${p.data}</td><td>${p.tipo === 'Entrada' ? p.hora : '-'}</td><td>${p.tipo === 'Saída' ? p.hora : '-'}</td>`;
+          corpo.appendChild(tr);
+        });
+      });
+    }
+    document.getElementById("btn-ponto-entrada").addEventListener("click", () => registrarPonto("Entrada"));
+    document.getElementById("btn-ponto-saida").addEventListener("click", () => registrarPonto("Saída"));
+    document.getElementById("btn-abrir-relatorio-pontos").addEventListener("click", () => {
+      const el = document.getElementById("painel-relatorio-pontos-geral");
+      el.style.display = el.style.display === "none" ? "block" : "none";
+    });
+    function registrarPonto(tipo) {
+      const agora = new Date();
+      const d = agora.toLocaleDateString('pt-BR');
+      const h = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      CloudDB.buscar("pontos", [], (p) => {
+        p.push({ tipo, data: d, hora: h });
+        CloudDB.salvar("pontos", p, () => { alert("Ponto registrado!"); renderizarPontos(); });
+      });
+    }
+
+    // MONTAGEM NO LOCAL DINÂMICA INTEGRADA COM ESTOQUE
+    const chkMontarLocal = document.getElementById("chk-montar-local");
+    const painelMontagemLocal = document.getElementById("painel-montagem-local");
+    const mlPecasEstoque = document.getElementById("ml-pecas-estoque");
+    const mlMesasEstoque = document.getElementById("ml-mesas-estoque");
+
+    chkMontarLocal.addEventListener("change", () => {
+      if (chkMontarLocal.checked) {
+        painelMontagemLocal.style.display = "block";
+        alimentarSeletoresMontagemEstoque();
+      } else {
+        painelMontagemLocal.style.display = "none";
+      }
+    });
+
+    function alimentarSeletoresMontagemEstoque() {
+      CloudDB.buscar("estoque", [], (estoque) => {
+        mlPecasEstoque.innerHTML = "";
+        mlMesasEstoque.innerHTML = "";
+
+        const itens = [];
+        if (estoque) {
+          Object.keys(estoque).forEach(k => {
+            const item = estoque[k];
+            if (item && typeof item === 'object') {
+              const itemNome = item.nome || item.item || item.titulo || "Sem Nome";
+              const qtd = item.quantidade !== undefined ? item.quantidade : 1;
+              if (qtd > 0) {
+                itens.push({ nome: itemNome, modelo: item.modelo || "" });
+              }
+            }
+          });
+        }
+
+        if (itens.length === 0) {
+          mlPecasEstoque.innerHTML = `<span style="font-size:12px; color:#999; padding:5px;">Nenhuma peça disponível no estoque</span>`;
+          mlMesasEstoque.innerHTML = `<span style="font-size:12px; color:#999; padding:5px;">Nenhuma mesa disponível no estoque</span>`;
+          return;
+        }
+
+        itens.forEach(item => {
+          const divPeca = document.createElement("div");
+          divPeca.className = "multi-select-item";
+          divPeca.innerHTML = `<label><input type="checkbox" class="chk-peca-item" value="${item.nome}"> ${item.nome}</label>`;
+          mlPecasEstoque.appendChild(divPeca);
+
+          const nomeL = item.nome.toLowerCase();
+          const modeloL = item.modelo.toLowerCase();
+          if (nomeL.includes("mesa") || nomeL.includes("cilindro") || modeloL.includes("mesa") || modeloL.includes("cilindro")) {
+            const divMesa = document.createElement("div");
+            divMesa.className = "multi-select-item";
+            divMesa.innerHTML = `<label><input type="checkbox" class="chk-mesa-item" value="${item.nome}"> ${item.nome}</label>`;
+            mlMesasEstoque.appendChild(divMesa);
+          }
+        });
+
+        if (mlMesasEstoque.innerHTML === "") {
+          mlMesasEstoque.innerHTML = `<span style="font-size:11px; color:#999; padding:5px;">Nenhum cilindro/mesa identificado no catálogo</span>`;
+        }
+      });
+    }
+
+    // CÁLCULO FINANCEIRO DINÂMICO
+    const inputValorFesta = document.getElementById("valor-festa");
+    const inputValorFrete = document.getElementById("valor-frete");
+    const inputValorTotal = document.getElementById("valor-total");
+    const inputValorSinal = document.getElementById("valor-sinal");
+    const inputValorRestante = document.getElementById("valor-restante");
+
+    function calcularFinanceiro() {
+      const festa = parseFloat(inputValorFesta.value) || 0;
+      const frete = parseFloat(inputValorFrete.value) || 0;
+      const total = festa + frete;
+      inputValorTotal.value = total.toFixed(2);
+
+      const sinal = parseFloat(inputValorSinal.value) || 0;
+      const restante = total - sinal;
+      inputValorRestante.value = restante.toFixed(2);
+    }
+
+    inputValorFesta.addEventListener("input", calcularFinanceiro);
+    inputValorSinal.addEventListener("input", calcularFinanceiro);
+
+    // CALCULADORA DE FRETE INTELIGENTE
+    const inputKM = document.getElementById("calc-km");
+    const inputLitro = document.getElementById("calc-valor-litro");
+    const outCombustivel = document.getElementById("calc-total-combustivel");
+    const outManutencao = document.getElementById("calc-manutencao");
+    const outCobrar = document.getElementById("calc-cobrar-cliente");
+    const inputFreteReal = document.getElementById("valor-frete");
+
+    function calcularFreteFórmula() {
+      const km = parseFloat(inputKM.value) || 0;
+      const precoL = parseFloat(inputLitro.value) || 0;
+      if (km <= 0) {
+        outCombustivel.innerText = "R$ 0.00";
+        outManutencao.innerText = "R$ 0.00";
+        outCobrar.innerText = "R$ 0.00";
+        inputFreteReal.value = "0.00";
+        calcularFinanceiro();
+        return;
+      }
+      const litrosNecessarios = km / 9;
+      const custoCombustivel = litrosNecessarios * precoL;
+      const taxaManutencao = custoCombustivel * 0.20;
+      const totalFreteFinal = custoCombustivel + taxaManutencao;
+
+      outCombustivel.innerText = `R$ ${custoCombustivel.toFixed(2)}`;
+      outManutencao.innerText = `R$ ${taxaManutencao.toFixed(2)}`;
+      outCobrar.innerText = `R$ ${totalFreteFinal.toFixed(2)}`;
+      inputFreteReal.value = totalFreteFinal.toFixed(2);
+      calcularFinanceiro();
+    }
+    inputKM.addEventListener("input", calcularFreteFórmula);
+    inputLitro.addEventListener("input", calcularFreteFórmula);
+
+    // REUNIÕES
+    const btnSalvarReuniao = document.getElementById("btn-salvar-reuniao-avulsa");
+    btnSalvarReuniao.addEventListener("click", () => {
+      const cliente = document.getElementById("reuniao-cliente").value.trim();
+      const dataHora = document.getElementById("reuniao-data-hora").value;
+      const pauta = document.getElementById("reuniao-pauta").value.trim();
+
+      if (!cliente || !dataHora) {
+        alert("Por favor, preencha o Nome da Cliente e a Data/Hora!");
+        return;
+      }
+
+      CloudDB.buscar("reunioes_agendadas", [], (dados) => {
+        dados.push({ cliente, dataHora, pauta });
+        CloudDB.salvar("reunioes_agendadas", dados, () => {
+          alert("Reunião agendada com sucesso!");
+          document.getElementById("reuniao-cliente").value = "";
+          document.getElementById("reuniao-data-hora").value = "";
+          document.getElementById("reuniao-pauta").value = "";
+          renderizarReunioes();
+        });
+      });
+    });
+
+    function renderizarReunioes() {
+      CloudDB.buscar("reunioes_agendadas", [], (dados) => {
+        const conteiner = document.getElementById("lista-reunioes-container");
+        conteiner.innerHTML = "";
+        if (!dados || dados.length === 0) {
+          conteiner.innerHTML = `<p style="color: #999; text-align: center;">Nenhuma reunião agendada no momento.</p>`;
+          return;
+        }
+
+        dados.forEach((re, index) => {
+          const div = document.createElement("div");
+          div.className = "card-reuniao";
+          const dataFmt = new Date(re.dataHora).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+          div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; font-weight: 600;">
+              <span>👤 ${re.cliente}</span>
+              <span style="color: #3498db;">📅 ${dataFmt}</span>
+            </div>
+            <p style="margin: 5px 0; font-size: 13px; color: var(--text-muted);">🎯 Pauta: ${re.pauta || 'Não definida'}</p>
+            <button onclick="removerReuniao(${index})" class="btn btn-danger" style="padding: 4px 8px; font-size: 11px; width: auto; margin-top: 5px;">Remover Agenda</button>
+          `;
+          conteiner.appendChild(div);
+        });
+      });
+    }
+
+    window.removerReuniao = function(index) {
+      if (confirm("Deseja realmente remover esta reunião?")) {
+        CloudDB.buscar("reunioes_agendadas", [], (dados) => {
+          dados.splice(index, 1);
+          CloudDB.salvar("reunioes_agendadas", dados, () => { renderizarReunioes(); });
+        });
+      }
+    }
+
+    // CATEGORIAS
+    const btnCriarCategoria = document.getElementById("btn-criar-categoria");
+    const inputNovaCategoria = document.getElementById("nova-categoria-nome");
+    const selectPecaCategoria = document.getElementById("catalogo-peca-categoria");
+
+    function atualizarSelectCategorias() {
+      selectPecaCategoria.innerHTML = "";
+      categoriasAtivas.forEach(cat => {
+        const op = document.createElement("option");
+        op.value = cat;
+        op.innerText = cat;
+        selectPecaCategoria.appendChild(op);
+      });
+    }
+
+    btnCriarCategoria.addEventListener("click", () => {
+      const novaCat = inputNovaCategoria.value.trim();
+      if (!novaCat) return;
+      if (!categoriasAtivas.includes(novaCat)) {
+        categoriasAtivas.push(novaCat);
+        atualizarSelectCategorias();
+        alert(`Categoria "${novaCat}" criada com sucesso!`);
+        inputNovaCategoria.value = "";
+      } else {
+        alert("Esta categoria já existe.");
+      }
+    });
+
+    // PRODUTOS DO ESTOQUE
+    const btnAdicionarPeca = document.getElementById("btn-adicionar-peca");
+    btnAdicionarPeca.addEventListener("click", () => {
+      const nome = document.getElementById("catalogo-peca-nome").value.trim();
+      const qtd = parseInt(document.getElementById("catalogo-peca-qtd").value) || 0;
+      const categoria = document.getElementById("catalogo-peca-categoria").value;
+      const modelo = document.getElementById("catalogo-peca-modelo").value.trim();
+      const imgUrl = document.getElementById("catalogo-peca-imagem").value.trim() || "https://placehold.co/100x100?text=Sem+Foto";
+
+      if(!nome) {
+        alert("Preencha ao menos o nome do Item/Tema!");
+        return;
+      }
+
+      CloudDB.buscar("estoque", [], (estoque) => {
+        estoque.push({ 
+          nome: nome, 
+          quantidade: qtd,
+          categoria: categoria || "Outros", 
+          modelo: modelo || "Tema Geral", 
+          imagem: imgUrl 
+        });
+        CloudDB.salvar("estoque", estoque, () => {
+          alert("Item salvo com sucesso!");
+          document.getElementById("catalogo-peca-nome").value = "";
+          document.getElementById("catalogo-peca-qtd").value = "1";
+          document.getElementById("catalogo-peca-modelo").value = "";
+          document.getElementById("catalogo-peca-imagem").value = "";
+          renderizarTemas();
+          alimentarSeletoresMontagemEstoque();
+        });
+      });
+    });
+
+    function renderizarTemas() {
+      CloudDB.buscar("estoque", [], (temas) => {
+        todosOsTemas = [];
+        if (temas) {
+          Object.keys(temas).forEach(k => {
+            const item = temas[k];
+            if (item && typeof item === 'object') {
+              const itemNome = item.nome || item.item || item.titulo || "Sem Nome";
+              todosOsTemas.push({
+                id: k,
+                nome: itemNome,
+                quantidade: item.quantidade !== undefined ? item.quantidade : 1,
+                categoria: item.categoria || "Outros",
+                modelo: item.modelo || "Tema Geral",
+                imagem: item.imagem || "https://placehold.co/100x100?text=Sem+Foto"
+              });
+            }
+          });
+        }
+
+        document.getElementById("contador-catalogo-total").innerText = `${todosOsTemas.length} itens`;
+        const corpo = document.getElementById("lista-temas-gerenciados-corpo");
+        corpo.innerHTML = "";
+
+        if (todosOsTemas.length === 0) {
+          corpo.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#999; padding: 10px;">Catálogo sem itens.</td></tr>`;
+          return;
+        }
+
+        const categoriasMap = {};
+        todosOsTemas.forEach((item, index) => {
+          const cat = item.categoria || "Outros";
+          if (!categoriasMap[cat]) categoriasMap[cat] = [];
+          categoriasMap[cat].push({ ...item, originalIndex: index });
+        });
+
+        Object.keys(categoriasMap).sort().forEach(cat => {
+          const trCat = document.createElement("tr");
+          trCat.className = "categoria-header-linha";
+          trCat.innerHTML = `<td colspan="3" style="font-size: 13px; text-transform: uppercase;">📂 Categoria: ${cat} (${categoriasMap[cat].length})</td>`;
+          corpo.appendChild(trCat);
+
+          categoriasMap[cat].forEach(item => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td><img src="${item.imagem}" class="catalogo-foto" alt="Foto"></td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <strong>${item.nome}</strong> 
+                  <span style="font-size: 11px; color: var(--success); font-weight: 600;">(Qtd: ${item.quantidade} disponíveis)</span>
+                  <button onclick="editarPecaCatalogo(${item.originalIndex})" style="background:none; border:none; cursor:pointer; font-size:14px; padding:0; display:inline-flex; align-items:center;" title="Editar Peça">✏️</button>
+                </div>
+                <small style="color:var(--primary);">${item.modelo}</small>
+              </td>
+              <td style="text-align: center;"><button onclick="removerTema(${item.originalIndex})" class="btn btn-danger" style="padding: 4px 8px; width: auto; font-size: 11px; margin: 0 auto;">🗑️</button></td>
+            `;
+            corpo.appendChild(tr);
+          });
+        });
+      });
+    }
+
+    window.editarPecaCatalogo = function(index) {
+      CloudDB.buscar("estoque", [], (temas) => {
+        const item = temas[index];
+        if(!item) return;
+
+        const nomeAtual = item.nome || item.item || item.titulo || "Sem Nome";
+        const qtdAtual = item.quantidade !== undefined ? item.quantidade : 1;
+        const modeloAtual = item.modelo || "Tema Geral";
+        const imgAtual = item.imagem || "";
+
+        const novoNome = prompt("Editar Nome do Item:", nomeAtual);
+        if (novoNome === null) return; 
+
+        const novaQtd = prompt("Editar Quantidade Disponível:", qtdAtual);
+        if (novaQtd === null) return;
+
+        const novoModelo = prompt("Editar Modelo/Estilo:", modeloAtual);
+        if (novoModelo === null) return;
+
+        const novaImg = prompt("Editar URL da Imagem:", imgAtual);
+        if (novaImg === null) return;
+
+        item.nome = novoNome.trim();
+        item.quantidade = parseInt(novaQtd) || 0;
+        item.modelo = novoModelo.trim();
+        item.imagem = novaImg.trim();
+
+        temas[index] = item;
+
+        CloudDB.salvar("estoque", temas, () => {
+          alert("Peça atualizada com sucesso no catálogo!");
+          renderizarTemas();
+          alimentarSeletoresMontagemEstoque();
+        });
+      });
+    };
+
+    window.removerTema = function(index) {
+      if(confirm("Remover este item do catálogo?")) {
+        CloudDB.buscar("estoque", [], (temas) => {
+          const listaLimpa = Object.keys(temas).map(k => temas[k]);
+          listaLimpa.splice(index, 1);
+          CloudDB.salvar("estoque", listaLimpa, () => { 
+            renderizarTemas(); 
+            alimentarSeletoresMontagemEstoque();
+          });
+        });
+      }
+    };
+
+    // SUGESTÕES DE TEMA
+    const filtroTemaInput = document.getElementById("filtro-tema-input");
+    const wrapperListaSugestoes = document.getElementById("wrapper-lista-sugestoes");
+    const hiddenTemaSelecionado = document.getElementById("busca-tema-input");
+
+    filtroTemaInput.addEventListener("input", (e) => {
+      const t = e.target.value.toLowerCase().trim();
+      wrapperListaSugestoes.innerHTML = "";
+      if(!t) { wrapperListaSugestoes.style.display = "none"; return; }
+      const matches = todosOsTemas.filter(item => item.nome.toLowerCase().includes(t));
+      if(matches.length === 0) {
+        wrapperListaSugestoes.innerHTML = `<div class="sugestao-vazia" style="padding:10px; font-size:12px; color:#999;">Nenhum resultado...</div>`;
+      } else {
+        matches.forEach((item) => {
+          const div = document.createElement("div");
+          div.className = "sugestao-item";
+          div.innerHTML = `<span><strong>${item.nome}</strong> <small>(${item.categoria})</small></span>`;
+          div.addEventListener("click", () => {
+            filtroTemaInput.value = item.nome;
+            hiddenTemaSelecionado.value = item.nome;
+            wrapperListaSugestoes.style.display = "none";
+          });
+          wrapperListaSugestoes.appendChild(div);
+        });
+      }
+      wrapperListaSugestoes.style.display = "block";
+    });
+
+    // RELATÓRIOS MENSAL & ANUAL
+    const seletorMes = document.getElementById("seletor-mes-planilha");
+    const tabelaPlanilha = document.getElementById("tabela-planilha-corpo").getElementsByTagName('tbody')[0];
+
+    function preencherPlanilhaMes(mes) {
+      CloudDB.buscar(`planilhas_faturamento/${mes}`, [], (dados) => {
+        tabelaPlanilha.innerHTML = "";
+        if(!dados || dados.length === 0) {
+          adicionarLinhaNaTabela();
+        } else {
+          dados.forEach(item => {
+            adicionarLinhaNaTabela(item.agendamento, item.kit, item.valor);
+          });
+        }
+      });
+    }
+
+    function adicionarLinhaNaTabela(agendamento = "", kit = "Kit Básico", valor = "") {
+      const novaLinha = tabelaPlanilha.insertRow();
+      novaLinha.innerHTML = `
+        <td><input type="text" class="input-tabela input-nome-agendamento" placeholder="Nome do Cliente" value="${agendamento}"></td>
+        <td>
+          <select class="seletor-kit-tabela select-kit-venda">
+            <option value="Só um Bolinho" ${kit === 'Só um Bolinho' ? 'selected' : ''}>🧁 Só um Bolinho</option>
+            <option value="Kit Básico" ${kit === 'Kit Básico' ? 'selected' : ''}>📦 Kit Básico</option>
+            <option value="Kit Prata" ${kit === 'Kit Prata' ? 'selected' : ''}>🥈 Kit Prata</option>
+            <option value="Kit Ouro" ${kit === 'Kit Ouro' ? 'selected' : ''}>🥇 Kit Ouro</option>
+          </select>
+        </td>
+        <td><input type="number" class="input-tabela input-valor-venda" placeholder="0.00" value="${valor}"></td>
+        <td style="text-align: center;"><button type="button" class="btn-remover-linha btn btn-danger" style="padding: 4px 8px; font-size: 12px; width: auto; margin: 0 auto;">🗑️</button></td>
+      `;
+      novaLinha.querySelector(".btn-remover-linha").addEventListener("click", () => { novaLinha.remove(); });
+    }
+
+    document.getElementById("btn-adicionar-linha-planilha").addEventListener("click", () => adicionarLinhaNaTabela());
+    seletorMes.addEventListener("change", (e) => preencherPlanilhaMes(e.target.value));
+
+    document.getElementById("btn-salvar-dados-planilha").addEventListener("click", () => {
+      const mesAtual = seletorMes.value;
+      const nomes = document.querySelectorAll(".input-nome-agendamento");
+      const kits = document.querySelectorAll(".select-kit-venda");
+      const valores = document.querySelectorAll(".input-valor-venda");
+
+      const payload = [];
+      nomes.forEach((inputNome, index) => {
+        if(inputNome.value.trim() !== "") {
+          payload.push({
+            agendamento: inputNome.value,
+            kit: kits[index].value,
+            valor: parseFloat(valores[index].value) || 0
+          });
+        }
+      });
+
+      CloudDB.salvar(`planilhas_faturamento/${mesAtual}`, payload, () => {
+        alert(`Relatório do Mês de ${mesAtual} updated!`);
+        renderizarGraficoAnual();
+      });
+    });
+
+    document.getElementById("btn-gerar-resumo-mensal").addEventListener("click", () => {
+      const mesProcurado = prompt("Qual mês deseja consultar? (Ex: Janeiro, Fevereiro...):");
+      if (!mesProcurado) return;
+      const mesCapitalizado = mesProcurado.charAt(0).toUpperCase() + mesProcurado.slice(1).toLowerCase();
+
+      CloudDB.buscar(`planilhas_faturamento/${mesCapitalizado}`, [], (dados) => {
+        if (!dados || dados.length === 0) {
+          alert(`Nenhum faturamento para o mês de: ${mesCapitalizado}`);
+          return;
+        }
+
+        let totalFaturamento = 0;
+        let resumoTexto = `📊 FATURAMENTO - ${mesCapitalizado.toUpperCase()} 📊\n\n`;
+
+        dados.forEach((d, idx) => {
+          const val = parseFloat(d.valor) || 0;
+          totalFaturamento += val;
+          resumoTexto += `${idx + 1}. Cliente: ${d.agendamento} | Kit: ${d.kit} | R$ ${val.toFixed(2)}\n`;
+        });
+
+        resumoTexto += `\n💰 FATURAMENTO TOTAL DO MÊS: R$ ${totalFaturamento.toFixed(2)}`;
+        alert(resumoTexto);
+      });
+    });
+
+    document.getElementById("btn-transformar-grafico").addEventListener("click", () => {
+      const el = document.getElementById("painel-grafico-faturamento");
+      el.style.display = "block";
+      renderizarGraficoAnual();
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    function sincronizarReservasComPlanilhas(callbackSincronizacao) {
+      CloudDB.buscar("reservas", [], (todasReservas) => {
+        const novasPlanilhas = {};
+        mesesAno.forEach(m => { novasPlanilhas[m] = []; });
+
+        todasReservas.forEach(res => {
+          if (res.data) {
+            const partes = res.data.split("-");
+            if (partes.length >= 2) {
+              const mesIndex = parseInt(partes[1], 10) - 1;
+              if (mesIndex >= 0 && mesIndex < 12) {
+                const nomeMes = mesesAno[mesIndex];
+                novasPlanilhas[nomeMes].push({
+                  agendamento: res.cliente || "Cliente Sem Nome",
+                  kit: res.kit || "Kit Básico",
+                  valor: parseFloat(res.preco) || 0
+                });
+              }
+            }
+          }
+        });
+
+        let salvasContador = 0;
+        mesesAno.forEach(m => {
+          CloudDB.salvar(`planilhas_faturamento/${m}`, novasPlanilhas[m], () => {
+            salvasContador++;
+            if (salvasContador === 12 && callbackSincronizacao) callbackSincronizacao();
+          });
+        });
+      });
+    }
+
+    function renderizarGraficoAnual() {
+      CloudDB.buscar("planilhas_faturamento", {}, (dadosFaturamentos) => {
+        const valoresAnuais = mesesAno.map(mes => {
+          const registros = dadosFaturamentos[mes] || [];
+          return registros.reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0);
+        });
+
+        const ctx = document.getElementById('graficoAnual').getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+
+        chartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: mesesAno,
+            datasets: [{
+              label: 'Faturamento Consolidado (R$)',
+              data: valoresAnuais,
+              backgroundColor: 'rgba(163, 83, 106, 0.7)',
+              borderColor: 'rgba(163, 83, 106, 1)',
+              borderWidth: 2,
+              borderRadius: 6
+            }]
+          },
+          options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+      });
+    }
+
+    document.getElementById("btn-toggle-grafico").addEventListener("click", () => {
+      const el = document.getElementById("painel-grafico-faturamento");
+      el.style.display = el.style.display === "none" ? "block" : "none";
+      if (el.style.display === "block") renderizarGraficoAnual();
+    });
+
+    // SISTEMA DE ORÇAMENTOS
+    const btnSalvarComoOrcamento = document.getElementById("btn-salvar-como-orcamento");
+    btnSalvarComoOrcamento.addEventListener("click", () => {
+      const cliente = document.getElementById("nome-cliente").value.trim();
+      const tema = document.getElementById("busca-tema-input").value || document.getElementById("filtro-tema-input").value;
+      const preco = parseFloat(document.getElementById("valor-total").value) || 0;
+
+      if(!cliente) {
+        alert("Preencha o campo 'Nome do Cliente'!");
+        return;
+      }
+
+      CloudDB.buscar("orcamentos_novos", [], (orcamentos) => {
+        orcamentos.push({ cliente, tema: tema || "Sem Tema", kit: kitSelecionado || "Não Selecionado", valor: preco });
+        CloudDB.salvar("orcamentos_novos", orcamentos, () => {
+          alert(`Orçamento de "${cliente}" salvo!`);
+          limparFormulario();
+          renderizarOrcamentosInternos();
+        });
+      });
+    });
+
+    const tabelaOrcamentosInterno = document.getElementById("lista-orcamentos-interno-corpo");
+    function renderizarOrcamentosInternos() {
+      CloudDB.buscar("orcamentos_novos", [], (dados) => {
+        tabelaOrcamentosInterno.innerHTML = "";
+        if(!dados || dados.length === 0) {
+          tabelaOrcamentosInterno.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999; padding:15px;">Nenhum orçamento salvo na nuvem.</td></tr>`;
+          return;
+        }
+        dados.forEach((item, index) => {
+          const novaLinha = tabelaOrcamentosInterno.insertRow();
+          novaLinha.innerHTML = `
+            <td><strong>${item.cliente || "N/A"}</strong></td>
+            <td>${item.tema || "Geral"}<br><span style="color:var(--primary); font-size:10px;">${item.kit || "Básico"}</span></td>
+            <td>R$ ${(parseFloat(item.valor) || 0).toFixed(2)}</td>
+            <td style="text-align: center; white-space: nowrap;">
+              <button type="button" onclick="promoverOrcamentoParaReserva(${index})" class="btn-acao-tabela btn-promover">✅</button>
+              <button type="button" onclick="deletarOrcamentoDoPainel(${index})" class="btn-acao-tabela btn-remover-orc">🗑️</button>
+            </td>
+          `;
+        });
+      });
+    }
+
+    window.promoverOrcamentoParaReserva = function(index) {
+      CloudDB.buscar("orcamentos_novos", [], (orcamentos) => {
+        const item = orcamentos[index];
+        if(!item) return;
+
+        const dataEvento = prompt(`Qual a data do evento para o cliente "${item.cliente}"? (AAAA-MM-DD)`);
+        if(!dataEvento) return;
+
+        const sinalPago = parseFloat(prompt("Qual o valor do Sinal Pago (R$)?", "0.00")) || 0;
+        const obs = prompt("Observações adicionais ou local da festa?", "") || "Nenhuma";
+
+        CloudDB.buscar("reservas", [], (reservas) => {
+          reservas.push({ cliente: item.cliente, data: dataEvento, tema: item.tema, kit: item.kit, preco: parseFloat(item.valor) || 0, sinal: sinalPago, frete: 0, obs });
+          CloudDB.salvar("reservas", reservas, () => {
+            orcamentos.splice(index, 1);
+            CloudDB.salvar("orcamentos_novos", orcamentos, () => {
+              sincronizarReservasComPlanilhas(() => {
+                alert("Orçamento promovido a reserva!");
+                renderOrcamentosEAgendamentos();
+                preencherPlanilhaMes(seletorMes.value);
+                renderizarGraficoAnual();
+              });
+            });
+          });
+        });
+      });
+    };
+
+    function renderOrcamentosEAgendamentos() {
+      renderizarOrcamentosInternos();
+      renderizarReservas();
+    }
+
+    window.deletarOrcamentoDoPainel = function(index) {
+      if(confirm("Excluir este orçamento?")) {
+        CloudDB.buscar("orcamentos_novos", [], (dados) => {
+          dados.splice(index, 1);
+          CloudDB.salvar("orcamentos_novos", dados, () => { renderizarOrcamentosInternos(); });
+        });
+      }
+    };
+
+    document.getElementById("btn-abrir-orcamentos").addEventListener("click", () => {
+      document.getElementById("card-orcamentos-integrado").scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    // CONTROLES DE ABAS
+    document.getElementById("btn-abrir-central-relatorios").addEventListener("click", () => { fecharTodasAsAbas(); document.getElementById("secao-central-relatorios").style.display = "block"; });
+    document.getElementById("btn-fechar-central-relatorios").addEventListener("click", () => { document.getElementById("secao-central-relatorios").style.display = "none"; });
+    document.getElementById("btn-abrir-catalogo-temas").addEventListener("click", () => {
+      const el = document.getElementById("painel-catalogo-temas");
+      fecharTodasAsAbas();
+      el.style.display = el.style.display === "none" ? "block" : "none";
+      if(el.style.display === "block") renderizarTemas();
+    });
+    document.getElementById("btn-abrir-reunioes-painel").addEventListener("click", () => {
+      const el = document.getElementById("painel-reunioes-exclusivo");
+      fecharTodasAsAbas();
+      el.style.display = el.style.display === "none" ? "block" : "none";
+      if(el.style.display === "block") renderizarReunioes();
+    });
+    document.getElementById("btn-fechar-reunioes").addEventListener("click", () => { document.getElementById("painel-reunioes-exclusivo").style.display = "none"; });
+
+    function fecharTodasAsAbas() {
+      document.getElementById("secao-central-relatorios").style.display = "none";
+      document.getElementById("painel-catalogo-temas").style.display = "none";
+      document.getElementById("painel-reunioes-exclusivo").style.display = "none";
+    }
+
+    // RESERVAS ATIVAS
+    const btnSalvarReserva = document.getElementById("btn-confirmar-agendamento");
+    let kitSelecionado = "";
+
+    document.querySelectorAll(".btn-kit-opcao").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        document.querySelectorAll(".btn-kit-opcao").forEach(b => b.classList.remove("ativo"));
+        e.target.classList.add("ativo");
+        kitSelecionado = e.target.getAttribute("data-kit");
+      });
+    });
+
+    function renderizarReservas() {
+      CloudDB.buscar("reservas", [], (reservas) => {
+        const conteiner = document.getElementById("lista-reservas-render");
+        conteiner.innerHTML = "";
+        if(!reservas || reservas.length === 0) {
+          conteiner.innerHTML = `<p style="text-align: center; color: #999;">Nenhum agendamento ativo.</p>`;
+          return;
+        }
+        reservas.forEach((res, index) => {
+          const v = parseFloat(res.preco) || 0;
+          const s = parseFloat(res.sinal) || 0;
+          const f = parseFloat(res.frete) || 0;
+          const falta = v - s;
+
+          let infoMontagem = "Não solicitado";
+          if (res.montarLocal === true || res.montarLocal === "Sim") {
+            infoMontagem = `
+              <strong>Sim</strong><br>
+              <span style="font-size:11px; color:#555;">
+                • Peças: ${res.mlQtdPecas || 0} (${res.mlPecasEscolhidas || "Nenhuma"})<br>
+                • LED: ${res.mlLed || "Não"} | Balão: ${res.mlBalao || "Não"}<br>
+                • Cilindros: ${res.mlQtdCilindros || 0} | Mesas: ${res.mlQtdMesas || 0} (${res.mlMesasEscolhidas || "Nenhuma"})
+              </span>
+            `;
+          }
+
+          const div = document.createElement("div");
+          div.className = "card-reserva";
+          div.innerHTML = `
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+              <strong>👤 ${res.cliente}</strong><small>📅 ${res.data}</small>
+            </div>
+            <p>🎨 Tema: ${res.tema || "Geral"} | 📦 Kit: ${res.kit || "N/A"}</p>
+            <p>💰 Festa: R$ ${(v - f).toFixed(2)} | Frete: R$ ${f.toFixed(2)} | Total: R$ ${v.toFixed(2)}</p>
+            <p>💳 Sinal: R$ ${s.toFixed(2)} | <span style="color:${falta > 0 ? 'var(--error)' : 'var(--success)'}; font-weight:600;">Falta: R$ ${falta.toFixed(2)}</span></p>
+            <p>🛠️ Montagem: ${infoMontagem}</p>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+              <button onclick="editarReservaParaFormulario(${index})" class="btn btn-outline" style="padding: 6px; font-size:11px; width:auto;">✏️ Editar</button>
+              <button onclick="removerReserva(${index})" class="btn btn-danger" style="padding: 6px; font-size:11px; width:auto; margin:0;">Deletar</button>
+            </div>
+          `;
+          conteiner.appendChild(div);
+        });
+      });
+    }
+
+    window.editarReservaParaFormulario = function(index) {
+      CloudDB.buscar("reservas", [], (reservas) => {
+        const res = reservas[index];
+        if(!res) return;
+
+        document.getElementById("titulo-form-reserva").innerText = `✏️ Editando Reserva de: ${res.cliente}`;
+        document.getElementById("editando-id-reserva").value = index;
+        document.getElementById("btn-cancelar-edicao").style.display = "block";
+
+        document.getElementById("nome-cliente").value = res.cliente || "";
+        document.getElementById("data").value = res.data || "";
+        document.getElementById("filtro-tema-input").value = res.tema || "";
+        document.getElementById("busca-tema-input").value = res.tema || "";
+        
+        const f = parseFloat(res.frete) || 0;
+        const total = parseFloat(res.preco) || 0;
+        document.getElementById("valor-festa").value = (total - f).toFixed(2);
+        document.getElementById("valor-frete").value = f.toFixed(2);
+        document.getElementById("valor-sinal").value = (parseFloat(res.sinal) || 0).toFixed(2);
+        
+        kitSelecionado = res.kit || "";
+        document.querySelectorAll(".btn-kit-opcao").forEach(btn => {
+          btn.classList.toggle("ativo", btn.getAttribute("data-kit") === kitSelecionado);
+        });
+
+        if (res.montarLocal === true || res.montarLocal === "Sim") {
+          chkMontarLocal.checked = true;
+          painelMontagemLocal.style.display = "block";
+          alimentarSeletoresMontagemEstoque();
+        } else {
+          chkMontarLocal.checked = false;
+          painelMontagemLocal.style.display = "none";
+        }
+        document.getElementById("adicionais-festa").value = res.obs || "";
+        calcularFinanceiro();
+      });
+    };
+
+    document.getElementById("btn-cancelar-edicao").addEventListener("click", () => limparFormulario());
+
+    function limparFormulario() {
+      document.getElementById("titulo-form-reserva").innerText = "Agendar Nova Festa";
+      document.getElementById("editando-id-reserva").value = "";
+      document.getElementById("btn-cancelar-edicao").style.display = "none";
+      document.getElementById("form-contrato-avulso").reset();
+      limparCamposLocais();
+    }
+
+    function limparCamposLocais() {
+      document.getElementById("nome-cliente").value = "";
+      document.getElementById("data").value = "";
+      document.getElementById("filtro-tema-input").value = "";
+      document.getElementById("busca-tema-input").value = "";
+      document.getElementById("valor-festa").value = "0.00";
+      document.getElementById("valor-frete").value = "0.00";
+      document.getElementById("valor-sinal").value = "0.00";
+      document.getElementById("calc-km").value = "";
+      chkMontarLocal.checked = false;
+      painelMontagemLocal.style.display = "none";
+      document.querySelectorAll(".btn-kit-opcao").forEach(b => b.classList.remove("ativo"));
+      kitSelecionado = "";
+      calcularFinanceiro();
+    }
+
+    window.removerReserva = function(index) {
+      if(confirm("Deletar este agendamento?")) {
+        CloudDB.buscar("reservas", [], (res) => { 
+          res.splice(index, 1); 
+          CloudDB.salvar("reservas", res, () => { 
+            sincronizarReservasComPlanilhas(() => {
+              renderizarReservas();
+              preencherPlanilhaMes(seletorMes.value);
+              renderizarGraficoAnual();
+            });
+          }); 
+        });
+      }
+    };
+
+    btnSalvarReserva.addEventListener("click", () => {
+      const cliente = document.getElementById("nome-cliente").value.trim();
+      const data = document.getElementById("data").value;
+      const tema = document.getElementById("busca-tema-input").value || document.getElementById("filtro-tema-input").value;
+      const precoTotal = parseFloat(document.getElementById("valor-total").value) || 0;
+      const sinal = parseFloat(document.getElementById("valor-sinal").value) || 0;
+      const frete = parseFloat(document.getElementById("valor-frete").value) || 0;
+      const obs = document.getElementById("adicionais-festa").value;
+      const editId = document.getElementById("editando-id-reserva").value;
+
+      if(!cliente || !data || !kitSelecionado) {
+        alert("Preencha os campos obrigatórios!");
+        return;
+      }
+
+      const montarLocal = chkMontarLocal.checked;
+      const dadosReserva = {
+        cliente, data, tema, kit: kitSelecionado, preco: precoTotal, sinal, frete, obs, montarLocal
+      };
+
+      CloudDB.buscar("reservas", [], (res) => {
+        if (editId !== "") res[parseInt(editId)] = dadosReserva;
+        else res.push(dadosReserva);
+
+        CloudDB.salvar("reservas", res, () => {
+          sincronizarReservasComPlanilhas(() => {
+            alert("Salvo com sucesso!");
+            limparFormulario();
+            renderizarReservas();
+            preencherPlanilhaMes(seletorMes.value);
+            renderizarGraficoAnual();
+          });
+        });
+      });
+    });
+
+    function inicializarSistema() {
+      atualizarSelectCategorias();
+      renderizarPontos();
+      renderizarReservas();
+      renderizarTemas();
+      renderizarOrcamentosInternos();
+      alimentarSeletoresMontagemEstoque();
+      sincronizarReservasComPlanilhas(() => {
+        preencherPlanilhaMes(seletorMes.value);
+        renderizarGraficoAnual();
+      });
+    }
+  </script>
+</body>
+</html>
