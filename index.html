@@ -746,6 +746,22 @@
       }
     };
 
+    // MIGRAÇÃO ÚNICA: copia os dados antigos do nó "estoque" para o nó novo "categorias_catalogo"
+    // Rode isso apenas UMA VEZ: abra o site, aperte F12 (console) e digite: migrarCategorias()
+    window.migrarCategorias = function() {
+      CloudDB.buscar("estoque", [], (dadosAntigos) => {
+        if (!dadosAntigos || (Array.isArray(dadosAntigos) && dadosAntigos.length === 0)) {
+          alert("Nenhum dado encontrado no nó antigo 'estoque'. Nada para migrar.");
+          return;
+        }
+        CloudDB.salvar("categorias_catalogo", dadosAntigos, () => {
+          alert("Dados migrados com sucesso para 'categorias_catalogo'!");
+          if (typeof renderizarTemas === "function") renderizarTemas();
+          if (typeof alimentarSeletoresMontagemEstoque === "function") alimentarSeletoresMontagemEstoque();
+        });
+      });
+    };
+
     // CONTROLES DE LOGIN
     const secaoLogin = document.getElementById("secao-login");
     const secaoVerificador = document.getElementById("secao-verificador");
@@ -958,7 +974,7 @@ ${nome} (CONTRATANTE)
     });
 
     function alimentarSeletoresMontagemEstoque() {
-      CloudDB.buscar("estoque", [], (estoque) => {
+      CloudDB.buscar("categorias_catalogo", [], (estoque) => {
         mlPecasEstoque.innerHTML = "";
         mlMesasEstoque.innerHTML = "";
 
@@ -1160,7 +1176,7 @@ ${nome} (CONTRATANTE)
       }
 
       const processarSalvar = (imgUrl) => {
-        CloudDB.buscar("estoque", [], (estoque) => {
+        CloudDB.buscar("categorias_catalogo", [], (estoque) => {
           estoque.push({ 
             nome: nome, 
             quantidade: qtd,
@@ -1168,7 +1184,7 @@ ${nome} (CONTRATANTE)
             modelo: modelo || "Tema Geral", 
             imagem: imgUrl 
           });
-          CloudDB.salvar("estoque", estoque, () => {
+          CloudDB.salvar("categorias_catalogo", estoque, () => {
             alert("Item salvo com sucesso!");
             document.getElementById("catalogo-peca-nome").value = "";
             document.getElementById("catalogo-peca-qtd").value = "1";
@@ -1198,7 +1214,7 @@ ${nome} (CONTRATANTE)
     });
 
     function renderizarTemas() {
-      CloudDB.buscar("estoque", [], (temas) => {
+      CloudDB.buscar("categorias_catalogo", [], (temas) => {
         todosOsTemas = [];
         if (temas) {
           Object.keys(temas).forEach(k => {
@@ -1260,7 +1276,7 @@ ${nome} (CONTRATANTE)
     }
 
     window.editarPecaCatalogo = function(index) {
-      CloudDB.buscar("estoque", [], (temas) => {
+      CloudDB.buscar("categorias_catalogo", [], (temas) => {
         const item = temas[index];
         if(!item) return;
 
@@ -1283,7 +1299,7 @@ ${nome} (CONTRATANTE)
 
         temas[index] = item;
 
-        CloudDB.salvar("estoque", temas, () => {
+        CloudDB.salvar("categorias_catalogo", temas, () => {
           alert("Peça atualizada com sucesso no catálogo!");
           renderizarTemas();
           alimentarSeletoresMontagemEstoque();
@@ -1293,10 +1309,10 @@ ${nome} (CONTRATANTE)
 
     window.removerTema = function(index) {
       if(confirm("Remover este item do catálogo?")) {
-        CloudDB.buscar("estoque", [], (temas) => {
+        CloudDB.buscar("categorias_catalogo", [], (temas) => {
           const listaLimpa = Object.keys(temas).map(k => temas[k]);
           listaLimpa.splice(index, 1);
-          CloudDB.salvar("estoque", listaLimpa, () => { 
+          CloudDB.salvar("categorias_catalogo", listaLimpa, () => { 
             renderizarTemas(); 
             alimentarSeletoresMontagemEstoque();
           });
