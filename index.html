@@ -13,7 +13,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Bibliotecas para PDF -->
+  <!-- jsPDF para gerar PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <style>
@@ -183,7 +183,7 @@
     .modal-contrato.ativo { opacity: 1; pointer-events: auto; }
     .modal-conteudo {
       background: #fff; padding: 30px; border-radius: var(--radius);
-      width: 90%; max-width: 650px; max-height: 85vh; overflow-y: auto;
+      width: 90%; max-width: 700px; max-height: 85vh; overflow-y: auto;
       box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     }
     
@@ -671,9 +671,9 @@
           </label>
         </div>
         <div style="margin-top:10px; font-size:11px; color:var(--text-muted); background:#fff; padding:8px; border-radius:6px;">
-          ℹ️ <strong>Modelo Padrão:</strong> Contrato completo com todas as cláusulas legais.
+          ℹ️ <strong>Modelo Padrão:</strong> Contrato completo com todas as cláusulas legais (baseado no DOCX).
           <br>
-          ℹ️ <strong>Pegue & Monte:</strong> Modelo simplificado com foco na locação e devolução.
+          ℹ️ <strong>Pegue & Monte:</strong> Modelo simplificado com foco na locação e devolução (baseado no PDF).
         </div>
       </div>
       
@@ -681,11 +681,21 @@
         <div class="grid-2">
           <div class="input-group">
             <label>Nome do Contratante:</label>
-            <input type="text" id="c-nome" placeholder="Ex: Lenira Ribeiro">
+            <input type="text" id="c-nome" placeholder="Ex: Ana Paula Felix Mota">
           </div>
           <div class="input-group">
             <label>CPF:</label>
-            <input type="text" id="c-cpf" placeholder="000.000.000-00">
+            <input type="text" id="c-cpf" placeholder="018.698.943-16">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="input-group">
+            <label>Endereço do Cliente:</label>
+            <input type="text" id="c-endereco" placeholder="Av. Flamboyant n 04 apt 206 - Aguas Claras">
+          </div>
+          <div class="input-group">
+            <label>Telefone:</label>
+            <input type="text" id="c-telefone" placeholder="(61) 99306-4523">
           </div>
         </div>
         <div class="grid-2">
@@ -694,32 +704,57 @@
             <input type="date" id="c-data">
           </div>
           <div class="input-group">
-            <label>Horário de Início:</label>
-            <input type="time" id="c-horario">
+            <label>Horário (Início e Retirada):</label>
+            <input type="text" id="c-horario" placeholder="15h às 19h00 | Retirada: 19h40">
           </div>
         </div>
         <div class="grid-2">
           <div class="input-group">
-            <label>Valor Total da Locação (R$):</label>
-            <input type="number" id="c-valor" placeholder="600.00" step="0.01">
+            <label>Valor Total (R$):</label>
+            <input type="number" id="c-valor" placeholder="750.00" step="0.01">
           </div>
           <div class="input-group">
-            <label>Selecione as Peças (Retiradas do Catálogo):</label>
-            <select id="c-pecas" multiple style="height:70px; padding:5px;"></select>
+            <label>Local do Evento:</label>
+            <input type="text" id="c-local" placeholder="Jardim Botânico 3 Qd 12, Cj i, Casa 11">
           </div>
         </div>
-        <div class="input-group">
-          <label>Local do Evento / Endereço:</label>
-          <input type="text" id="c-local" placeholder="Endereço Completo">
+        
+        <!-- SINAIS DE PAGAMENTO -->
+        <div style="background:#f8f4f0; padding:12px; border-radius:8px; margin:10px 0;">
+          <h5 style="margin:0 0 8px 0; color:#8e5868;">💳 Pagamento (Sinal)</h5>
+          <div class="grid-2">
+            <div class="input-group" style="margin-bottom:8px;">
+              <label style="font-size:11px;">1º Sinal (R$):</label>
+              <input type="number" id="c-sinal1" placeholder="375.00" step="0.01">
+            </div>
+            <div class="input-group" style="margin-bottom:8px;">
+              <label style="font-size:11px;">Data 1º Sinal:</label>
+              <input type="date" id="c-data-sinal1">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="input-group" style="margin-bottom:8px;">
+              <label style="font-size:11px;">2º Sinal (R$):</label>
+              <input type="number" id="c-sinal2" placeholder="375.00" step="0.01">
+            </div>
+            <div class="input-group" style="margin-bottom:8px;">
+              <label style="font-size:11px;">Data 2º Sinal:</label>
+              <input type="date" id="c-data-sinal2">
+            </div>
+          </div>
         </div>
         
-        <!-- BOTÃO GERAR PDF -->
-        <button type="button" id="btn-gerar-pdf-contrato" class="btn btn-primary" style="background-color:#e67e22; margin-bottom:15px; padding:16px;">
+        <div class="input-group">
+          <label>Selecione as Peças (Segure Ctrl para múltiplas):</label>
+          <select id="c-pecas" multiple style="height:100px; padding:8px;"></select>
+          <small style="color:#999;">Peças do catálogo disponíveis</small>
+        </div>
+        
+        <button type="button" id="btn-gerar-pdf-contrato" class="btn btn-primary" style="background-color:#e67e22; margin:10px 0; padding:16px;">
           📄 Gerar Contrato em PDF
         </button>
         
-        <!-- BOTÃO SALVAR TXT (fallback) -->
-        <button type="button" id="btn-gerar-salvar-contrato" class="btn btn-outline" style="border-color:var(--primary); color:var(--primary); margin-bottom:20px; width:100%;">
+        <button type="button" id="btn-gerar-salvar-contrato" class="btn btn-outline" style="border-color:var(--primary); color:var(--primary); width:100%;">
           💾 Salvar como TXT (backup)
         </button>
       </form>
@@ -740,9 +775,9 @@
     const firebaseConfig = {
       databaseURL: "https://tralala-d8ce2-default-rtdb.firebaseio.com/"
     };
-    
+
     let db = null;
-    let todosOsTemas = []; 
+    let todosOsTemas = [];
     let categoriasAtivas = ["Infantil", "Casamento", "15 Anos", "Outros"];
     let chartInstance = null;
     const mesesAno = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
@@ -793,17 +828,295 @@
     };
 
     // ============================================
-    // FUNÇÕES DO GERADOR DE CONTRATO EM PDF
+    // FUNÇÃO PARA EXTENSO (VALOR POR EXTENSO)
+    // ============================================
+
+    function extenso(valor) {
+      if (valor === 0) return 'zero reais';
+      
+      const unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
+      const dezenas = ['', 'dez', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+      const centenas = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+      
+      function converterNumero(num) {
+        if (num === 0) return '';
+        if (num < 10) return unidades[num];
+        if (num < 20) {
+          const especiais = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+          return especiais[num - 10];
+        }
+        if (num < 100) {
+          const d = Math.floor(num / 10);
+          const u = num % 10;
+          return dezenas[d] + (u > 0 ? ' e ' + unidades[u] : '');
+        }
+        if (num < 1000) {
+          const c = Math.floor(num / 100);
+          const r = num % 100;
+          return centenas[c] + (r > 0 ? ' e ' + converterNumero(r) : '');
+        }
+        if (num < 1000000) {
+          const m = Math.floor(num / 1000);
+          const r = num % 1000;
+          const textoMil = m === 1 ? 'mil' : converterNumero(m) + ' mil';
+          return textoMil + (r > 0 ? ' e ' + converterNumero(r) : '');
+        }
+        return String(num);
+      }
+      
+      const inteiro = Math.floor(valor);
+      const centavos = Math.round((valor - inteiro) * 100);
+      
+      let resultado = converterNumero(inteiro) + ' reais';
+      if (centavos > 0) {
+        resultado += ' e ' + converterNumero(centavos) + ' centavos';
+      }
+      return resultado;
+    }
+
+    // ============================================
+    // MODELOS DE CONTRATO EXATOS (BASEADOS NOS SEUS ARQUIVOS)
+    // ============================================
+
+    function gerarTextoContratoPadrao(dados) {
+      const hoje = new Date().toLocaleDateString('pt-BR');
+      const dataFestaFormatada = dados.dataFesta ? dados.dataFesta.split("-").reverse().join("/") : "___/___/______";
+      
+      const pecasLista = dados.pecas && dados.pecas.length > 0 
+        ? dados.pecas.map(p => `(X) ${p}`).join('\n') 
+        : '(X) Peças conforme catálogo selecionado';
+
+      const sinal1Valor = dados.sinal1 || (dados.valor / 2);
+      const sinal2Valor = dados.sinal2 || (dados.valor / 2);
+      const dataSinal1Formatada = dados.dataSinal1 ? dados.dataSinal1.split("-").reverse().join("/") : "___/___/______";
+      const dataSinal2Formatada = dados.dataSinal2 ? dados.dataSinal2.split("-").reverse().join("/") : "___/___/______";
+
+      return `CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO
+
+CONTRATADA: TRALALÁ DECORAÇÕES DE FESTAS
+CNPJ: 21.918.863/0001-12
+E-MAIL:tralaladecoracoes@gmail.com
+
+CONTRATANTE: ${dados.nome || "_________________________"}
+CPF: ${dados.cpf || "_________________________"}
+ENDEREÇO CLIENTE: ${dados.endereco || "_________________________"}
+local da festa: ${dados.localFesta || "_________________________"}
+Telefone: ${dados.telefone || "(61) _________"}
+DATA DA FESTA: ${dataFestaFormatada}
+HORARIO INICIO: ${dados.horarioInicio || "____h às ____h"} RETIRADA: ${dados.horarioRetirada || "____h"}
+
+As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.
+
+DO OBJETO DO CONTRATO
+
+Clausula 1ª. É objeto do presente contrato a prestação de serviço de Aluguel das seguintes peças:
+${pecasLista}
+de sua propriedade, para o evento que se realizará no dia ${dataFestaFormatada}, conforme endereço especificado abaixo:
+
+LOCAL DA FESTA: ${dados.localFesta || "_________________________"}
+
+Primeiro. A alteração do local para entrega do objeto deste contrato implica em prévia comunicação da CONTRATANTE no prazo de 48 horas antes da entrega.
+
+Parágrafo Segundo. Caso haja alteração do local para entrega, poderá haver alteração do valor do frete conforme localidade e distância.
+
+Parágrafo Terceiro. A CONTRATANTE não poderá, sem prévia autorização da CONTRATADA, sublocar, emprestar, ou ceder os móveis locados.
+
+OBRIGAÇÃO DA CONTRATANTE
+
+Clausula 2ª. A CONTRATANTE deverá fornecer à CONTRATADA todas as informações necessárias para a realização do serviço, devendo especificar o material, tipo e a quantidade.
+
+Clausula 3ª. É dever da CONTRATANTE devolver o(s) produto(s) de acordo com o que foi locado no término da festa. A CONTRATADA efetuara a retirada dos itens no dia ${dataFestaFormatada}.
+
+Parágrafo único. A CONTRATADA deverá entregar e buscar o produto no endereço mencionado na cláusula 1ª, em caso de a CONTRATANTE optar por fazer retirada do produto no local, deverá devolvê-lo no local mencionado na cláusula 1ª conforme combinado com a CONTRATADA.
+
+OBRIGAÇÃO DA CONTRATADA
+
+Clausula 4ª. É dever da CONTRATADA oferecer o serviço de acordo com as especificações da CONTRATANTE, devendo o material ser entregue no dia ${dataFestaFormatada} ate as 13h00 no endereço já especificado na Clausula 1ª.
+
+Clausula 5ª. A CONTRATADA fornecerá as seguintes peças:
+${pecasLista}
+
+Clausula 6ª. O serviço contratado no presente instrumento será remunerado pela quantia de R$ ${(dados.valor || 0).toFixed(2)} (${extenso(dados.valor || 0)}), pago no ato da reserva:
+
+- ${dataSinal1Formatada} - R$ ${sinal1Valor.toFixed(2)} (no ato da reserva)
+- ${dataSinal2Formatada} - R$ ${sinal2Valor.toFixed(2)} (Na montagem da festa)
+
+*pagamentos em cartão de credito e debito tem acréscimo da taxa da operadora do cartão.
+
+Em dinheiro ou depósito bancário (Caixa Econômica Federal, Agencia: 2403 ,Op.001 Conta corrente: 21702-0 em nome de Aline Alves de Araújo do Valle, CPF: 864.331.211-87) ou (Banco Itaú, agencia 8624, conta corrente: 06209-0, Aline Alves de Araújo, CPF: 864.331.211.87) ou (Banco do Brasil, Agencia:1230-0, conta corrente 39.464-5, em nome Jorge Leonardo Sampaio do Valle, CPF: 794.883.315-34) CHAVE PIX CNPJ: 21.918.863/0001-12
+
+Parágrafo primeiro. Não será aceito, sob hipótese alguma, pagamento pós-festa.
+
+Parágrafo Segundo. No valor acima referido já está incluso frete.
+
+Parágrafo Terceiro. O valor do frete é referente à entrega e à retirada que será realizada pela CONTRATADA no local do evento ou onde for combinado entre as PARTES.
+
+Parágrafo quarto. NÃO está incluso no valor da locação de peças e mobílias, o serviço de arrumação de mesa, como colocar doces, bolo, lembrancinhas e personalizados feitos por terceiros, para esse serviço favor consultar valores com a CONTRATADA.
+
+Cláusula 7ª. O recibo do depósito da transferência bancária, referente ao sinal, efetuada na conta informada pela CONTRATADA, servirá para a CONTRATANTE como comprovante de cumprimento da obrigação de pagar.
+
+DA DEVOLUÇÃO
+
+Cláusula 8ª. Caso Haja perda, Danos, Quebra Ou não devolução dos itens, a CONTRATANTE arcará com 50% do valor de uma peça nova para reposição (caso haja recuperação) NÃO Havendo recuperação, será cobrado o valor de mercado por cada item, em dinheiro ou outra forma que convier às PARTES. Em caso de quebra ou extravio de peças a CONTRATATE assinará uma nota promissória se comprometendo-se com o pagamento que será devolvida após a quitação do debito.
+
+Parágrafo Primeiro: E de responsabilidade da CONTRATANTE que na retirada da decoração, todas as peças alugadas estejam sobre a mesa, caso fique algum item, a CONTRATANTE se responsabilizará pela devolução, a recusa da devolução imediata, acarretará em multa de R$ 20,00, por diária/peça.
+
+Parágrafo segundo: É dever da CONTRATANTE devolver as peças foi entregue. É proibido, furar o bolo cenográfico, usar cola quente no painel, peças e mesas, usar confeitos coloridos, vela faísca estes itens danificam e mancham peças e mobilha (uso estará sujeito em caso de avarias pagar pela recuperação ou peça nova caso não seja possível.
+
+O tapete deverá ser devolvido com foi entregue sem doces e bolos, caso contrário pagará multa de limpeza de R$ 40,00 (quarenta reais).
+
+DO CANCELAMENTO
+
+Clausula 9ª. Em caso de desistência a CONTRATANTE acará com a multa de quebra de contrato, 50% do valor total do seu contrato.
+
+Parágrafo primeiro: Em caso de força maior, a CONTRATANTE, poderá solicitar uma carta credito na quantia paga, para utilização de até um ano a partir da data da notificação. Sendo que essa carta crédito não poderá ser transferida para outro titular, nem prorrogada. Cabendo a CONTRATADA confirmar disponibilidade de peças e data. A CONTRATANTE deverá comprovar o fato ocorrido com documentos oficiais.
+
+Parágrafo Segundo. A Parte impossibilitada de cumprir sua obrigação deverá notificar a outra, de imediato, acerca da extensão do problema e o prazo estimado para remarcação da nova data.
+
+DAS CONDIÇÕES GERAIS
+
+Cláusula 10ª. O orçamento ou aceite referente ao serviço contratado, faz parte integrante deste contrato.
+
+DO FORO
+
+As Partes elegem o foro da Circunscrição Judiciária de Brasília - DF para dirimir os conflitos que porventura venham a surgir em decorrência da execução do presente contrato, com renúncia de qualquer outro, por mais privilegiado que seja.
+
+E por assim estarem de acordo, o contrato será sendo assinado de forma digitalizada, sendo as vias compartilhadas em meio eletrônico e permitida a assinatura hibrida (física e digital).
+
+Brasília-DF, ${hoje}.
+
+CONTRATADA:
+
+______________________________________________________
+TRALALÁ DECORAÇOES DE FESTA
+CNPJ:21.918.863/0001-12
+REPRESENTANTE LEGAL: ALINE ARAUJO DO VALLE
+
+CONTRATANTE:
+
+______________________________________________________
+${dados.nome || "_________________________"}
+CPF: ${dados.cpf || "_________________________"}`;
+    }
+
+    function gerarTextoContratoPegueMonte(dados) {
+      const hoje = new Date().toLocaleDateString('pt-BR');
+      const dataFestaFormatada = dados.dataFesta ? dados.dataFesta.split("-").reverse().join("/") : "__/__/______";
+      
+      const pecasLista = dados.pecas && dados.pecas.length > 0 
+        ? dados.pecas.map((p, i) => `${i+1}. ${p}`).join('\n') 
+        : 'Nenhuma peça selecionada';
+
+      return `CONTRATO DE LOCAÇÃO PEGUE & MONTE
+
+CONTRATADA: TRALALÁ DECORAÇÕES DE FESTAS CNPJ: 21.918.863/0001-12 E-MAIL:tralaladecoracoes@gmail.com
+
+CONTRATANTE: ${dados.nome || "_________________________"} CPF: ${dados.cpf || "_________________________"} ENDEREÇO CLIENTE: ${dados.endereco || "_________________________"} TELEFONE: ${dados.telefone || "(61) _________"} DATA DA FESTA: ${dataFestaFormatada} RETIRADA DOS ITENS: ___/___/______, ATÉ AS ____:____ DEVOLUÇÃO DOS ITENS: ___/___/______, ATÉ AS 11H00 (caso não seja entregue na data e horário combinado será cobrado o valor de uma locação para cada dia de atraso).
+
+As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.
+
+DO OBJETO DO CONTRATO
+
+Clausula 1ª. É objeto do presente contrato a prestação de serviço de Locação de:
+
+PEÇAS LOCADAS:
+${pecasLista}
+
+VALOR TOTAL: R$ ${(dados.valor || 0).toFixed(2)}
+
+Parágrafo primeiro. A CONTRATANTE não poderá, sem prévia autorização da CONTRATADA, sublocar, emprestar, ou ceder os móveis locados.
+
+OBRIGAÇÃO DA CONTRATADA
+
+Clausula 2ª. O serviço contratado no presente instrumento deverá ser pago no ato da reserva.
+
+Clausula 3ª. É dever da CONTRATADA oferecer os itens de acordo com as especificações do contrato.
+
+Em dinheiro ou depósito bancário (Caixa Econômica Federal, Agencia: 2403 ,Op.001 Conta corrente: 21702-0 em nome de Aline Alves de Araújo do Valle, CPF: 864.331.211-87 pix).
+
+Parágrafo primeiro. Não será aceito, sob hipótese alguma, pagamento pós-festa
+
+Cláusula 4ª. O recibo do depósito da transferência bancária ou pix, referente ao valor, efetuada na conta informada pela CONTRATADA, servirá para a CONTRATANTE como comprovante de cumprimento da obrigação de pagar.
+
+Clausula 5ª. É dever da CONTRATANTE devolver o(s) produto(s) de acordo com o que foi locado no dia informado neste contrato.
+
+Parágrafo único. A CONTRATANTE deverá retirar e entregar os itens no endereço no seguinte endereço Qn 508 CONJUNTO 03 Loja 06, Samambaia Sul, munido de cópia do comprovante de residência em seu nome, cópia ou foto CPF e RG documentos necessários para a retiradas das peças.
+
+DA DEVOLUÇÃO
+
+Cláusula 6ª. Caso Haja perda, Danos, Quebra ou não devolução dos itens, a CONTRATANTE arcará com 50% do valor de uma peça nova para reposição (caso haja recuperação) NÃO Havendo recuperação, será cobrado o valor de mercado por cada item, em dinheiro ou outra forma que convier às PARTES. Em caso de quebra ou extravio de peças a CONTRATATE assinará uma nota promissória se comprometendo-se com o pagamento que será devolvida após a quitação do debito.
+
+Parágrafo primeiro: É dever da CONTRATANTE devolver as peças como foi entregue, no dia e horário marcado, será cobrado multa de uma diária dos itens alocados com cada dia de atraso da devolução.
+
+OBS: É proibido, furar o bolo cenográfico, usar cola quente no painel, peças e mesas, usar confeitos coloridos, vela faísca estes itens danificam e mancham peças e mobilha (uso estará sujeito em caso de avarias, pagar pela recuperação ou peça nova caso não seja possível recuperação.
+
+O tapete deverá ser devolvido com foi entregue sem doces e bolos, caso contrário pagará multa de limpeza de R$ 40,00 (quarenta reais).
+
+Parágrafo Segundo: É dever da CONTRATANTE devolver o kit ou itens na data informada neste contrato, caso contrato será cobrado o valor de uma locação por cada dia de atraso.
+
+DO CANCELAMENTO
+
+Clausula 7ª. Em caso de desistência a CONTRATANTE acará com a multa de quebra de contrato, 50% do valor total do seu contrato. Parágrafo primeiro: Em caso de força maior, a CONTRATANTE, poderá solicitar uma carta credito na quantia paga, para utilização de até um ano a partir da data da notificação. Sendo que essa carta crédito não poderá ser transferida para outro titular, nem prorrogada. Cabendo a CONTRATADA confirmar disponibilidade de peças e data. A CONTRATANTE deverá comprovar o fato ocorrido com documentos oficiais.
+
+Parágrafo Segundo. A Parte impossibilitada de cumprir sua obrigação deverá notificar a outra, de imediato, acerca da extensão do problema e o prazo estimado para remarcação da nova data.
+
+DAS CONDIÇÕES GERAIS
+
+DO FORO
+
+As Partes elegem o foro da Circunscrição Judiciária de Brasília - DF para dirimir os conflitos que porventura venham a surgir em decorrência da execução do presente contrato, com renúncia de qualquer outro, por mais privilegiado que seja. E por assim estarem de acordo, o contrato será sendo assinado de forma digitalizada, sendo as vias compartilhadas em meio eletrônico e permitida a assinatura híbrida (física e digital).
+
+Brasilia-DF, ${hoje}.
+
+______________________________________________________
+TRALALÁ DECORACOES DE FESTA
+CNPJ:21.918.863/0001-12
+REPRESENTANTE LEGAL: ALINE ARAUJO DO VALLE
+
+CONTRATANTE:
+
+______________________________________________________
+${dados.nome || "_________________________"}
+
+TRALALÁ DECORAÇÕES DE FESTAS QN 508 CONJUNTO 03 LOJA 06, SAMAMBAIA SUL. (61) 9.8191-9559`;
+    }
+
+    // ============================================
+    // FUNÇÃO GERADORA DE CONTRATO EM PDF
     // ============================================
 
     function gerarContratoPDF() {
-      // Buscar dados do formulário
-      const nome = document.getElementById("c-nome").value.trim();
-      const cpf = document.getElementById("c-cpf").value.trim();
-      const dataFesta = document.getElementById("c-data").value;
-      const horario = document.getElementById("c-horario").value;
-      const valor = parseFloat(document.getElementById("c-valor").value) || 0;
-      const local = document.getElementById("c-local").value.trim();
+      // Verificar se jsPDF está disponível
+      if (typeof window.jspdf === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        script.onload = function() {
+          setTimeout(() => gerarContratoPDF(), 500);
+        };
+        script.onerror = function() {
+          alert('❌ Erro ao carregar PDF. Gerando como TXT...');
+          gerarContratoTXT();
+        };
+        document.head.appendChild(script);
+        return;
+      }
+      
+      // Coletar dados do formulário
+      const dados = {
+        nome: document.getElementById("c-nome").value.trim(),
+        cpf: document.getElementById("c-cpf").value.trim(),
+        endereco: document.getElementById("c-endereco").value.trim(),
+        localFesta: document.getElementById("c-local").value.trim(),
+        telefone: document.getElementById("c-telefone").value.trim(),
+        dataFesta: document.getElementById("c-data").value,
+        horarioInicio: document.getElementById("c-horario").value,
+        horarioRetirada: document.getElementById("c-horario-retirada").value || document.getElementById("c-horario").value.split('|')[1]?.replace('Retirada:', '').trim() || '',
+        valor: parseFloat(document.getElementById("c-valor").value) || 0,
+        sinal1: parseFloat(document.getElementById("c-sinal1").value) || 0,
+        dataSinal1: document.getElementById("c-data-sinal1").value,
+        sinal2: parseFloat(document.getElementById("c-sinal2").value) || 0,
+        dataSinal2: document.getElementById("c-data-sinal2").value,
+      };
       
       // Pegar modelo selecionado
       const modeloSelecionado = document.querySelector('input[name="modelo-contrato"]:checked');
@@ -811,357 +1124,100 @@
       
       // Pegar peças selecionadas
       const selectPecas = document.getElementById("c-pecas");
-      const pecasSelecionadas = Array.from(selectPecas.selectedOptions).map(opt => opt.value);
+      dados.pecas = Array.from(selectPecas.selectedOptions).map(opt => opt.value);
       
-      if(!nome || !cpf || !dataFesta || !local) {
-        alert("Preencha Nome, CPF, Data e Local para gerar o contrato!");
+      // Validação
+      if (!dados.nome || !dados.cpf || !dados.dataFesta || !dados.localFesta) {
+        alert("⚠️ Preencha: Nome, CPF, Data da Festa e Local do Evento!");
         return;
       }
       
-      const dataFmt = dataFesta.split("-").reverse().join("/");
-      const pecasTexto = pecasSelecionadas.length > 0 ? pecasSelecionadas.join(", ") : "Nenhuma peça explicitada.";
-      const hoje = new Date().toLocaleDateString('pt-BR');
+      // Gerar texto do contrato
+      const textoContrato = modelo === 'pegue_monte' 
+        ? gerarTextoContratoPegueMonte(dados) 
+        : gerarTextoContratoPadrao(dados);
       
-      // ============================================
-      // MODELO 1: CONTRATO PADRÃO (LOCAÇÃO)
-      // ============================================
-      const textoPadrao = `
-CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO
-
-CONTRATADA: TRALALÁ DECORAÇÕES DE FESTAS
-CNPJ: 21.918.863/0001-12
-E-MAIL: tralaladecoracoes@gmail.com
-
-CONTRATANTE: ${nome}
-CPF: ${cpf}
-LOCAL DA FESTA: ${local}
-DATA DA FESTA: ${dataFmt} | HORÁRIO INÍCIO: ${horario}
-
-------------------------------------------------
-
-DO OBJETO DO CONTRATO
-
-Cláusula 1ª. É objeto do presente contrato a prestação de serviço de 
-Aluguel das peças: ${pecasTexto}, para o evento que se realizará no dia ${dataFmt}.
-
-Primeiro. A alteração do local implica em prévia comunicação à CONTRATADA 
-no prazo de 48 horas.
-
-Parágrafo Segundo. Caso haja alteração do local, poderá haver alteração 
-do valor do frete.
-
-------------------------------------------------
-
-OBRIGAÇÃO DA CONTRATANTE
-
-Cláusula 2ª. A CONTRATANTE deverá fornecer todas as informações necessárias.
-
-Cláusula 3ª. É dever da CONTRATANTE devolver o(s) produto(s) no término da festa.
-
-------------------------------------------------
-
-OBRIGAÇÃO DA CONTRATADA
-
-Cláusula 4ª. A CONTRATADA entregará o material no dia ${dataFmt} no endereço especificado.
-
-------------------------------------------------
-
-VALOR E FORMA DE PAGAMENTO
-
-Cláusula 6ª. O serviço contratado no presente instrumento será remunerado 
-pela quantia total de R$ ${valor.toFixed(2)}.
-
-CHAVE PIX CNPJ: 21.918.863/0001-12
-
-------------------------------------------------
-
-DA DEVOLUÇÃO E CANCELAMENTO
-
-Cláusula 8ª. Caso haja perda ou danos, a CONTRATANTE arcará com 50% de uma 
-peça nova para reposição.
-
-Cláusula 9ª. Em caso de desistência a CONTRATANTE arcará com multa de 50% 
-do valor total do contrato.
-
-------------------------------------------------
-
-Brasília-DF, ${hoje}.
-
-______________________________________________________
-TRALALÁ DECORAÇÕES DE FESTA (CONTRATADA)
-
-______________________________________________________
-${nome} (CONTRATANTE)
-      `.trim();
-
-      // ============================================
-      // MODELO 2: PEGUE & MONTE
-      // ============================================
-      const textoPegueMonte = `
-CONTRATO DE LOCAÇÃO PEGUE & MONTE
-
-CONTRATADA: TRALALÁ DECORAÇÕES DE FESTAS 
-CNPJ: 21.918.863/0001-12 
-E-MAIL: tralaladecoracoes@gmail.com
-
-CONTRATANTE: ${nome}
-CPF: ${cpf}
-ENDEREÇO CLIENTE: ${local}
-TELEFONE: (61) 
-DATA DA FESTA: ${dataFmt}
-RETIRADA DOS ITENS: /  /2024, ATÉ AS 
-DEVOLUÇÃO DOS ITENS: /  /2024, ATÉ AS 11H00
-
-------------------------------------------------
-
-DO OBJETO DO CONTRATO
-
-Cláusula 1ª. É objeto do presente contrato a prestação de serviço de Locação de:
-
-PEÇAS LOCADAS:
-${pecasSelecionadas.map((p, i) => `${i+1}. ${p}`).join('\n')}
-
-Valor Total: R$ ${valor.toFixed(2)}
-
-------------------------------------------------
-
-OBRIGAÇÃO DA CONTRATADA
-
-Cláusula 2ª. O serviço contratado no presente instrumento deverá ser pago no ato da reserva.
-
-Cláusula 3ª. É dever da CONTRATADA oferecer os itens de acordo com as especificações.
-
-------------------------------------------------
-
-DA DEVOLUÇÃO
-
-Cláusula 6ª. Caso haja perda, Danos, Quebra ou não devolução dos itens, 
-a CONTRATANTE arcará com 50% do valor de uma peça nova para reposição.
-
-OBS: É proibido furar o bolo cenográfico, usar cola quente no painel, 
-peças e mesas, usar confeitos coloridos, vela faísca.
-
-O tapete deverá ser devolvido como foi entregue sem doces e bolos, 
-caso contrário pagará multa de limpeza de R$ 40,00.
-
-------------------------------------------------
-
-DO CANCELAMENTO
-
-Cláusula 7ª. Em caso de desistência a CONTRATANTE arcará com a multa de 
-quebra de contrato, 50% do valor total do seu contrato.
-
-------------------------------------------------
-
-Brasília-DF, ${hoje}.
-
-______________________________________________________
-TRALALÁ DECORAÇÕES DE FESTA
-CNPJ: 21.918.863/0001-12
-REPRESENTANTE LEGAL: ALINE ARAUJO DO VALLE
-
-______________________________________________________
-${nome} (CONTRATANTE)
-      `.trim();
-
-      // Selecionar o texto conforme modelo
-      const textoFinal = modelo === 'pegue_monte' ? textoPegueMonte : textoPadrao;
-      
-      // ============================================
-      // GERAR PDF COM jsPDF
-      // ============================================
+      // Gerar PDF
       try {
-        // Verificar se jsPDF está disponível
-        if (typeof window.jspdf === 'undefined') {
-          alert('A biblioteca jsPDF não foi carregada. Tentando recarregar...');
-          // Tentar carregar novamente
-          const script = document.createElement('script');
-          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-          script.onload = function() {
-            setTimeout(() => gerarContratoPDF(), 500);
-          };
-          document.head.appendChild(script);
-          return;
-        }
-        
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
-        const pageWidth = 210;
         const margin = 15;
+        const pageWidth = 210;
         const maxWidth = pageWidth - (margin * 2);
         let y = 20;
         
-        // Configurar fonte
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
         
-        // ============================================
-        // CABEÇALHO
-        // ============================================
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text('TRALALÁ DECORAÇÕES DE FESTAS', pageWidth/2, y, { align: 'center' });
-        y += 8;
-        
-        doc.setFontSize(11);
-        doc.text('CNPJ: 21.918.863/0001-12', pageWidth/2, y, { align: 'center' });
-        y += 6;
-        doc.text('tralaladecoracoes@gmail.com', pageWidth/2, y, { align: 'center' });
-        y += 10;
-        
-        // Linha divisória
-        doc.line(margin, y, pageWidth - margin, y);
-        y += 8;
-        
-        // ============================================
-        // TÍTULO DO CONTRATO
-        // ============================================
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        const titulo = modelo === 'pegue_monte' ? 'CONTRATO DE LOCAÇÃO PEGUE & MONTE' : 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO';
-        doc.text(titulo, pageWidth/2, y, { align: 'center' });
-        y += 8;
-        
-        doc.line(margin, y, pageWidth - margin, y);
-        y += 8;
-        
-        // ============================================
-        // DADOS DO CONTRATANTE
-        // ============================================
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text('DADOS DO CONTRATANTE', margin, y);
-        y += 6;
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        doc.text(`Nome: ${nome}`, margin, y);
-        y += 5;
-        doc.text(`CPF: ${cpf}`, margin, y);
-        y += 5;
-        doc.text(`Data da Festa: ${dataFmt}`, margin, y);
-        y += 5;
-        doc.text(`Horário: ${horario || 'Não informado'}`, margin, y);
-        y += 5;
-        doc.text(`Local: ${local}`, margin, y);
-        y += 8;
-        
-        // ============================================
-        // PEÇAS LOCADAS
-        // ============================================
-        doc.setFont('helvetica', 'bold');
-        doc.text('PEÇAS LOCADAS:', margin, y);
-        y += 6;
-        
-        doc.setFont('helvetica', 'normal');
-        const pecasList = pecasSelecionadas.length > 0 ? pecasSelecionadas : ['Nenhuma peça especificada'];
-        pecasList.forEach((peca, i) => {
-          const linha = `${i+1}. ${peca}`;
-          const linhasQuebradas = doc.splitTextToSize(linha, maxWidth - 10);
-          linhasQuebradas.forEach(line => {
-            doc.text(line, margin + 5, y);
-            y += 5;
-          });
-        });
-        y += 3;
-        
-        // ============================================
-        // VALOR
-        // ============================================
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Valor Total: R$ ${valor.toFixed(2)}`, margin, y);
-        y += 8;
-        
-        doc.setFont('helvetica', 'normal');
-        doc.text('CHAVE PIX CNPJ: 21.918.863/0001-12', margin, y);
-        y += 8;
-        
-        // ============================================
-        // CLÁUSULAS (apenas algumas principais)
-        // ============================================
-        doc.setFont('helvetica', 'bold');
-        doc.text('CONDIÇÕES GERAIS:', margin, y);
-        y += 6;
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        
-        const clausulas = [
-          '1. A CONTRATANTE deverá devolver os itens no estado em que foram recebidos.',
-          '2. Em caso de danos ou perdas, a CONTRATANTE arcará com os custos de reposição.',
-          '3. O cancelamento implica em multa de 50% do valor total do contrato.',
-          '4. Este contrato é regido pelas leis brasileiras.'
-        ];
-        
-        clausulas.forEach(clausula => {
-          const quebradas = doc.splitTextToSize(`• ${clausula}`, maxWidth);
+        const linhas = textoContrato.split('\n');
+        linhas.forEach(linha => {
+          const quebradas = doc.splitTextToSize(linha, maxWidth);
           quebradas.forEach(line => {
+            if (y > 280) {
+              doc.addPage();
+              y = 20;
+            }
             doc.text(line, margin, y);
             y += 5;
           });
         });
-        y += 5;
         
-        // ============================================
-        // ASSINATURAS
-        // ============================================
-        y += 8;
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Brasília-DF, ${hoje}`, pageWidth/2, y, { align: 'center' });
-        y += 15;
+        doc.save(`Contrato_Tralala_${dados.nome.replace(/\s+/g, '_')}.pdf`);
         
-        // Linhas para assinaturas
-        doc.line(margin + 20, y, pageWidth/2 - 10, y);
-        doc.line(pageWidth/2 + 10, y, pageWidth - margin - 20, y);
-        y += 5;
-        
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text('TRALALÁ DECORAÇÕES DE FESTA', pageWidth/4, y, { align: 'center' });
-        doc.text(`${nome} (CONTRATANTE)`, pageWidth * 3/4, y, { align: 'center' });
-        y += 5;
-        doc.text('CNPJ: 21.918.863/0001-12', pageWidth/4, y, { align: 'center' });
-        
-        // ============================================
-        // RODAPÉ (PEGUE & MONTE)
-        // ============================================
-        if (modelo === 'pegue_monte') {
-          y += 12;
-          doc.setFontSize(8);
-          doc.setFont('helvetica', 'italic');
-          const rodape = 'TRALALÁ DECORAÇÕES DE FESTAS QN 508 CONJUNTO 03 LOJA 06, SAMAMBAIA SUL. (61) 9.8191-9559';
-          doc.text(rodape, pageWidth/2, y, { align: 'center' });
-        }
-        
-        // ============================================
-        // SALVAR PDF
-        // ============================================
-        doc.save(`Contrato_Tralala_${nome.replace(/\s+/g, '_')}.pdf`);
-        
-        // Também salvar no histórico
         salvarContratoHistorico({
-          nome, cpf, dataFesta, horario, valor, local,
-          pecas: pecasTexto,
+          ...dados,
           modelo: modelo,
-          textoContrato: textoFinal,
+          textoContrato: textoContrato,
           criadoEm: new Date().toLocaleString('pt-BR')
         });
         
-        alert("✅ Contrato gerado em PDF com sucesso!");
+        alert('✅ Contrato gerado em PDF com sucesso!');
         
       } catch (error) {
-        console.error('Erro ao gerar PDF:', error);
-        alert('Erro ao gerar o PDF. Tentando baixar como TXT...');
-        // Fallback: salvar como TXT
-        salvarContratoHistorico({
-          nome, cpf, dataFesta, horario, valor, local,
-          pecas: pecasTexto,
-          modelo: modelo,
-          textoContrato: textoFinal,
-          criadoEm: new Date().toLocaleString('pt-BR')
-        });
+        console.error('Erro no PDF:', error);
+        alert('❌ Erro ao gerar PDF. Gerando como TXT...');
+        gerarContratoTXT(dados, textoContrato);
       }
+    }
+
+    // ============================================
+    // FALLBACK: GERAR COMO TXT
+    // ============================================
+
+    function gerarContratoTXT(dados, textoContrato) {
+      if (!dados) {
+        dados = {
+          nome: document.getElementById("c-nome").value.trim(),
+          cpf: document.getElementById("c-cpf").value.trim(),
+          localFesta: document.getElementById("c-local").value.trim(),
+          dataFesta: document.getElementById("c-data").value,
+          valor: parseFloat(document.getElementById("c-valor").value) || 0,
+        };
+        const selectPecas = document.getElementById("c-pecas");
+        dados.pecas = Array.from(selectPecas.selectedOptions).map(opt => opt.value);
+        
+        const modeloSelecionado = document.querySelector('input[name="modelo-contrato"]:checked');
+        const modelo = modeloSelecionado ? modeloSelecionado.value : 'padrao';
+        
+        textoContrato = modelo === 'pegue_monte' 
+          ? gerarTextoContratoPegueMonte(dados) 
+          : gerarTextoContratoPadrao(dados);
+      }
+      
+      const blob = new Blob([textoContrato], { type: "text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `Contrato_Tralala_${dados.nome.replace(/\s+/g, '_')}.txt`;
+      link.click();
+      
+      salvarContratoHistorico({
+        ...dados,
+        modelo: 'txt_fallback',
+        textoContrato: textoContrato,
+        criadoEm: new Date().toLocaleString('pt-BR')
+      });
+      
+      alert('✅ Contrato salvo como TXT!');
     }
 
     // ============================================
@@ -1176,37 +1232,6 @@ ${nome} (CONTRATANTE)
         });
       });
     }
-
-    // ============================================
-    // FUNÇÃO PARA BAIXAR CONTRATO COMO TXT
-    // ============================================
-
-    window.baixarContratoComoTxt = function(index) {
-      CloudDB.buscar("contratos", [], (contratos) => {
-        const c = contratos[index];
-        if(!c) return;
-        const blob = new Blob([c.textoContrato], { type: "text/plain;charset=utf-8" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `Contrato_Tralala_${c.nome.replace(/\s+/g, '_')}.txt`;
-        link.click();
-      });
-    };
-
-    // ============================================
-    // IMPRIMIR CONTRATO DIRETO
-    // ============================================
-
-    window.imprimirContratoDireto = function(index) {
-      CloudDB.buscar("contratos", [], (contratos) => {
-        const c = contratos[index];
-        if(!c) return;
-        const janelaImpressao = window.open('', '', 'width=800,height=600');
-        janelaImpressao.document.write(`<pre style="font-family:Courier,monospace; white-space:pre-wrap; padding:30px;">${c.textoContrato}</pre>`);
-        janelaImpressao.document.close();
-        janelaImpressao.print();
-      });
-    };
 
     // ============================================
     // RENDERIZAR HISTÓRICO DE CONTRATOS
@@ -1226,25 +1251,58 @@ ${nome} (CONTRATANTE)
           const div = document.createElement("div");
           div.className = "card-contrato";
           div.style.padding = "12px";
+          const modeloNome = c.modelo === 'pegue_monte' ? 'Pegue & Monte' : (c.modelo === 'txt_fallback' ? 'TXT (fallback)' : 'Padrão');
           div.innerHTML = `
             <div style="display:flex; justify-content:space-between; font-size:12px;">
-              <strong>📄 ${c.nome}</strong>
+              <strong>📄 ${c.nome || 'Cliente'}</strong>
               <span style="color:#e67e22;">Val: R$ ${(c.valor || 0).toFixed(2)}</span>
             </div>
             <small style="color:#888; display:block; margin:4px 0;">
               Festa: ${c.dataFesta ? c.dataFesta.split("-").reverse().join("/") : 'N/A'} 
-              ${c.modelo ? `| Modelo: ${c.modelo === 'pegue_monte' ? 'Pegue & Monte' : 'Padrão'}` : ''}
+              | Modelo: ${modeloNome}
               | Criado: ${c.criadoEm || 'N/A'}
+              | Peças: ${c.pecas ? c.pecas.length : 0}
             </small>
             <div style="margin-top:8px; display:flex; gap:10px; flex-wrap:wrap;">
-              <button onclick="baixarContratoComoTxt(${idx})" class="btn btn-outline" style="font-size:11px; padding:4px 8px;">💾 Baixar TXT</button>
-              <button onclick="imprimirContratoDireto(${idx})" class="btn btn-outline" style="font-size:11px; padding:4px 8px; border-color:#3498db; color:#3498db;">🖨️ Imprimir</button>
+              <button onclick="baixarContratoTxt(${idx})" class="btn btn-outline" style="font-size:11px; padding:4px 8px;">💾 Baixar TXT</button>
+              <button onclick="imprimirContrato(${idx})" class="btn btn-outline" style="font-size:11px; padding:4px 8px; border-color:#3498db; color:#3498db;">🖨️ Imprimir</button>
             </div>
           `;
           container.appendChild(div);
         });
       });
     }
+
+    // ============================================
+    // BAIXAR TXT DO HISTÓRICO
+    // ============================================
+
+    window.baixarContratoTxt = function(index) {
+      CloudDB.buscar("contratos", [], (contratos) => {
+        const c = contratos[index];
+        if(!c) return;
+        const blob = new Blob([c.textoContrato], { type: "text/plain;charset=utf-8" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `Contrato_Tralala_${c.nome.replace(/\s+/g, '_')}.txt`;
+        link.click();
+      });
+    };
+
+    // ============================================
+    // IMPRIMIR CONTRATO
+    // ============================================
+
+    window.imprimirContrato = function(index) {
+      CloudDB.buscar("contratos", [], (contratos) => {
+        const c = contratos[index];
+        if(!c) return;
+        const janela = window.open('', '', 'width=800,height=600');
+        janela.document.write(`<pre style="font-family:Courier,monospace; white-space:pre-wrap; padding:30px; font-size:12px;">${c.textoContrato}</pre>`);
+        janela.document.close();
+        janela.print();
+      });
+    };
 
     // ============================================
     // ATUALIZAR LISTA DE PEÇAS NO CONTRATO
@@ -1256,7 +1314,7 @@ ${nome} (CONTRATANTE)
       todosOsTemas.forEach(tema => {
         const opt = document.createElement("option");
         opt.value = tema.nome;
-        opt.innerText = `${tema.nome} (${tema.modelo})`;
+        opt.innerText = `${tema.nome} (${tema.modelo || 'Geral'})`;
         selectPecas.appendChild(opt);
       });
     }
@@ -1281,76 +1339,51 @@ ${nome} (CONTRATANTE)
 
     // Evento do botão Salvar TXT (fallback)
     document.getElementById("btn-gerar-salvar-contrato").addEventListener("click", () => {
-      const nome = document.getElementById("c-nome").value.trim();
-      const cpf = document.getElementById("c-cpf").value.trim();
-      const dataFesta = document.getElementById("c-data").value;
-      const horario = document.getElementById("c-horario").value;
-      const valor = parseFloat(document.getElementById("c-valor").value) || 0;
-      const local = document.getElementById("c-local").value.trim();
+      const dados = {
+        nome: document.getElementById("c-nome").value.trim(),
+        cpf: document.getElementById("c-cpf").value.trim(),
+        endereco: document.getElementById("c-endereco").value.trim(),
+        localFesta: document.getElementById("c-local").value.trim(),
+        telefone: document.getElementById("c-telefone").value.trim(),
+        dataFesta: document.getElementById("c-data").value,
+        horarioInicio: document.getElementById("c-horario").value,
+        horarioRetirada: document.getElementById("c-horario-retirada").value || '',
+        valor: parseFloat(document.getElementById("c-valor").value) || 0,
+        sinal1: parseFloat(document.getElementById("c-sinal1").value) || 0,
+        dataSinal1: document.getElementById("c-data-sinal1").value,
+        sinal2: parseFloat(document.getElementById("c-sinal2").value) || 0,
+        dataSinal2: document.getElementById("c-data-sinal2").value,
+      };
       
       const selectPecas = document.getElementById("c-pecas");
-      const pecasSelecionadas = Array.from(selectPecas.selectedOptions).map(opt => opt.value);
+      dados.pecas = Array.from(selectPecas.selectedOptions).map(opt => opt.value);
       
-      if(!nome || !cpf || !dataFesta || !local) {
-        alert("Preencha Nome, CPF, Data e Local para gerar o contrato!");
+      if (!dados.nome || !dados.cpf || !dados.dataFesta || !dados.localFesta) {
+        alert("⚠️ Preencha: Nome, CPF, Data da Festa e Local do Evento!");
         return;
       }
       
-      const dataFmt = dataFesta.split("-").reverse().join("/");
-      const pecasTexto = pecasSelecionadas.length > 0 ? pecasSelecionadas.join(", ") : "Nenhuma peça explicitada.";
+      const modeloSelecionado = document.querySelector('input[name="modelo-contrato"]:checked');
+      const modelo = modeloSelecionado ? modeloSelecionado.value : 'padrao';
       
-      const textoContratoCompleto = `
-CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO
-CONTRATADA: TRALALÁ DECORAÇÕES DE FESTAS
-CNPJ: 21.918.863/0001-12 | E-MAIL: tralaladecoracoes@gmail.com
-
-CONTRATANTE: ${nome}
-CPF: ${cpf}
-LOCAL DA FESTA: ${local}
-DATA DA FESTA: ${dataFmt} | HORÁRIO INÍCIO: ${horario}
-
-DO OBJETO DO CONTRATO
-Cláusula 1ª. É objeto do presente contrato a prestação de serviço de Aluguel das peças: ${pecasTexto}, para o evento que se realizará no dia ${dataFmt}.
-Primeiro. A alteração do local implica em prévia comunicação à CONTRATADA no prazo de 48 horas.
-Parágrafo Segundo. Caso haja alteração do local, poderá haver alteração do valor do frete.
-
-OBRIGAÇÃO DA CONTRATANTE
-Cláusula 2ª. A CONTRATANTE deverá fornecer todas as informações necessárias.
-Cláusula 3ª. É dever da CONTRATANTE devolver o(s) produto(s) no término da festa.
-
-OBRIGAÇÃO DA CONTRATADA
-Cláusula 4ª. A CONTRATADA entregará o material no dia ${dataFmt} no endereço especificado.
-
-VALOR E FORMA DE PAGAMENTO
-Cláusula 6ª. O serviço contratado no presente instrumento será remunerado pela quantia total de R$ ${valor.toFixed(2)}.
-CHAVE PIX CNPJ: 21.918.863/0001-12
-
-DA DEVOLUÇÃO E CANCELAMENTO
-Cláusula 8ª. Caso haja perda ou danos, a CONTRATANTE arcará com 50% de uma peça nova para reposição.
-Cláusula 9ª. Em caso de desistência a CONTRATANTE arcará com multa de 50% do valor total do contrato.
-
-Brasília-DF, ${new Date().toLocaleDateString('pt-BR')}.
-______________________________________________________
-TRALALÁ DECORAÇÕES DE FESTA (CONTRATADA)
-______________________________________________________
-${nome} (CONTRATANTE)
-      `.trim();
-
+      const textoContrato = modelo === 'pegue_monte' 
+        ? gerarTextoContratoPegueMonte(dados) 
+        : gerarTextoContratoPadrao(dados);
+      
       salvarContratoHistorico({
-        nome, cpf, dataFesta, horario, valor, local,
-        pecas: pecasTexto,
-        modelo: 'padrao',
-        textoContrato: textoContratoCompleto,
+        ...dados,
+        modelo: modelo,
+        textoContrato: textoContrato,
         criadoEm: new Date().toLocaleString('pt-BR')
       });
       
-      alert("Contrato salvo no histórico (formato TXT)!");
+      alert("✅ Contrato salvo no histórico!");
       document.getElementById("form-contrato-avulso").reset();
       renderizarHistoricoContratos();
     });
 
     // ============================================
-    // SELEÇÃO DE MODELO DE CONTRATO - ESTILO VISUAL
+    // SELEÇÃO DE MODELO - ESTILO VISUAL
     // ============================================
 
     document.querySelectorAll('.modelo-contrato-opcao').forEach(el => {
@@ -2270,12 +2303,11 @@ ${nome} (CONTRATANTE)
         renderizarGraficoAnual();
       });
       
-      // Atualizar lista de peças no contrato
       setTimeout(atualizarListaPecasContrato, 1000);
     }
 
     console.log('✅ Sistema Tralalá carregado com sucesso!');
-    console.log('📄 Gerador de Contratos PDF disponível!');
+    console.log('📄 Gerador de Contratos com modelos atualizados!');
   </script>
 </body>
 </html>
