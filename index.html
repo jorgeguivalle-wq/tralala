@@ -670,6 +670,17 @@
           <label>Local do Evento / Endereço:</label>
           <input type="text" id="c-local" placeholder="Endereço Completo">
         </div>
+        <div class="input-group">
+          <label>Modalidade da Locação:</label>
+          <select id="c-modalidade">
+            <option value="Monte no Local">🚚 Monte no Local (Entrega e Montagem pela Tralalá)</option>
+            <option value="Pegue e Monte">🧳 Pegue e Monte (Cliente retira e monta)</option>
+          </select>
+        </div>
+        <div id="c-frete-wrapper" class="input-group">
+          <label>Valor do Frete (R$):</label>
+          <input type="number" id="c-frete" placeholder="0.00" step="0.01" value="0">
+        </div>
         <button type="button" id="btn-gerar-salvar-contrato" class="btn btn-primary" style="background-color:#e67e22; margin-bottom:20px;">💾 Gerar e Salvar Contrato na Nuvem</button>
       </form>
 
@@ -760,8 +771,19 @@
       modalContrato.classList.add("ativo");
       atualizarListaPecasContrato();
       renderizarHistoricoContratos();
+      atualizarVisibilidadeFrete();
     });
     btnFecharGerador.addEventListener("click", () => modalContrato.classList.remove("ativo"));
+
+    // MOSTRA/ESCONDE O CAMPO DE FRETE CONFORME A MODALIDADE ESCOLHIDA
+    const seletorModalidade = document.getElementById("c-modalidade");
+    const freteWrapper = document.getElementById("c-frete-wrapper");
+    function atualizarVisibilidadeFrete() {
+      const ehPegueMonte = seletorModalidade.value === "Pegue e Monte";
+      freteWrapper.style.display = ehPegueMonte ? "none" : "block";
+      if (ehPegueMonte) document.getElementById("c-frete").value = "0";
+    }
+    seletorModalidade.addEventListener("change", atualizarVisibilidadeFrete);
 
     function atualizarListaPecasContrato() {
       const selectPecas = document.getElementById("c-pecas");
@@ -782,7 +804,9 @@
       const horario = document.getElementById("c-horario").value;
       const valor = parseFloat(document.getElementById("c-valor").value) || 0;
       const local = document.getElementById("c-local").value.trim();
-      
+      const modalidade = document.getElementById("c-modalidade").value; // "Monte no Local" ou "Pegue e Monte"
+      const frete = modalidade === "Pegue e Monte" ? 0 : (parseFloat(document.getElementById("c-frete").value) || 0);
+
       const pecasSelecionadas = Array.from(document.getElementById("c-pecas").selectedOptions).map(option => option.value);
 
       if(!nome || !cpf || !dataFesta || !local) {
@@ -792,60 +816,118 @@
 
       const dataFmt = dataFesta.split("-").reverse().join("/");
       const pecasTexto = pecasSelecionadas.length > 0 ? pecasSelecionadas.join(", ") : "Nenhuma peça explicitada.";
+      const valorTotal = valor + frete;
+      const hojeFmt = new Date().toLocaleDateString('pt-BR');
 
-      // Estrutura do texto do contrato com base no modelo base fornecido
-      const textoContratoCompleto = `
-CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO
-CONTRATADA: TRALALÁ DECORAÇÕES DE FESTAS
-CNPJ: 21.918.863/0001-12 | E-MAIL: tralaladecoracoes@gmail.com
-
-CONTRATANTE: ${nome}
-CPF: ${cpf}
-LOCAL DA FESTA: ${local}
-DATA DA FESTA: ${dataFmt} | HORÁRIO INÍCIO: ${horario}
-
-DO OBJETO DO CONTRATO
-Cláusula 1ª. É objeto do presente contrato a prestação de serviço de Aluguel das peças: ${pecasTexto}, para o evento que se realizará no dia ${dataFmt}.
-Primeiro. A alteração do local implica em prévia comunicação à CONTRATADA no prazo de 48 horas.
-Parágrafo Segundo. Caso haja alteração do local, poderá haver alteração do valor do frete.
-
-OBRIGAÇÃO DA CONTRATANTE
-Cláusula 2ª. A CONTRATANTE deverá fornecer todas as informações necessárias.
-Cláusula 3ª. É dever da CONTRATANTE devolver o(s) produto(s) no término da festa.
-
-OBRIGAÇÃO DA CONTRATADA
-Cláusula 4ª. A CONTRATADA entregará o material no dia ${dataFmt} no endereço especificado.
-
-VALOR E FORMA DE PAGAMENTO
-Cláusula 6ª. O serviço contratado no presente instrumento será remunerado pela quantia total de R$ ${valor.toFixed(2)}.
-CHAVE PIX CNPJ: 21.918.863/0001-12
-
-DA DEVOLUÇÃO E CANCELAMENTO
-Cláusula 8ª. Caso haja perda ou danos, a CONTRATANTE arcará com 50% de uma peça nova para reposição.
-Cláusula 9ª. Em caso de desistência a CONTRATANTE arcará com multa de 50% do valor total do contrato.
-
-Brasília-DF, ${new Date().toLocaleDateString('pt-BR')}.
-______________________________________________________
-TRALALÁ DECORAÇÕES DE FESTA (CONTRATADA)
-______________________________________________________
-${nome} (CONTRATANTE)
-      `.trim();
+      const textoContratoCompleto = gerarTextoContrato({
+        modalidade, nome, cpf, local, dataFmt, horario, pecasTexto, valor, frete, valorTotal, hojeFmt
+      });
 
       CloudDB.buscar("contratos", [], (contratosSalvos) => {
         contratosSalvos.push({
-          nome, cpf, dataFesta, horario, valor, local,
+          nome, cpf, dataFesta, horario, valor, frete, valorTotal, local, modalidade,
           pecas: pecasTexto,
           textoContrato: textoContratoCompleto,
           criadoEm: new Date().toLocaleString('pt-BR')
         });
 
         CloudDB.salvar("contratos", contratosSalvos, () => {
-          alert("Contrato gravado com sucesso no nó da nuvem 'contratos'!");
+          alert("Contrato (" + modalidade + ") gravado com sucesso no nó da nuvem 'contratos'!");
           document.getElementById("form-contrato-avulso").reset();
+          atualizarVisibilidadeFrete();
           renderizarHistoricoContratos();
         });
       });
     });
+
+    // MONTA O TEXTO DO CONTRATO CONFORME A MODALIDADE: "Monte no Local" x "Pegue e Monte"
+    function gerarTextoContrato(d) {
+      const cabecalho = `
+CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO
+CONTRATADA: TRALALÁ DECORAÇÕES DE FESTAS
+CNPJ: 21.918.863/0001-12 | E-MAIL: tralaladecoracoes@gmail.com
+
+CONTRATANTE: ${d.nome}
+CPF: ${d.cpf}
+LOCAL DA FESTA: ${d.local}
+DATA DA FESTA: ${d.dataFmt} | HORÁRIO INÍCIO: ${d.horario}
+MODALIDADE DA LOCAÇÃO: ${d.modalidade}
+
+As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.
+`.trim();
+
+      let corpo = "";
+
+      if (d.modalidade === "Monte no Local") {
+        corpo = `
+DO OBJETO DO CONTRATO
+Cláusula 1ª. É objeto do presente contrato a prestação de serviço de Aluguel das peças: ${d.pecasTexto}, com entrega e montagem no local, para o evento que se realizará no dia ${d.dataFmt}, no endereço especificado abaixo:
+LOCAL DA FESTA: ${d.local}.
+Primeiro. A alteração do local para entrega do objeto deste contrato implica em prévia comunicação da CONTRATANTE no prazo de 48 horas antes da entrega.
+Parágrafo Segundo. Caso haja alteração do local para entrega, poderá haver alteração do valor do frete conforme localidade e distância.
+Parágrafo Terceiro. A CONTRATANTE não poderá, sem prévia autorização da CONTRATADA, sublocar, emprestar, ou ceder os móveis locados.
+
+OBRIGAÇÃO DA CONTRATANTE
+Cláusula 2ª. A CONTRATANTE deverá fornecer à CONTRATADA todas as informações necessárias para a realização do serviço, devendo especificar o material, tipo e a quantidade.
+Cláusula 3ª. É dever da CONTRATANTE manter o(s) produto(s) nas condições em que foram entregues até o momento da retirada, que será feita pela CONTRATADA no dia ${d.dataFmt}.
+
+OBRIGAÇÃO DA CONTRATADA
+Cláusula 4ª. É dever da CONTRATADA entregar e montar o material no dia ${d.dataFmt} no endereço já especificado na Cláusula 1ª, e realizar a retirada dos itens ao término da festa.
+Cláusula 5ª. A CONTRATADA fornecerá as seguintes peças: ${d.pecasTexto}.
+
+VALOR E FORMA DE PAGAMENTO
+Cláusula 6ª. O serviço contratado no presente instrumento será remunerado pela quantia total de R$ ${d.valorTotal.toFixed(2)} (Locação: R$ ${d.valor.toFixed(2)} + Frete/Entrega e Montagem: R$ ${d.frete.toFixed(2)}), pago no ato da reserva conforme combinado.
+CHAVE PIX CNPJ: 21.918.863/0001-12
+Parágrafo primeiro. Não será aceito, sob hipótese alguma, pagamento pós-festa.
+Parágrafo Segundo. O valor do frete é referente à entrega e à retirada que será realizada pela CONTRATADA no local do evento.
+`.trim();
+      } else {
+        // PEGUE E MONTE — cliente retira, monta e devolve por conta própria
+        corpo = `
+DO OBJETO DO CONTRATO
+Cláusula 1ª. É objeto do presente contrato a prestação de serviço de Aluguel das peças: ${d.pecasTexto}, na modalidade PEGUE E MONTE, em que a CONTRATANTE realizará a retirada, montagem e devolução das peças por conta própria, para o evento que se realizará no dia ${d.dataFmt}, no endereço: ${d.local}.
+Parágrafo Único. Não há, nesta modalidade, entrega, montagem ou retirada por parte da CONTRATADA, sendo de inteira responsabilidade da CONTRATANTE o transporte das peças até o local do evento e o retorno à CONTRATADA.
+
+OBRIGAÇÃO DA CONTRATANTE
+Cláusula 2ª. A CONTRATANTE deverá retirar as peças na data e horário combinados previamente com a CONTRATADA, e é responsável pelo transporte, montagem e desmontagem no local do evento.
+Cláusula 3ª. É dever da CONTRATANTE devolver o(s) produto(s) no mesmo estado em que foram retirados, limpos e sem danos, no endereço e prazo combinados com a CONTRATADA.
+
+OBRIGAÇÃO DA CONTRATADA
+Cláusula 4ª. A CONTRATADA disponibilizará as peças: ${d.pecasTexto}, para retirada pela CONTRATANTE, na data e horário previamente combinados.
+Cláusula 5ª. A CONTRATADA fornecerá as seguintes peças: ${d.pecasTexto}.
+
+VALOR E FORMA DE PAGAMENTO
+Cláusula 6ª. O serviço contratado no presente instrumento será remunerado pela quantia total de R$ ${d.valorTotal.toFixed(2)}, não havendo cobrança de frete/entrega nesta modalidade, pago no ato da reserva conforme combinado.
+CHAVE PIX CNPJ: 21.918.863/0001-12
+Parágrafo primeiro. Não será aceito, sob hipótese alguma, pagamento pós-festa.
+`.trim();
+      }
+
+      const rodape = `
+DA DEVOLUÇÃO
+Cláusula 8ª. Caso haja perda, danos, quebra ou não devolução dos itens, a CONTRATANTE arcará com 50% do valor de uma peça nova para reposição (caso haja recuperação). Não havendo recuperação, será cobrado o valor de mercado por cada item.
+Parágrafo Único. É proibido furar o bolo cenográfico, usar cola quente no painel, peças e mesas, ou usar confeitos coloridos e vela faísca — itens que danificam e mancham as peças.
+
+DO CANCELAMENTO
+Cláusula 9ª. Em caso de desistência a CONTRATANTE arcará com multa de quebra de contrato de 50% do valor total do contrato.
+Parágrafo Primeiro. Em caso de força maior, a CONTRATANTE poderá solicitar carta crédito na quantia paga, para utilização em até um ano a partir da notificação, não transferível nem prorrogável, cabendo à CONTRATADA confirmar disponibilidade de peças e data.
+
+DO FORO
+As Partes elegem o foro da Circunscrição Judiciária de Brasília-DF para dirimir os conflitos que porventura venham a surgir em decorrência da execução do presente contrato, com renúncia de qualquer outro, por mais privilegiado que seja.
+
+E por assim estarem de acordo, o contrato será assinado de forma digitalizada, sendo as vias compartilhadas em meio eletrônico e permitida a assinatura híbrida (física e digital).
+
+Brasília-DF, ${d.hojeFmt}.
+______________________________________________________
+TRALALÁ DECORAÇÕES DE FESTA (CONTRATADA)
+CNPJ: 21.918.863/0001-12
+______________________________________________________
+${d.nome} (CONTRATANTE)
+CPF: ${d.cpf}
+`.trim();
+
+      return `${cabecalho}\n\n${corpo}\n\n${rodape}`;
+    }
 
     function renderizarHistoricoContratos() {
       CloudDB.buscar("contratos", [], (contratos) => {
@@ -861,12 +943,14 @@ ${nome} (CONTRATANTE)
           const div = document.createElement("div");
           div.className = "card-contrato";
           div.style.padding = "12px";
+          const badgeCor = c.modalidade === "Pegue e Monte" ? "#3498db" : "#e67e22";
           div.innerHTML = `
             <div style="display:flex; justify-content:space-between; font-size:12px;">
               <strong>📄 ${c.nome}</strong>
-              <span style="color:#e67e22;">Val: R$ ${(c.valor || 0).toFixed(2)}</span>
+              <span style="color:#e67e22;">Val: R$ ${(c.valorTotal || c.valor || 0).toFixed(2)}</span>
             </div>
             <small style="color:#888; display:block; margin:4px 0;">Festa: ${c.dataFesta.split("-").reverse().join("/")} | Criado: ${c.criadoEm}</small>
+            <span style="display:inline-block; background:${badgeCor}; color:#fff; font-size:10px; padding:2px 8px; border-radius:20px; font-weight:600;">${c.modalidade || "Monte no Local"}</span>
             <div style="margin-top:8px; display:flex; gap:10px;">
               <button type="button" onclick="baixarContratoTexto(${idx})" class="btn btn-outline" style="font-size:11px; padding:4px 8px;">💾 Baixar Arquivo TXT</button>
               <button type="button" onclick="imprimirContratoDireto(${idx})" class="btn btn-outline" style="font-size:11px; padding:4px 8px; border-color:#3498db; color:#3498db;">🖨️ Imprimir</button>
