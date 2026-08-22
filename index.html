@@ -174,7 +174,6 @@
     .multi-select-item { display: flex; align-items: center; gap: 8px; padding: 4px; font-size: 13px; }
     .multi-select-item input { width: 16px; height: 16px; }
 
-    /* Estilos do Modal de Contrato */
     .modal-contrato {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
@@ -187,7 +186,6 @@
       box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     }
 
-    /* Estilos do Modal de Visualização do Contrato PDF */
     .modal-visualizar-contrato {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center;
@@ -200,22 +198,84 @@
       box-shadow: 0 10px 40px rgba(0,0,0,0.3);
     }
 
-    /* Estilo para o preview do contrato antes do PDF */
+    /* ESTILO PROFISSIONAL PARA O CONTRATO - CORRIGIDO */
     #contrato-preview-content {
-      font-family: 'Times New Roman', serif;
-      font-size: 12px;
-      line-height: 1.6;
-      padding: 30px;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 11pt;
+      line-height: 1.4;
+      padding: 35px 40px;
       background: white;
       border: 1px solid #ddd;
-      border-radius: 8px;
-      max-height: 500px;
+      border-radius: 4px;
+      max-height: 600px;
       overflow-y: auto;
+      text-align: justify;
     }
-    #contrato-preview-content h1 { font-size: 16px; text-align: center; }
-    #contrato-preview-content h2 { font-size: 14px; color: #333; }
-    #contrato-preview-content .mark { background-color: #fef9e7; padding: 1px 4px; }
-    #contrato-preview-content .assinatura { margin-top: 30px; text-align: center; }
+    #contrato-preview-content .titulo-contrato {
+      text-align: center;
+      font-size: 16pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin: 0 0 8px 0;
+      padding: 0;
+      letter-spacing: 1px;
+    }
+    #contrato-preview-content .dados-contratada {
+      margin: 0;
+      padding: 0;
+      line-height: 1.3;
+    }
+    #contrato-preview-content .dados-contratante {
+      margin: 6px 0 0 0;
+      padding: 0;
+      line-height: 1.3;
+    }
+    #contrato-preview-content .clausula-titulo {
+      font-weight: bold;
+      font-size: 11.5pt;
+      margin: 8px 0 2px 0;
+      padding: 0;
+    }
+    #contrato-preview-content .clausula-texto {
+      margin: 0 0 3px 0;
+      padding: 0;
+      text-align: justify;
+    }
+    #contrato-preview-content .paragrafo {
+      margin: 0 0 2px 18px;
+      padding: 0;
+      text-align: justify;
+    }
+    #contrato-preview-content .assinatura {
+      margin-top: 18px;
+      text-align: center;
+    }
+    #contrato-preview-content .linha-assinatura {
+      border-top: 1px solid #000;
+      width: 60%;
+      margin: 4px auto;
+      padding-top: 4px;
+    }
+    #contrato-preview-content .assinatura-nome {
+      font-weight: bold;
+      font-size: 10pt;
+    }
+    #contrato-preview-content .destaque {
+      font-weight: bold;
+    }
+    #contrato-preview-content .marcador {
+      font-weight: bold;
+    }
+    #contrato-preview-content p {
+      margin: 0 0 2px 0;
+      padding: 0;
+    }
+    #contrato-preview-content .espaco-pequeno {
+      margin-bottom: 2px;
+    }
+    #contrato-preview-content .espaco-medio {
+      margin-bottom: 6px;
+    }
 
     .btn-pdf { background-color: #e67e22; color: #fff; }
     .btn-pdf:hover { background-color: #d35400; transform: translateY(-2px); }
@@ -232,7 +292,6 @@
       <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" alt="Logo Tralalá" class="logo-imagem">
     </header>
     
-    <!-- SEÇÃO DE LOGIN -->
     <section id="secao-login">
       <h2 style="text-align: center;">Acesso ao Sistema</h2>
       <p class="instrucao">Faça login para gerenciar reservas e estoque.</p>
@@ -247,14 +306,12 @@
       <button type="button" id="btn-login-direto" class="btn btn-primary">Entrar no Panel</button>
     </section>
     
-    <!-- CONTEÚDO PRINCIPAL (PÓS-LOGIN) -->
     <section id="secao-verificador" style="display: none;">
       <div class="usuario-logado">
         <span id="nome-usuario"> 👤 Administrador (Tralalá)</span>
         <button type="button" id="btn-logout-direto" class="btn btn-outline">Sair</button>
       </div>
    
-      <!-- PONTO ELETRÔNICO -->
       <div id="painel-ponto-eletronico" class="painel-ponto">
         <div class="ponto-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
           <h3> ⏰ Ponto Eletrônico</h3>
@@ -269,7 +326,6 @@
         </div>
       </div>
       
-      <!-- Tabela do Histórico de Pontos -->
       <div id="painel-relatorio-pontos-geral" class="painel-relatorio-pontos">
         <h3 style="margin-top: 0; border-bottom: 2px solid var(--primary-light); padding-bottom: 5px;"> 📊 Histórico de Pontos</h3>
         <div style="overflow-x: auto; max-height: 200px;">
@@ -289,7 +345,6 @@
         </div>
       </div>
 
-      <!-- BOTÕES DE ATALHO PRINCIPAIS -->
       <div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">
         <button type="button" id="btn-abrir-central-relatorios" class="btn btn-primary" style="flex: 1; min-width: 140px; background-color: #3498db;"> 📊 Venda Mensal & Anual</button>
         <button type="button" id="btn-abrir-reunioes-painel" class="btn btn-primary" style="flex: 1; min-width: 140px; background-color: #27ae60;"> 📅 Agendar Reuniões</button>
@@ -298,7 +353,6 @@
         <button type="button" id="btn-abrir-gerador-contrato" class="btn btn-outline" style="flex: 1; min-width: 130px; border-color: #e67e22; color: #e67e22;"> ✍️ Gerar Contrato </button>
       </div>
 
-      <!-- PAINEL DE AGENDAMENTO DE REUNIÕES -->
       <div id="painel-reunioes-exclusivo" class="painel-central-relatorios" style="display: none; border-color: #27ae60;">
         <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center; color: #27ae60;">
           <span>📅 Painel de Reuniões com Clientes</span>
@@ -330,7 +384,6 @@
         </div>
       </div>
 
-      <!-- CATÁLOGO DE TEMAS -->
       <div id="painel-catalogo-temas" class="painel-relatorio-pontos" style="border-color: var(--primary); background: #ffffff;">
         <h3 style="margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 5px; color: var(--primary); display: flex; justify-content: space-between; align-items: center;">
           <span>🎨 Catálogo de Temas & Peças</span>
@@ -387,7 +440,6 @@
         </div>
       </div>
 
-      <!-- CENTRAL DE RELATÓRIOS -->
       <div id="secao-central-relatorios" class="painel-central-relatorios" style="display: none;">
         <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center;">
           <span>📊 Relatório de Vendas & Faturamento Mensal</span>
@@ -449,7 +501,6 @@
         </div>
       </div>
 
-      <!-- FORMULÁRIO DE NOVA RESERVA / EDIÇÃO -->
       <h2 id="titulo-form-reserva">Agendar Nova Festa</h2>
       <input type="hidden" id="editando-id-reserva" value="">
       
@@ -649,7 +700,6 @@
     </section>
   </div>
 
-  <!-- INTERFACE DO MODAL GERADOR DE CONTRATOS -->
   <div id="modal-gerador-contrato" class="modal-contrato">
     <div class="modal-conteudo">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
@@ -711,7 +761,6 @@
     </div>
   </div>
 
-  <!-- MODAL DE VISUALIZAÇÃO DO CONTRATO PDF -->
   <div id="modal-visualizar-contrato" class="modal-visualizar-contrato">
     <div class="modal-visualizar-conteudo">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
@@ -720,7 +769,6 @@
       </div>
       
       <div id="contrato-preview-content">
-        <!-- O conteúdo do contrato será injetado aqui -->
       </div>
       
       <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
@@ -799,7 +847,6 @@
       }
     };
 
-    // CONTROLES DE LOGIN
     const secaoLogin = document.getElementById("secao-login");
     const secaoVerificador = document.getElementById("secao-verificador");
     document.getElementById("btn-login-direto").addEventListener("click", () => {
@@ -812,7 +859,6 @@
       secaoLogin.style.display = "block";
     });
 
-    // CONTROLE WINDOW MODAL DO CONTRATO
     const btnAbrirGerador = document.getElementById("btn-abrir-gerador-contrato");
     const btnFecharGerador = document.getElementById("btn-fechar-modal-contrato");
     const modalContrato = document.getElementById("modal-gerador-contrato");
@@ -824,7 +870,6 @@
     });
     btnFecharGerador.addEventListener("click", () => modalContrato.classList.remove("ativo"));
 
-    // MODAL DE VISUALIZAÇÃO
     const modalVisualizar = document.getElementById("modal-visualizar-contrato");
     const btnFecharVisualizacao = document.getElementById("btn-fechar-visualizacao");
     const btnBaixarPdf = document.getElementById("btn-baixar-pdf-contrato");
@@ -843,78 +888,221 @@
       });
     }
 
-    // FUNÇÃO GERADORA DE CONTRATO EM HTML PARA PDF
+    // FUNÇÃO GERADORA DE CONTRATO EM HTML - VERSÃO CORRIGIDA COM LAYOUT PROFISSIONAL
     function gerarHtmlContrato(dados) {
       const { nome, cpf, dataFesta, horario, valor, local, pecasSelecionadas, obs } = dados;
       const dataFmt = dataFesta ? dataFesta.split("-").reverse().join("/") : "_____/_____/______";
       const pecasTexto = pecasSelecionadas && pecasSelecionadas.length > 0 
         ? pecasSelecionadas.join(", ") 
         : "__________________________________";
-      const valorFormatado = valor ? valor.toFixed(2) : "______,____";
+      const valorFormatado = valor ? valor.toFixed(2).replace('.', ',') : "______,____";
       const obsTexto = obs || "__________________________________";
+      const dataAtual = new Date().toLocaleDateString('pt-BR');
 
       return `
-        <div style="font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.6; padding: 20px; max-width: 700px; margin: 0 auto;">
-          <h1 style="text-align: center; font-size: 16pt; text-transform: uppercase; margin-bottom: 10px;">Contrato de Prestação de Serviços para Locação</h1>
+        <div style="font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.3; padding: 0; margin: 0; text-align: justify;">
           
-          <p><strong>CONTRATADA:</strong> TRALALÁ DECORAÇÕES DE FESTAS</p>
-          <p><strong>CNPJ:</strong> 21.918.863/0001-12</p>
-          <p><strong>E-MAIL:</strong> tralaladecoracoes@gmail.com</p>
-          <br>
+          <div style="text-align: center; font-size: 16pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px 0; padding: 0;">
+            CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO
+          </div>
           
-          <p><strong>CONTRATANTE:</strong> ${nome || "_________________________"}</p>
-          <p><strong>CPF:</strong> ${cpf || "_________________________"}</p>
-          <p><strong>LOCAL DA FESTA:</strong> ${local || "_________________________"}</p>
-          <p><strong>DATA DA FESTA:</strong> ${dataFmt} | <strong>HORÁRIO INÍCIO:</strong> ${horario || "_____:____"}</p>
-          <br>
-
-          <h2 style="font-size: 13pt; text-transform: uppercase;">Do Objeto do Contrato</h2>
-          <p><strong>Cláusula 1ª.</strong> É objeto do presente contrato a prestação de serviço de <strong>Aluguel</strong> das peças: ${pecasTexto}, para o evento que se realizará no dia ${dataFmt}.</p>
-          <p><strong>Primeiro.</strong> A alteração do local implica em prévia comunicação à CONTRATADA no prazo de 48 horas.</p>
-          <p><strong>Parágrafo Segundo.</strong> Caso haja alteração do local, poderá haver alteração do valor do frete.</p>
-          <br>
-
-          <h2 style="font-size: 13pt; text-transform: uppercase;">Obrigação da CONTRATANTE</h2>
-          <p><strong>Cláusula 2ª.</strong> A CONTRATANTE deverá fornecer todas as informações necessárias.</p>
-          <p><strong>Cláusula 3ª.</strong> É dever da CONTRATANTE devolver o(s) produto(s) no término da festa.</p>
-          <br>
-
-          <h2 style="font-size: 13pt; text-transform: uppercase;">Obrigação da CONTRATADA</h2>
-          <p><strong>Cláusula 4ª.</strong> A CONTRATADA entregará o material no dia ${dataFmt} no endereço especificado.</p>
-          <br>
-
-          <h2 style="font-size: 13pt; text-transform: uppercase;">Valor e Forma de Pagamento</h2>
-          <p><strong>Cláusula 6ª.</strong> O serviço contratado no presente instrumento será remunerado pela quantia total de <strong>R$ ${valorFormatado}</strong>.</p>
-          <p><strong>CHAVE PIX CNPJ:</strong> 21.918.863/0001-12</p>
-          <br>
-
-          <h2 style="font-size: 13pt; text-transform: uppercase;">Da Devolução e Cancelamento</h2>
-          <p><strong>Cláusula 8ª.</strong> Caso haja perda ou danos, a CONTRATANTE arcará com 50% de uma peça nova para reposição.</p>
-          <p><strong>Cláusula 9ª.</strong> Em caso de desistência a CONTRATANTE arcará com multa de 50% do valor total do contrato.</p>
-          <br>
-
-          <p><strong>Observações:</strong> ${obsTexto}</p>
-          <br>
-
-          <p style="text-align: center;">Brasília-DF, ${new Date().toLocaleDateString('pt-BR')}.</p>
-          <br>
-          <br>
-
-          <div style="display: flex; justify-content: space-between; margin-top: 30px;">
-            <div style="text-align: center; width: 45%;">
-              <div style="border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 5px;">______________________________________</div>
-              <p style="margin: 0; font-size: 10pt;"><strong>TRALALÁ DECORAÇÕES DE FESTA</strong><br>CONTRATADA</p>
-            </div>
-            <div style="text-align: center; width: 45%;">
-              <div style="border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 5px;">______________________________________</div>
-              <p style="margin: 0; font-size: 10pt;"><strong>${nome || "CONTRATANTE"}</strong></p>
-            </div>
+          <div style="margin: 0 0 4px 0; padding: 0; line-height: 1.2;">
+            <span style="font-weight: bold;">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS
+          </div>
+          <div style="margin: 0; padding: 0; line-height: 1.2;">
+            <span style="font-weight: bold;">CNPJ:</span> 21.918.863/0001-12
+          </div>
+          <div style="margin: 0 0 6px 0; padding: 0; line-height: 1.2;">
+            <span style="font-weight: bold;">E-MAIL:</span> tralaladecoracoes@gmail.com
+          </div>
+          
+          <div style="margin: 0 0 3px 0; padding: 0; line-height: 1.3;">
+            <span style="font-weight: bold;">CONTRATANTE:</span> ${nome || "_________________________"}
+          </div>
+          <div style="margin: 0; padding: 0; line-height: 1.3;">
+            <span style="font-weight: bold;">CPF:</span> ${cpf || "_________________________"}
+          </div>
+          <div style="margin: 0 0 6px 0; padding: 0; line-height: 1.3;">
+            <span style="font-weight: bold;">LOCAL DA FESTA:</span> ${local || "_________________________"}
+          </div>
+          
+          <div style="margin: 0 0 6px 0; padding: 0; line-height: 1.3;">
+            <span style="font-weight: bold;">DATA DA FESTA:</span> ${dataFmt} &nbsp;|&nbsp; <span style="font-weight: bold;">HORÁRIO INÍCIO:</span> ${horario || "_____:____"}
+          </div>
+          
+          <div style="margin: 0 0 4px 0; padding: 0; line-height: 1.3;">
+            As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.
+          </div>
+          
+          <div style="font-weight: bold; font-size: 11.5pt; margin: 6px 0 2px 0; padding: 0;">
+            DO OBJETO DO CONTRATO
+          </div>
+          
+          <div style="margin: 0 0 2px 0; padding: 0;">
+            <span style="font-weight: bold;">Cláusula 1ª.</span> É objeto do presente contrato a prestação de serviço de <span style="font-weight: bold;">Aluguel</span> das peças: ${pecasTexto}, para o evento que se realizará no dia <span style="font-weight: bold;">${dataFmt}</span>, conforme endereço especificado abaixo:
+          </div>
+          
+          <div style="margin: 0 0 2px 18px; padding: 0;">
+            <span style="font-weight: bold;">LOCAL DA FESTA:</span> ${local || "_________________________"}
+          </div>
+          
+          <div style="margin: 0 0 2px 18px; padding: 0;">
+            <span style="font-weight: bold;">Primeiro.</span> A alteração do local para entrega do objeto deste contrato implica em prévia comunicação da CONTRATANTE no prazo de 48 horas antes da entrega.
+          </div>
+          
+          <div style="margin: 0 0 2px 18px; padding: 0;">
+            <span style="font-weight: bold;">Parágrafo Segundo.</span> Caso haja alteração do local para entrega, poderá haver alteração do valor do frete conforme localidade e distância.
+          </div>
+          
+          <div style="margin: 0 0 4px 18px; padding: 0;">
+            <span style="font-weight: bold;">Parágrafo Terceiro.</span> A CONTRATANTE não poderá, sem prévia autorização da CONTRATADA, sublocar, emprestar, ou ceder os móveis locados.
+          </div>
+          
+          <div style="font-weight: bold; font-size: 11.5pt; margin: 6px 0 2px 0; padding: 0;">
+            OBRIGAÇÃO DA CONTRATANTE
+          </div>
+          
+          <div style="margin: 0 0 2px 0; padding: 0;">
+            <span style="font-weight: bold;">Cláusula 2ª.</span> A CONTRATANTE deverá fornecer à CONTRATADA todas as informações necessárias para a realização do serviço, devendo especificar o material, tipo e a quantidade.
+          </div>
+          
+          <div style="margin: 0 0 2px 0; padding: 0;">
+            <span style="font-weight: bold;">Cláusula 3ª.</span> É dever da CONTRATANTE devolver o(s) produto(s) de acordo com o que foi locado no término da festa. A CONTRATADA efetuara a retirada dos itens no dia <span style="font-weight: bold;">${dataFmt}</span>.
+          </div>
+          
+          <div style="margin: 0 0 4px 18px; padding: 0;">
+            Parágrafo único. A CONTRATADA deverá entregar e buscar o produto no endereço mencionado na cláusula 1ª, em caso de a CONTRATANTE optar por fazer retirada do produto no local, deverá devolvê-lo no local mencionado na cláusula 1ª conforme combinado com a CONTRATADA.
+          </div>
+          
+          <div style="font-weight: bold; font-size: 11.5pt; margin: 6px 0 2px 0; padding: 0;">
+            OBRIGAÇÃO DA CONTRATADA
+          </div>
+          
+          <div style="margin: 0 0 2px 0; padding: 0;">
+            <span style="font-weight: bold;">Cláusula 4ª.</span> É dever da CONTRATADA oferecer o serviço de acordo com as especificações da CONTRATANTE, devendo o material ser entregue no dia <span style="font-weight: bold;">${dataFmt}</span> ate as 13h00 no endereço já especificado na Clausula 1ª.
+          </div>
+          
+          <div style="margin: 0 0 2px 0; padding: 0;">
+            <span style="font-weight: bold;">Cláusula 5ª.</span> A CONTRATADA fornecerá as seguintes peças:
+          </div>
+          
+          <div style="margin: 0 0 2px 18px; padding: 0;">
+            (X) ${pecasTexto || "Peças selecionadas"}
+          </div>
+          
+          <div style="margin: 0 0 2px 0; padding: 0;">
+            <span style="font-weight: bold;">Cláusula 6ª.</span> O serviço contratado no presente instrumento será remunerado pela quantia de <span style="font-weight: bold;">R$ ${valorFormatado}</span>, pago no ato da reserva.
+          </div>
+          
+          <div style="margin: 0 0 2px 18px; padding: 0;">
+            - Data da reserva - R$ ${(valor ? (valor/2).toFixed(2).replace('.', ',') : "______,____")} (no ato da reserva)
+          </div>
+          <div style="margin: 0 0 4px 18px; padding: 0;">
+            - ${dataFmt} - R$ ${(valor ? (valor/2).toFixed(2).replace('.', ',') : "______,____")} (na montagem da festa)
+          </div>
+          
+          <div style="margin: 0 0 2px 0; padding: 0;">
+            <span style="font-weight: bold;">Parágrafo primeiro.</span> Não será aceito, sob hipótese alguma, pagamento pós-festa.
+          </div>
+          
+          <div style="margin: 0 0 2px 0; padding: 0;">
+            <span style="font-weight: bold;">Parágrafo Segundo.</span> No valor acima referido já está <span style="font-weight: bold;">incluso frete</span>.
+          </div>
+          
+          <div style="margin: 0 0 2px 0; padding: 0;">
+            <span style="font-weight: bold;">Parágrafo Terceiro.</span> O valor do frete é referente à entrega e à retirada que será realizada pela CONTRATADA no local do evento ou onde for combinado entre as PARTES.
+          </div>
+          
+          <div style="margin: 0 0 4px 0; padding: 0;">
+            <span style="font-weight: bold;">Parágrafo quarto. NÃO</span> está incluso no valor da locação de peças e mobílias, o serviço de arrumação de mesa, como colocar doces, bolo, lembrancinhas e personalizados feitos por terceiros, para esse serviço favor consultar valores com a CONTRATADA.
+          </div>
+          
+          <div style="margin: 0 0 2px 0; padding: 0;">
+            <span style="font-weight: bold;">Cláusula 7ª.</span> O recibo do depósito da transferência bancária, referente ao sinal, efetuada na conta informada pela CONTRATADA, servirá para a CONTRATANTE como comprovante de cumprimento da obrigação de pagar.
+          </div>
+          
+          <div style="font-weight: bold; font-size: 11.5pt; margin: 6px 0 2px 0; padding: 0;">
+            DA DEVOLUÇÃO
+          </div>
+          
+          <div style="margin: 0 0 2px 0; padding: 0;">
+            <span style="font-weight: bold;">Cláusula 8ª.</span> Caso haja perda, Danos, Quebra ou não devolução dos itens, a CONTRATANTE arcará com 50% do valor de uma peça nova para reposição (caso haja recuperação). NÃO havendo recuperação, será cobrado o valor de mercado por cada item, em dinheiro ou outra forma que convier às PARTES. Em caso de quebra ou extravio de peças a CONTRATANTE assinará uma nota promissória se comprometendo-se com o pagamento que será devolvida após a quitação do débito.
+          </div>
+          
+          <div style="margin: 0 0 2px 18px; padding: 0;">
+            <span style="font-weight: bold;">Parágrafo Primeiro:</span> É de responsabilidade da CONTRATANTE que na retirada da decoração, todas as peças alugadas estejam sobre a mesa, caso fique algum item, a CONTRATANTE se responsabilizará pela devolução, a recusa da devolução imediata, acarretará em multa de R$ 20,00, por diária/peça.
+          </div>
+          
+          <div style="margin: 0 0 2px 18px; padding: 0;">
+            <span style="font-weight: bold;">Parágrafo segundo:</span> É dever da CONTRATANTE devolver as peças como foi entregue. É proibido, furar o bolo cenográfico, usar cola quente no painel, peças e mesas, usar confeitos coloridos, vela faísca estes itens danificam e mancham peças e mobília (uso estará sujeito em caso de avarias pagar pela recuperação ou peça nova caso não seja possível).
+          </div>
+          
+          <div style="margin: 0 0 4px 18px; padding: 0;">
+            O tapete deverá ser devolvido como foi entregue sem doces e bolos, caso contrário pagará multa de limpeza de R$ 40,00 (quarenta reais).
+          </div>
+          
+          <div style="font-weight: bold; font-size: 11.5pt; margin: 6px 0 2px 0; padding: 0;">
+            DO CANCELAMENTO
+          </div>
+          
+          <div style="margin: 0 0 2px 0; padding: 0;">
+            <span style="font-weight: bold;">Cláusula 9ª.</span> Em caso de desistência a CONTRATANTE arcará com a multa de quebra de contrato, 50% do valor total do seu contrato.
+          </div>
+          
+          <div style="margin: 0 0 2px 18px; padding: 0;">
+            <span style="font-weight: bold;">Parágrafo primeiro:</span> Em caso de força maior, a CONTRATANTE, poderá solicitar uma carta crédito na quantia paga, para utilização de até um ano a partir da data da notificação. Sendo que essa carta crédito não poderá ser transferida para outro titular, nem prorrogada. Cabendo a CONTRATADA confirmar disponibilidade de peças e data. A CONTRATANTE deverá comprovar o fato ocorrido com documentos oficiais.
+          </div>
+          
+          <div style="margin: 0 0 4px 18px; padding: 0;">
+            <span style="font-weight: bold;">Parágrafo Segundo.</span> A Parte impossibilitada de cumprir sua obrigação deverá notificar a outra, de imediato, acerca da extensão do problema e o prazo estimado para remarcação da nova data.
+          </div>
+          
+          <div style="font-weight: bold; font-size: 11.5pt; margin: 6px 0 2px 0; padding: 0;">
+            DAS CONDIÇÕES GERAIS
+          </div>
+          
+          <div style="margin: 0 0 2px 0; padding: 0;">
+            <span style="font-weight: bold;">Cláusula 10ª.</span> O orçamento ou aceite referente ao serviço contratado, enviado por email, faz parte integrante deste contrato.
+          </div>
+          
+          <div style="margin: 0 0 4px 0; padding: 0;">
+            <span style="font-weight: bold;">Observações:</span> ${obsTexto}
+          </div>
+          
+          <div style="font-weight: bold; font-size: 11.5pt; margin: 6px 0 2px 0; padding: 0;">
+            DO FORO
+          </div>
+          
+          <div style="margin: 0 0 12px 0; padding: 0;">
+            As Partes elegem o foro da Circunscrição Judiciária de Brasília - DF para dirimir os conflitos que porventura venham a surgir em decorrência da execução do presente contrato, com renúncia de qualquer outro, por mais privilegiado que seja.
+          </div>
+          
+          <div style="margin: 0 0 4px 0; padding: 0;">
+            E por assim estarem de acordo, o contrato será sendo assinado de forma digitalizada, sendo as vias compartilhadas em meio eletrônico e permitida a assinatura híbrida (física e digital).
+          </div>
+          
+          <div style="text-align: center; margin: 0 0 2px 0; padding: 0; font-weight: bold;">
+            Brasília-DF, ${dataAtual}.
+          </div>
+          
+          <div style="margin-top: 16px; text-align: center;">
+            <div style="font-weight: bold; font-size: 10pt;">CONTRATADA:</div>
+            <div style="border-bottom: 1px solid #000; width: 60%; margin: 4px auto; padding-top: 4px;"></div>
+            <div style="font-weight: bold; font-size: 10pt;">TRALALÁ DECORAÇÕES DE FESTA</div>
+            <div style="font-size: 9pt;">CNPJ: 21.918.863/0001-12</div>
+            <div style="font-size: 9pt;">REPRESENTANTE LEGAL: ALINE ARAUJO DO VALLE</div>
+          </div>
+          
+          <div style="margin-top: 16px; text-align: center;">
+            <div style="font-weight: bold; font-size: 10pt;">CONTRATANTE:</div>
+            <div style="border-bottom: 1px solid #000; width: 60%; margin: 4px auto; padding-top: 4px;"></div>
+            <div style="font-weight: bold; font-size: 10pt;">${nome || "CONTRATANTE"}</div>
+            <div style="font-size: 9pt;">CPF: ${cpf || "_________________________"}</div>
           </div>
         </div>
       `;
     }
 
-    // BOTÃO PARA GERAR E SALVAR CONTRATOS NO NÓ 'contratos'
     document.getElementById("btn-gerar-salvar-contrato").addEventListener("click", () => {
       const nome = document.getElementById("c-nome").value.trim();
       const cpf = document.getElementById("c-cpf").value.trim();
@@ -954,7 +1142,6 @@
       });
     });
 
-    // BOTÃO PARA GERAR PDF
     document.getElementById("btn-gerar-pdf-contrato").addEventListener("click", () => {
       const nome = document.getElementById("c-nome").value.trim();
       const cpf = document.getElementById("c-cpf").value.trim();
@@ -978,35 +1165,43 @@
 
       const htmlContrato = gerarHtmlContrato(dadosContrato);
       
-      // Exibe no modal de visualização
       document.getElementById("contrato-preview-content").innerHTML = htmlContrato;
       modalVisualizar.classList.add("ativo");
     });
 
-    // BAIXAR PDF
     btnBaixarPdf.addEventListener("click", () => {
       const element = document.getElementById("contrato-preview-content");
       const opt = {
-        margin: 1,
+        margin: [0.5, 0.5, 0.5, 0.5],
         filename: `Contrato_Tralala_${document.getElementById("c-nome").value.trim() || "cliente"}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          letterRendering: true
+        },
+        jsPDF: { 
+          unit: 'in', 
+          format: 'a4', 
+          orientation: 'portrait',
+          compress: true
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
       html2pdf().set(opt).from(element).save();
     });
 
-    // IMPRIMIR
     btnImprimirContrato.addEventListener("click", () => {
       const content = document.getElementById("contrato-preview-content").innerHTML;
       const win = window.open('', '', 'width=800,height=600');
       win.document.write(`
         <html>
-          <head><title>Contrato Tralalá</title>
-          <style>
-            body { font-family: 'Times New Roman', serif; padding: 40px; }
-            ${document.querySelector('style').innerHTML}
-          </style>
+          <head>
+            <title>Contrato Tralalá</title>
+            <style>
+              body { font-family: 'Times New Roman', Times, serif; padding: 30px; }
+              ${document.querySelector('style').innerHTML}
+            </style>
           </head>
           <body>${content}</body>
         </html>
@@ -1076,11 +1271,12 @@
         const janelaImpressao = window.open('', '', 'width=800,height=600');
         janelaImpressao.document.write(`
           <html>
-            <head><title>Contrato Tralalá</title>
-            <style>
-              body { font-family: 'Times New Roman', serif; padding: 40px; }
-              ${document.querySelector('style').innerHTML}
-            </style>
+            <head>
+              <title>Contrato Tralalá</title>
+              <style>
+                body { font-family: 'Times New Roman', Times, serif; padding: 30px; }
+                ${document.querySelector('style').innerHTML}
+              </style>
             </head>
             <body>${conteudo}</body>
           </html>
@@ -1090,7 +1286,7 @@
       });
     };
 
-    // SISTEMA DO PONTO ELETRÔNICO
+    // PONTO ELETRÔNICO
     function renderizarPontos() {
       CloudDB.buscar("pontos", [], (pontos) => {
         const corpo = document.getElementById("lista-pontos-geral-corpo");
@@ -1124,7 +1320,7 @@
       });
     }
 
-    // MONTAGEM NO LOCAL DINÂMICA INTEGRADA COM ESTOQUE
+    // MONTAGEM NO LOCAL
     const chkMontarLocal = document.getElementById("chk-montar-local");
     const painelMontagemLocal = document.getElementById("painel-montagem-local");
     const mlPecasEstoque = document.getElementById("ml-pecas-estoque");
@@ -1186,7 +1382,7 @@
       });
     }
 
-    // CÁLCULO FINANCEIRO DINÂMICO
+    // CÁLCULO FINANCEIRO
     const inputValorFesta = document.getElementById("valor-festa");
     const inputValorFrete = document.getElementById("valor-frete");
     const inputValorTotal = document.getElementById("valor-total");
@@ -1207,7 +1403,7 @@
     inputValorFesta.addEventListener("input", calcularFinanceiro);
     inputValorSinal.addEventListener("input", calcularFinanceiro);
 
-    // CALCULADORA DE FRETE INTELIGENTE
+    // CALCULADORA DE FRETE
     const inputKM = document.getElementById("calc-km");
     const inputLitro = document.getElementById("calc-valor-litro");
     const outCombustivel = document.getElementById("calc-total-combustivel");
@@ -1486,7 +1682,7 @@
       wrapperListaSugestoes.style.display = "block";
     });
 
-    // RELATÓRIOS MENSAL & ANUAL
+    // RELATÓRIOS
     const seletorMes = document.getElementById("seletor-mes-planilha");
     const tabelaPlanilha = document.getElementById("tabela-planilha-corpo").getElementsByTagName('tbody')[0];
 
@@ -1645,7 +1841,7 @@
       if (el.style.display === "block") renderizarGraficoAnual();
     });
 
-    // SISTEMA DE ORÇAMENTOS
+    // ORÇAMENTOS
     const btnSalvarComoOrcamento = document.getElementById("btn-salvar-como-orcamento");
     btnSalvarComoOrcamento.addEventListener("click", () => {
       const cliente = document.getElementById("nome-cliente").value.trim();
@@ -1759,7 +1955,7 @@
       document.getElementById("painel-reunioes-exclusivo").style.display = "none";
     }
 
-    // RESERVAS ATIVAS
+    // RESERVAS
     const btnSalvarReserva = document.getElementById("btn-confirmar-agendamento");
     let kitSelecionado = "";
 
