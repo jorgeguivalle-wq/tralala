@@ -472,7 +472,52 @@
           <button type="button" id="btn-adicionar-peca" class="btn btn-primary" style="margin-top: 5px;">Salvar Peça no Acervo</button>
         </div>
 
-        <div style="overflow-x: auto; max-height: 350px;">
+        <!-- ============================================ -->
+        <!-- PAINEL DE ADMINISTRAÇÃO DE CATEGORIAS - NOVO -->
+        <!-- ============================================ -->
+        <div style="background: #f5f0f0; border: 1.5px solid #e1cbd4; padding: 15px; border-radius: 10px; margin-bottom: 20px; margin-top: 15px;">
+          <h4 style="margin: 0 0 12px 0; color: var(--primary-dark); display: flex; justify-content: space-between; align-items: center;">
+            <span>📂 Gerenciar Categorias</span>
+            <span id="contador-categorias" style="font-size:12px; background:var(--primary); color:#fff; padding:2px 10px; border-radius:12px;">0</span>
+          </h4>
+          
+          <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px; display: flex; gap: 8px;">
+              <input type="text" id="input-nova-categoria" placeholder="Nome da nova categoria" style="flex:1; padding:8px 12px; border:1.5px solid var(--border-color); border-radius:8px;">
+              <button type="button" id="btn-adicionar-categoria" class="btn btn-primary" style="padding:8px 16px; width:auto; font-size:13px; white-space:nowrap;">➕ Adicionar</button>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <select id="select-remover-categoria" style="padding:8px 12px; border:1.5px solid var(--border-color); border-radius:8px; min-width:150px;">
+                <option value="">Selecione...</option>
+              </select>
+              <button type="button" id="btn-remover-categoria" class="btn btn-danger" style="padding:8px 16px; width:auto; font-size:13px; white-space:nowrap;">🗑️ Remover</button>
+            </div>
+          </div>
+          
+          <div id="lista-categorias-admin" style="display:flex; flex-wrap:wrap; gap:6px; padding:8px; background:#fff; border-radius:8px; min-height:40px; border:1px solid var(--border-color);">
+            <!-- As categorias serão renderizadas aqui -->
+          </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- PAINEL DE REMOVER TEMA - NOVO -->
+        <!-- ============================================ -->
+        <div style="background: #fff5f5; border: 1.5px solid #f5c6c6; padding: 15px; border-radius: 10px; margin-top: 15px;">
+          <h4 style="margin: 0 0 12px 0; color: var(--error); display: flex; justify-content: space-between; align-items: center;">
+            <span>🗑️ Remover Tema/Peça</span>
+          </h4>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <select id="select-remover-tema" style="flex:1; min-width:200px; padding:10px 14px; border:1.5px solid var(--border-color); border-radius:8px;">
+              <option value="">Selecione um tema para remover...</option>
+            </select>
+            <button type="button" id="btn-remover-tema-admin" class="btn btn-danger" style="padding:10px 20px; width:auto; font-size:14px;">
+              🗑️ Remover Tema Selecionado
+            </button>
+          </div>
+          <div id="info-tema-remover" style="margin-top:8px; font-size:12px; color:var(--text-muted);"></div>
+        </div>
+
+        <div style="overflow-x: auto; max-height: 350px; margin-top: 15px;">
           <table class="tabela-pontos">
             <thead>
               <tr style="background: var(--primary);">
@@ -963,8 +1008,345 @@
     };
 
     // ============================================================
-    // MODELO 1 - CONTRATO COM FRETE (Original)
+    // GERENCIAMENTO DE CATEGORIAS - NOVO NÓ
     // ============================================================
+
+    let categoriasList = [];
+    let listenerCategoriasAtivo = false;
+
+    // Carregar categorias do Firebase
+    function carregarCategorias(callback) {
+      CloudDB.buscar("categorias", {}, (dados) => {
+        if (dados && typeof dados === 'object') {
+          const nomes = Object.keys(dados).filter(key => dados[key] && dados[key].nome);
+          if (nomes.length > 0) {
+            categoriasList = nomes;
+          } else {
+            migrarCategoriasDoEstoque();
+            return;
+          }
+        } else {
+          migrarCategoriasDoEstoque();
+          return;
+        }
+        if (callback) callback(categoriasList);
+        atualizarInterfaceCategorias();
+      });
+    }
+
+    // Migrar categorias existentes para o novo nó
+    function migrarCategoriasDoEstoque() {
+      CloudDB.buscar("estoque", [], (temas) => {
+        const categoriasEncontradas = new Set();
+        if (temas) {
+          Object.keys(temas).forEach(k => {
+            const item = temas[k];
+            if (item && item.categoria) {
+              categoriasEncontradas.add(item.categoria);
+            }
+          });
+        }
+        
+        if (categoriasEncontradas.size === 0) {
+          ["Infantil", "Casamento", "15 Anos", "Outros"].forEach(c => categoriasEncontradas.add(c));
+        }
+        
+        const categoriasArray = Array.from(categoriasEncontradas);
+        salvarCategorias(categoriasArray, () => {
+          categoriasList = categoriasArray;
+          atualizarInterfaceCategorias();
+        });
+      });
+    }
+
+    // Salvar categorias no Firebase
+    function salvarCategorias(categorias, callback) {
+      const obj = {};
+      categorias.forEach(cat => {
+        obj[cat] = { nome: cat, criadoEm: Date.now() };
+      });
+      CloudDB.salvar("categorias", obj, callback);
+    }
+
+    // Adicionar categoria
+    function adicionarCategoria(nome) {
+      nome = nome.trim();
+      if (!nome) {
+        alert("⚠️ Digite um nome para a categoria!");
+        return false;
+      }
+      
+      if (categoriasList.some(c => c.toLowerCase() === nome.toLowerCase())) {
+        alert(`⚠️ A categoria "${nome}" já existe!`);
+        return false;
+      }
+      
+      categoriasList.push(nome);
+      salvarCategorias(categoriasList, () => {
+        atualizarInterfaceCategorias();
+        atualizarSelectCategoria();
+        console.log(`✅ Categoria "${nome}" adicionada!`);
+      });
+      return true;
+    }
+
+    // Remover categoria
+    function removerCategoria(nome) {
+      CloudDB.buscar("estoque", [], (temas) => {
+        const temasVinculados = [];
+        if (temas) {
+          Object.keys(temas).forEach(k => {
+            const item = temas[k];
+            if (item && item.categoria === nome) {
+              temasVinculados.push(item.nome || item.item || item.titulo || "Sem Nome");
+            }
+          });
+        }
+        
+        if (temasVinculados.length > 0) {
+          alert(`⚠️ Não é possível remover a categoria "${nome}" pois ela possui ${temasVinculados.length} tema(s) vinculado(s):\n\n${temasVinculados.join('\n')}\n\nRemova ou reassocie os temas primeiro.`);
+          return;
+        }
+        
+        if (confirm(`Deseja realmente remover a categoria "${nome}"?`)) {
+          const index = categoriasList.indexOf(nome);
+          if (index > -1) {
+            categoriasList.splice(index, 1);
+            salvarCategorias(categoriasList, () => {
+              atualizarInterfaceCategorias();
+              atualizarSelectCategoria();
+              console.log(`✅ Categoria "${nome}" removida!`);
+            });
+          }
+        }
+      });
+    }
+
+    // Atualizar o select de categoria no formulário de adicionar peça
+    function atualizarSelectCategoria() {
+      const selectCat = document.getElementById("catalogo-peca-categoria");
+      if (selectCat) {
+        const valorAtual = selectCat.value;
+        selectCat.innerHTML = '';
+        categoriasList.forEach(cat => {
+          const opt = document.createElement("option");
+          opt.value = cat;
+          opt.textContent = cat;
+          selectCat.appendChild(opt);
+        });
+        if (categoriasList.includes(valorAtual)) {
+          selectCat.value = valorAtual;
+        }
+      }
+      
+      const selectRemover = document.getElementById("select-remover-categoria");
+      if (selectRemover) {
+        const valorAtual = selectRemover.value;
+        selectRemover.innerHTML = '<option value="">Selecione...</option>';
+        categoriasList.forEach(cat => {
+          const opt = document.createElement("option");
+          opt.value = cat;
+          opt.textContent = cat;
+          selectRemover.appendChild(opt);
+        });
+        if (categoriasList.includes(valorAtual)) {
+          selectRemover.value = valorAtual;
+        }
+      }
+    }
+
+    // Atualizar a interface de categorias
+    function atualizarInterfaceCategorias() {
+      const contador = document.getElementById("contador-categorias");
+      if (contador) {
+        contador.textContent = categoriasList.length;
+      }
+      
+      const container = document.getElementById("lista-categorias-admin");
+      if (container) {
+        container.innerHTML = '';
+        categoriasList.forEach(cat => {
+          const div = document.createElement("div");
+          div.className = "categoria-item-admin";
+          div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:#f8f0f2; border-radius:6px; border:1px solid #e1cbd4;";
+          div.innerHTML = `
+            <span style="font-size:13px;">📁 ${cat}</span>
+            <button onclick="removerCategoria('${cat}')" class="btn btn-danger" style="padding:2px 8px; font-size:10px; width:auto; margin-left:6px;">✕</button>
+          `;
+          container.appendChild(div);
+        });
+      }
+      
+      atualizarSelectCategoria();
+    }
+
+    // ============================================================
+    // LISTENER EM TEMPO REAL PARA CATEGORIAS
+    // ============================================================
+
+    function iniciarListenerCategorias() {
+      if (listenerCategoriasAtivo) return;
+      listenerCategoriasAtivo = true;
+      
+      if (db) {
+        db.ref('categorias').on('value', function(snapshot) {
+          const data = snapshot.val();
+          if (data && typeof data === 'object') {
+            const nomes = Object.keys(data).filter(key => data[key] && data[key].nome);
+            if (nomes.length > 0) {
+              categoriasList = nomes;
+            }
+          }
+          atualizarInterfaceCategorias();
+          console.log(`🔄 Categorias atualizadas: ${categoriasList.length}`);
+        });
+      }
+    }
+
+    // ============================================================
+    // FUNÇÃO REMOVER TEMA MELHORADA
+    // ============================================================
+
+    window.removerTema = function(index) {
+      const tema = todosOsTemas[index];
+      if (!tema) return;
+      
+      if(confirm(`Deseja realmente remover o item "${tema.nome}" da categoria "${tema.categoria}"?`)) {
+        CloudDB.buscar("estoque", [], (temas) => {
+          let listaLimpa;
+          if (Array.isArray(temas)) {
+            listaLimpa = [...temas];
+          } else if (temas && typeof temas === 'object') {
+            listaLimpa = Object.keys(temas).map(k => temas[k]);
+          } else {
+            listaLimpa = [];
+          }
+          
+          if (index < listaLimpa.length) {
+            listaLimpa.splice(index, 1);
+            CloudDB.salvar("estoque", listaLimpa, () => { 
+              console.log("✅ Tema removido!");
+            });
+          }
+        });
+      }
+    };
+
+    // ============================================================
+    // ATUALIZAR RENDERIZAÇÃO DE TEMAS COM SELECT DE REMOVER
+    // ============================================================
+
+    const renderizarTemasOriginal = renderizarTemas;
+
+    renderizarTemas = function() {
+      if (renderizarTemasOriginal) {
+        renderizarTemasOriginal();
+      }
+      
+      setTimeout(() => {
+        const selectRemover = document.getElementById("select-remover-tema");
+        if (selectRemover) {
+          const valorAtual = selectRemover.value;
+          selectRemover.innerHTML = '<option value="">Selecione um tema para remover...</option>';
+          todosOsTemas.forEach((item, idx) => {
+            const opt = document.createElement("option");
+            opt.value = idx;
+            const disponivel = item.quantidade > 0 ? `${item.quantidade} disponíveis` : 'ESGOTADO';
+            opt.textContent = `${item.nome} (${item.categoria}) - ${disponivel}`;
+            selectRemover.appendChild(opt);
+          });
+          if (valorAtual && todosOsTemas[parseInt(valorAtual)]) {
+            selectRemover.value = valorAtual;
+          }
+        }
+      }, 100);
+    };
+
+    // ============================================================
+    // EVENTOS DOS BOTÕES
+    // ============================================================
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const btnAdicionar = document.getElementById("btn-adicionar-categoria");
+      const inputCategoria = document.getElementById("input-nova-categoria");
+      const btnRemoverCat = document.getElementById("btn-remover-categoria");
+      const btnRemoverTema = document.getElementById("btn-remover-tema-admin");
+      const selectRemoverTema = document.getElementById("select-remover-tema");
+      const infoTemaRemover = document.getElementById("info-tema-remover");
+
+      if (btnAdicionar) {
+        btnAdicionar.addEventListener("click", function() {
+          const nome = inputCategoria.value.trim();
+          if (adicionarCategoria(nome)) {
+            inputCategoria.value = "";
+            inputCategoria.focus();
+          }
+        });
+      }
+
+      if (inputCategoria) {
+        inputCategoria.addEventListener("keypress", function(e) {
+          if (e.key === "Enter") {
+            document.getElementById("btn-adicionar-categoria").click();
+          }
+        });
+      }
+
+      if (btnRemoverCat) {
+        btnRemoverCat.addEventListener("click", function() {
+          const select = document.getElementById("select-remover-categoria");
+          const categoria = select.value;
+          if (!categoria) {
+            alert("⚠️ Selecione uma categoria para remover!");
+            return;
+          }
+          removerCategoria(categoria);
+        });
+      }
+
+      if (btnRemoverTema) {
+        btnRemoverTema.addEventListener("click", function() {
+          const index = parseInt(selectRemoverTema.value);
+          if (isNaN(index) || !todosOsTemas[index]) {
+            alert("⚠️ Selecione um tema válido para remover!");
+            return;
+          }
+          
+          const tema = todosOsTemas[index];
+          if (infoTemaRemover) {
+            infoTemaRemover.innerHTML = `<span style="color:var(--primary);">📌 Removendo: <strong>${tema.nome}</strong> (${tema.categoria})</span>`;
+          }
+          
+          window.removerTema(index);
+          
+          setTimeout(() => {
+            if (infoTemaRemover) {
+              infoTemaRemover.innerHTML = `<span style="color:var(--success);">✅ Tema removido com sucesso!</span>`;
+              setTimeout(() => { infoTemaRemover.innerHTML = ''; }, 3000);
+            }
+          }, 500);
+        });
+      }
+
+      if (selectRemoverTema) {
+        selectRemoverTema.addEventListener("change", function() {
+          const index = parseInt(this.value);
+          if (infoTemaRemover) {
+            if (!isNaN(index) && todosOsTemas[index]) {
+              const tema = todosOsTemas[index];
+              infoTemaRemover.innerHTML = `<span style="color:var(--primary);">📌 Selecionado: <strong>${tema.nome}</strong> (${tema.categoria}) - ${tema.quantidade} disponíveis</span>`;
+            } else {
+              infoTemaRemover.innerHTML = '';
+            }
+          }
+        });
+      }
+    });
+
+    // ============================================================
+    // MODELOS DE CONTRATO
+    // ============================================================
+
     function gerarModeloComFrete(dados) {
       const { nome, cpf, endereco, telefone, dataFesta, horario, valor, local, pecasSelecionadas, obs } = dados;
       const dataFmt = dataFesta ? dataFesta.split("-").reverse().join("/") : "____/____/______";
@@ -1157,9 +1539,6 @@
       `;
     }
 
-    // ============================================================
-    // MODELO 2 - CONTRATO PEGUE E MONTE
-    // ============================================================
     function gerarModeloPegueMonte(dados) {
       const { nome, cpf, endereco, telefone, dataFesta, horario, valor, local, pecasSelecionadas, obs } = dados;
       const dataFmt = dataFesta ? dataFesta.split("-").reverse().join("/") : "____/____/______";
@@ -1327,9 +1706,6 @@
       `;
     }
 
-    // ============================================================
-    // FUNÇÃO PRINCIPAL PARA GERAR CONTRATO
-    // ============================================================
     function gerarContratoHtml(dados) {
       const modelo = dados.modelo || "com-frete";
       if (modelo === "pegue-monte") {
@@ -1390,13 +1766,10 @@
       
       const pecasSelecionadas = Array.from(document.getElementById("c-pecas").selectedOptions).map(option => option.value);
       
-      // Itens adicionais
       const porcelanas = Array.from(document.getElementById("c-porcelanas").selectedOptions).map(option => option.value);
       const bolos = Array.from(document.getElementById("c-bolos").selectedOptions).map(option => option.value);
       const decoracao = Array.from(document.getElementById("c-decoracao").selectedOptions).map(option => option.value);
       const outros = Array.from(document.getElementById("c-outros").selectedOptions).map(option => option.value);
-      
-      // Combinar todos os itens adicionais
       const itensAdicionais = [...porcelanas, ...bolos, ...decoracao, ...outros];
 
       if(!nome || !cpf || !dataFesta || !local) {
@@ -2187,19 +2560,6 @@
       });
     };
 
-    window.removerTema = function(index) {
-      if(confirm("Remover este item do catálogo?")) {
-        CloudDB.buscar("estoque", [], (temas) => {
-          const listaLimpa = Object.keys(temas).map(k => temas[k]);
-          listaLimpa.splice(index, 1);
-          CloudDB.salvar("estoque", listaLimpa, () => { 
-            renderizarTemas(); 
-            alimentarSeletoresMontagemEstoque();
-          });
-        });
-      }
-    };
-
     // ============================================================
     // SUGESTÕES DE TEMA
     // ============================================================
@@ -2702,14 +3062,24 @@
     });
 
     function inicializarSistema() {
-      renderizarPontos();
-      renderizarReservas();
-      renderizarTemas();
-      renderizarOrcamentosInternos();
-      alimentarSeletoresMontagemEstoque();
-      sincronizarReservasComPlanilhas(() => {
-        preencherPlanilhaMes(seletorMes.value);
-        renderizarGraficoAnual();
+      console.log('🚀 Inicializando sistema...');
+      
+      carregarCategorias(() => {
+        iniciarListenerCategorias();
+        
+        renderizarPontos();
+        renderizarReservas();
+        renderizarTemas();
+        renderizarOrcamentosInternos();
+        alimentarSeletoresMontagemEstoque();
+        
+        sincronizarReservasComPlanilhas(() => {
+          preencherPlanilhaMes(seletorMes.value);
+          renderizarGraficoAnual();
+        });
+        
+        atualizarInterfaceCategorias();
+        console.log('✅ Sistema inicializado com sucesso!');
       });
     }
   </script>
