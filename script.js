@@ -29,11 +29,108 @@ var State = {
   kitAtual: "", 
   carregando: true, 
   usuarioLogadoEmail: "",
-  // ============================================================
-  // NOVO: CONTROLE DE ESTADO PARA EVITAR DUPLOS CLIQUE
-  // ============================================================
   salvandoPeca: false,
   removendoPeca: false
+};
+
+// ============================================================
+// TELINHA DE CARREGAMENTO (OVERLAY)
+// ============================================================
+
+var LoadingOverlay = {
+  criar: function() {
+    if (document.getElementById('loading-overlay')) return;
+    
+    var overlay = document.createElement('div');
+    overlay.id = 'loading-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+      backdrop-filter: blur(4px);
+    `;
+    
+    overlay.innerHTML = `
+      <div style="
+        background: white;
+        padding: 40px 50px;
+        border-radius: 16px;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        max-width: 400px;
+        animation: fadeInScale 0.3s ease;
+      ">
+        <div style="font-size: 48px; margin-bottom: 15px;">⏳</div>
+        <div style="font-size: 20px; font-weight: 600; color: #2d3436; margin-bottom: 8px;" id="loading-message">
+          Salvando...
+        </div>
+        <div style="font-size: 14px; color: #636e72;" id="loading-submessage">
+          Aguarde um momento
+        </div>
+        <div style="margin-top: 20px;">
+          <div style="
+            width: 100%;
+            height: 4px;
+            background: #f0f0f0;
+            border-radius: 2px;
+            overflow: hidden;
+          ">
+            <div style="
+              width: 0%;
+              height: 100%;
+              background: #a3536a;
+              border-radius: 2px;
+              animation: loadingBar 1.5s ease-in-out infinite;
+            "></div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    var style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeInScale {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      @keyframes loadingBar {
+        0% { width: 0%; }
+        50% { width: 70%; }
+        100% { width: 100%; }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(overlay);
+  },
+  
+  mostrar: function(mensagem, submensagem) {
+    this.criar();
+    var overlay = document.getElementById('loading-overlay');
+    if (!overlay) return;
+    
+    var msgEl = document.getElementById('loading-message');
+    var subMsgEl = document.getElementById('loading-submessage');
+    
+    if (msgEl) msgEl.textContent = mensagem || 'Salvando...';
+    if (subMsgEl) subMsgEl.textContent = submensagem || 'Aguarde um momento';
+    
+    overlay.style.display = 'flex';
+  },
+  
+  esconder: function() {
+    var overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+    }
+  }
 };
 
 var Utils = {
@@ -42,7 +139,6 @@ var Utils = {
     var container = document.getElementById('toast-container');
     if (!container) { 
       console.log(type + ": " + message); 
-      // Fallback: alert se for erro
       if (type === 'error') {
         alert('❌ ' + message);
       }
@@ -102,17 +198,9 @@ var Database = {
     }
   },
   listen: function() {
-    // ============================================================
-    // OTIMIZAÇÃO: Usar child_added, child_changed, child_removed para
-    // atualizações incrementais em vez de recarregar tudo
-    // ============================================================
-    
-    // Manter o listener completo para compatibilidade, mas otimizado
-    var estoqueRef = State.db.ref('estoque');
-    
-    // Listener principal - agora com debounce para evitar múltiplas renderizações
     var timeoutRender = null;
-    estoqueRef.on('value', function(snap) {
+    
+    State.db.ref('estoque').on('value', function(snap) {
       var val = snap.val();
       if (val) {
         if (Array.isArray(val)) {
@@ -136,11 +224,9 @@ var Database = {
         }
       }
       
-      // ============================================================
-      // OTIMIZAÇÃO: Debounce para evitar múltiplas renderizações
-      // ============================================================
       clearTimeout(timeoutRender);
       timeoutRender = setTimeout(function() {
+        console.log("🔄 Renderizando catálogo com " + Object.keys(State.estoque).length + " temas");
         UI.renderReservas();
         UI.renderCatalogo();
         
@@ -148,7 +234,7 @@ var Database = {
         if (inputBuscaTemaFicha && inputBuscaTemaFicha.value.trim()) {
           UI.renderSuggestions(inputBuscaTemaFicha.value);
         }
-      }, 100); // Espera 100ms para agrupar múltiplas mudanças
+      }, 200);
     });
 
     State.db.ref('historico').on('value', function(snap) { 
@@ -223,9 +309,6 @@ var Database = {
         });
       }
       
-      // ============================================================
-      // OTIMIZAÇÃO: Debounce para categorias também
-      // ============================================================
       clearTimeout(timeoutCategorias);
       timeoutCategorias = setTimeout(function() {
         console.log("🔄 Categorias atualizadas:", categorias.length);
@@ -236,24 +319,20 @@ var Database = {
     });
   },
   
-  // ============================================================
-  // NOVO: SALVAR PEÇA COM FEEDBACK OTIMISTA
-  // ============================================================
   salvarPecaNuvem: function(dadosPeca) {
     if (!State.db) {
       Utils.showToast("🚨 Sem conexão com Firebase", "error");
       return Promise.reject("Sem conexão");
     }
     
-    // Prevenir múltiplos cliques
     if (State.salvandoPeca) {
-      Utils.showToast("⏳ Aguarde, salvando...", "info");
+      Utils.showToast("⏳ Salvando, aguarde...", "info");
       return Promise.reject("Já está salvando");
     }
     
     State.salvandoPeca = true;
     
-    console.log("📤 Salvando peça no Firebase:", dadosPeca);
+    console.log("📤 Salvando peça no Firebase:", dadosPeca.nome);
     
     var novoRef = State.db.ref('estoque').push();
     return novoRef.set(dadosPeca)
@@ -271,9 +350,6 @@ var Database = {
       });
   },
   
-  // ============================================================
-  // NOVO: REMOVER PEÇA COM FEEDBACK OTIMISTA
-  // ============================================================
   excluirPecaNuvem: function(idPeca) {
     if (!State.db) {
       Utils.showToast("🚨 Sem conexão com Firebase", "error");
@@ -281,7 +357,7 @@ var Database = {
     }
     
     if (State.removendoPeca) {
-      Utils.showToast("⏳ Aguarde, removendo...", "info");
+      Utils.showToast("⏳ Removendo, aguarde...", "info");
       return Promise.reject("Já está removendo");
     }
     
@@ -460,9 +536,17 @@ var Database = {
   },
   excluirTemaNuvem: function(nomeTema) {
     if(!State.db) return;
-    State.db.ref("estoque/" + nomeTema).remove()
-    .then(function() { Utils.showToast("Tema deletado do estoque.", "success"); })
-    .catch(function() { Utils.showToast("Erro ao deletar tema.", "error"); });
+    return State.db.ref("estoque/" + nomeTema).remove()
+    .then(function() { 
+      Utils.showToast("✅ Tema deletado do estoque.", "success");
+      console.log("✅ Tema removido:", nomeTema);
+      return true;
+    })
+    .catch(function(error) { 
+      console.error("❌ Erro ao deletar tema:", error);
+      Utils.showToast("❌ Erro ao deletar tema.", "error");
+      return false;
+    });
   },
   salvarOrcamentoNuvem: function(dadosOrcamento) {
     if(!State.db) return Utils.showToast("🚨 Sem conexão com Firebase", "error");
@@ -532,20 +616,17 @@ var UI = {
     }
 
     // ============================================================
-    // CORREÇÃO: BOTÃO "SALVAR PEÇA NO ACERVO" COM FEEDBACK OTIMISTA
+    // BOTÃO "SALVAR PEÇA NO ACERVO" COM TELINHA DE CARREGAMENTO
     // ============================================================
     var btnAdicionarPeca = document.getElementById("btn-adicionar-peca");
     if (btnAdicionarPeca) {
       btnAdicionarPeca.onclick = function(e) {
         e.preventDefault();
         
-        // Prevenir múltiplos cliques
         if (State.salvandoPeca) {
           Utils.showToast("⏳ Salvando, aguarde...", "info");
           return;
         }
-        
-        console.time("⏱️ salvarPeca");
         
         var nome = document.getElementById("catalogo-peca-nome").value.trim();
         var qtd = parseInt(document.getElementById("catalogo-peca-qtd").value) || 0;
@@ -553,19 +634,17 @@ var UI = {
         var modelo = document.getElementById("catalogo-peca-modelo").value.trim();
         var fileInput = document.getElementById("catalogo-peca-imagem");
         
-        console.log("📝 Dados da peça:", { nome, qtd, categoria, modelo });
-        
         if(!nome) {
           Utils.showToast("Preencha o nome do Item/Tema!", "warning");
-          console.timeEnd("⏱️ salvarPeca");
           return;
         }
 
-        // Feedback visual imediato
-        var textoOriginal = btnAdicionarPeca.innerHTML;
-        btnAdicionarPeca.innerHTML = "⏳ Salvando...";
-        btnAdicionarPeca.disabled = true;
-        btnAdicionarPeca.style.opacity = "0.7";
+        LoadingOverlay.mostrar(
+          '🔄 Salvando Peça...',
+          'Tema: ' + nome
+        );
+        
+        State.salvandoPeca = true;
 
         var processarSalvar = function(imgUrl) {
           var dadosPeca = {
@@ -577,42 +656,28 @@ var UI = {
             criadoEm: Date.now()
           };
           
-          console.time("⏱️ firebaseSalvar");
-          
           Database.salvarPecaNuvem(dadosPeca).then(function(sucesso) {
-            console.timeEnd("⏱️ firebaseSalvar");
-            
-            // Restaurar botão
-            btnAdicionarPeca.innerHTML = textoOriginal;
-            btnAdicionarPeca.disabled = false;
-            btnAdicionarPeca.style.opacity = "1";
+            LoadingOverlay.esconder();
+            State.salvandoPeca = false;
             
             if (sucesso) {
-              // Limpar campos após salvar (otimista - já vai atualizar)
               document.getElementById("catalogo-peca-nome").value = "";
               document.getElementById("catalogo-peca-qtd").value = "1";
               document.getElementById("catalogo-peca-modelo").value = "";
               document.getElementById("catalogo-peca-imagem").value = "";
-              
-              console.timeEnd("⏱️ salvarPeca");
             }
           }).catch(function() {
-            btnAdicionarPeca.innerHTML = textoOriginal;
-            btnAdicionarPeca.disabled = false;
-            btnAdicionarPeca.style.opacity = "1";
-            console.timeEnd("⏱️ salvarPeca");
+            LoadingOverlay.esconder();
+            State.salvandoPeca = false;
           });
         };
 
         if (fileInput && fileInput.files && fileInput.files[0]) {
-          console.time("⏱️ processarImagem");
           var reader = new FileReader();
           reader.onload = function(e) {
-            console.timeEnd("⏱️ processarImagem");
             processarSalvar(e.target.result);
           };
           reader.onerror = function() {
-            console.timeEnd("⏱️ processarImagem");
             Utils.showToast("Erro ao ler imagem. Salvando sem foto.", "warning");
             processarSalvar("https://placehold.co/100x100?text=Sem+Foto");
           };
@@ -621,11 +686,11 @@ var UI = {
           processarSalvar("https://placehold.co/100x100?text=Sem+Foto");
         }
       };
-      console.log("✅ Botão Salvar Peça configurado com feedback otimista!");
+      console.log("✅ Botão Salvar Peça configurado com telinha de carregamento!");
     }
 
     // ============================================================
-    // BOTÃO ADICIONAR CATEGORIA
+    // BOTÃO ADICIONAR CATEGORIA COM TELINHA
     // ============================================================
     var btnAdicionarCategoria = document.getElementById("btn-adicionar-categoria");
     if (btnAdicionarCategoria) {
@@ -634,17 +699,17 @@ var UI = {
         var input = document.getElementById("input-nova-categoria");
         var nome = input.value.trim();
         if (nome) {
-          btnAdicionarCategoria.innerHTML = "⏳ Salvando...";
-          btnAdicionarCategoria.disabled = true;
+          LoadingOverlay.mostrar(
+            '🔄 Adicionando Categoria...',
+            'Categoria: ' + nome
+          );
           
           window.adicionarCategoria(nome).then(function() {
+            LoadingOverlay.esconder();
             input.value = "";
             input.focus();
-            btnAdicionarCategoria.innerHTML = "➕ Adicionar";
-            btnAdicionarCategoria.disabled = false;
           }).catch(function() {
-            btnAdicionarCategoria.innerHTML = "➕ Adicionar";
-            btnAdicionarCategoria.disabled = false;
+            LoadingOverlay.esconder();
           });
         } else {
           Utils.showToast("Digite um nome para a categoria!", "warning");
@@ -671,15 +736,15 @@ var UI = {
         var select = document.getElementById("select-remover-categoria");
         var categoria = select.value;
         if (categoria) {
-          btnRemoverCategoria.innerHTML = "⏳ Removendo...";
-          btnRemoverCategoria.disabled = true;
+          LoadingOverlay.mostrar(
+            '🔄 Removendo Categoria...',
+            'Categoria: ' + categoria
+          );
           
           window.removerCategoria(categoria).then(function() {
-            btnRemoverCategoria.innerHTML = "🗑️ Remover";
-            btnRemoverCategoria.disabled = false;
+            LoadingOverlay.esconder();
           }).catch(function() {
-            btnRemoverCategoria.innerHTML = "🗑️ Remover";
-            btnRemoverCategoria.disabled = false;
+            LoadingOverlay.esconder();
           });
         } else {
           Utils.showToast("Selecione uma categoria para remover!", "warning");
@@ -688,7 +753,7 @@ var UI = {
     }
 
     // ============================================================
-    // BOTÃO REMOVER TEMA
+    // BOTÃO REMOVER TEMA COM TELINHA
     // ============================================================
     var btnRemoverTema = document.getElementById("btn-remover-tema-admin");
     if (btnRemoverTema) {
@@ -705,19 +770,19 @@ var UI = {
         
         var temaNome = Object.keys(State.estoque)[index];
         if (confirm("Deseja realmente remover o tema \"" + temaNome + "\"?")) {
-          btnRemoverTema.innerHTML = "⏳ Removendo...";
-          btnRemoverTema.disabled = true;
+          LoadingOverlay.mostrar(
+            '🔄 Removendo Tema...',
+            'Tema: ' + temaNome
+          );
           
           Database.excluirTemaNuvem(temaNome).then(function() {
-            btnRemoverTema.innerHTML = "🗑️ Remover Tema Selecionado";
-            btnRemoverTema.disabled = false;
+            LoadingOverlay.esconder();
             if (infoDiv) {
               infoDiv.innerHTML = `<span style="color:var(--success);">✅ Tema removido com sucesso!</span>`;
               setTimeout(function() { infoDiv.innerHTML = ''; }, 3000);
             }
           }).catch(function() {
-            btnRemoverTema.innerHTML = "🗑️ Remover Tema Selecionado";
-            btnRemoverTema.disabled = false;
+            LoadingOverlay.esconder();
           });
         }
       };
@@ -831,13 +896,9 @@ var UI = {
     }
   },
 
-  // ============================================================
-  // NOVO: ATUALIZAR SELETORES DE CATEGORIA
-  // ============================================================
   atualizarSeletoresCategoria: function(categorias) {
     if (!categorias) categorias = [];
     
-    // Atualizar select do formulário de adicionar peça
     var selectCat = document.getElementById("catalogo-peca-categoria");
     if (selectCat) {
       var valorAtual = selectCat.value;
@@ -853,7 +914,6 @@ var UI = {
       }
     }
     
-    // Atualizar select de remover categoria
     var selectRemover = document.getElementById("select-remover-categoria");
     if (selectRemover) {
       var valorAtual = selectRemover.value;
@@ -869,7 +929,6 @@ var UI = {
       }
     }
     
-    // Atualizar lista visual de categorias
     var container = document.getElementById("lista-categorias-admin");
     if (container) {
       container.innerHTML = '';
@@ -884,7 +943,6 @@ var UI = {
       });
     }
     
-    // Atualizar contador
     var contador = document.getElementById("contador-categorias");
     if (contador) {
       contador.textContent = categorias.length;
