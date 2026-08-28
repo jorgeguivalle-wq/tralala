@@ -28,14 +28,26 @@ var State = {
   temaAtual: "", 
   kitAtual: "", 
   carregando: true, 
-  usuarioLogadoEmail: "" 
+  usuarioLogadoEmail: "",
+  // ============================================================
+  // NOVO: CONTROLE DE ESTADO PARA EVITAR DUPLOS CLIQUE
+  // ============================================================
+  salvandoPeca: false,
+  removendoPeca: false
 };
 
 var Utils = {
   showToast: function(message, type) {
     if (!type) type = 'info';
     var container = document.getElementById('toast-container');
-    if (!container) { console.log(type + ": " + message); return; }
+    if (!container) { 
+      console.log(type + ": " + message); 
+      // Fallback: alert se for erro
+      if (type === 'error') {
+        alert('❌ ' + message);
+      }
+      return; 
+    }
     var toast = document.createElement('div');
     var icone = type === 'success' ? '✅' : (type === 'error' ? '🚨' : '⚠️');
     toast.className = "toast toast-" + type;
@@ -84,14 +96,23 @@ var Database = {
       }
       State.db = firebase.database();
       this.listen();
-      // Iniciar listener de categorias
       this.listenCategorias();
     } else {
       Utils.showToast("🚨 Erro de conexão: Biblioteca do Firebase não carregou.", "error");
     }
   },
   listen: function() {
-    State.db.ref('estoque').on('value', function(snap) {
+    // ============================================================
+    // OTIMIZAÇÃO: Usar child_added, child_changed, child_removed para
+    // atualizações incrementais em vez de recarregar tudo
+    // ============================================================
+    
+    // Manter o listener completo para compatibilidade, mas otimizado
+    var estoqueRef = State.db.ref('estoque');
+    
+    // Listener principal - agora com debounce para evitar múltiplas renderizações
+    var timeoutRender = null;
+    estoqueRef.on('value', function(snap) {
       var val = snap.val();
       if (val) {
         if (Array.isArray(val)) {
@@ -114,13 +135,20 @@ var Database = {
           }
         }
       }
-      UI.renderReservas();
-      UI.renderCatalogo();
       
-      var inputBuscaTemaFicha = document.getElementById("busca-tema-input") || document.getElementById("busca-tema");
-      if (inputBuscaTemaFicha && inputBuscaTemaFicha.value.trim()) {
-        UI.renderSuggestions(inputBuscaTemaFicha.value);
-      }
+      // ============================================================
+      // OTIMIZAÇÃO: Debounce para evitar múltiplas renderizações
+      // ============================================================
+      clearTimeout(timeoutRender);
+      timeoutRender = setTimeout(function() {
+        UI.renderReservas();
+        UI.renderCatalogo();
+        
+        var inputBuscaTemaFicha = document.getElementById("busca-tema-input") || document.getElementById("busca-tema");
+        if (inputBuscaTemaFicha && inputBuscaTemaFicha.value.trim()) {
+          UI.renderSuggestions(inputBuscaTemaFicha.value);
+        }
+      }, 100); // Espera 100ms para agrupar múltiplas mudanças
     });
 
     State.db.ref('historico').on('value', function(snap) { 
@@ -176,14 +204,13 @@ var Database = {
       UI.renderOrcamentos();
     });
   },
-  // ============================================================
-  // NOVO: LISTENER PARA CATEGORIAS EM TEMPO REAL
-  // ============================================================
+  
   listenCategorias: function() {
     if (!State.db) return;
     
     console.log("🔌 Listener de categorias iniciado...");
     
+    var timeoutCategorias = null;
     State.db.ref('categorias').on('value', function(snapshot) {
       var data = snapshot.val();
       var categorias = [];
@@ -196,66 +223,21 @@ var Database = {
         });
       }
       
-      console.log("🔄 Categorias atualizadas em tempo real:", categorias);
-      
-      // Atualizar o select de categorias no formulário de adicionar peça
-      var selectCat = document.getElementById("catalogo-peca-categoria");
-      if (selectCat) {
-        var valorAtual = selectCat.value;
-        selectCat.innerHTML = '';
-        categorias.forEach(function(cat) {
-          var opt = document.createElement("option");
-          opt.value = cat;
-          opt.textContent = cat;
-          selectCat.appendChild(opt);
-        });
-        if (categorias.includes(valorAtual)) {
-          selectCat.value = valorAtual;
-        }
-      }
-      
-      // Atualizar select de remover categoria
-      var selectRemover = document.getElementById("select-remover-categoria");
-      if (selectRemover) {
-        var valorAtual = selectRemover.value;
-        selectRemover.innerHTML = '<option value="">Selecione...</option>';
-        categorias.forEach(function(cat) {
-          var opt = document.createElement("option");
-          opt.value = cat;
-          opt.textContent = cat;
-          selectRemover.appendChild(opt);
-        });
-        if (categorias.includes(valorAtual)) {
-          selectRemover.value = valorAtual;
-        }
-      }
-      
-      // Atualizar lista visual de categorias
-      var container = document.getElementById("lista-categorias-admin");
-      if (container) {
-        container.innerHTML = '';
-        categorias.forEach(function(cat) {
-          var div = document.createElement("div");
-          div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:#f8f0f2; border-radius:6px; border:1px solid #e1cbd4;";
-          div.innerHTML = `
-            <span style="font-size:13px;">📁 ${cat}</span>
-            <button onclick="window.removerCategoria('${cat}')" class="btn btn-danger" style="padding:2px 8px; font-size:10px; width:auto; margin-left:6px;">✕</button>
-          `;
-          container.appendChild(div);
-        });
-      }
-      
-      // Atualizar contador
-      var contador = document.getElementById("contador-categorias");
-      if (contador) {
-        contador.textContent = categorias.length;
-      }
+      // ============================================================
+      // OTIMIZAÇÃO: Debounce para categorias também
+      // ============================================================
+      clearTimeout(timeoutCategorias);
+      timeoutCategorias = setTimeout(function() {
+        console.log("🔄 Categorias atualizadas:", categorias.length);
+        UI.atualizarSeletoresCategoria(categorias);
+      }, 50);
     }, function(error) {
       console.error("❌ Erro no listener de categorias:", error);
     });
   },
+  
   // ============================================================
-  // NOVO: FUNÇÃO PARA ADICIONAR PEÇA
+  // NOVO: SALVAR PEÇA COM FEEDBACK OTIMISTA
   // ============================================================
   salvarPecaNuvem: function(dadosPeca) {
     if (!State.db) {
@@ -263,24 +245,63 @@ var Database = {
       return Promise.reject("Sem conexão");
     }
     
+    // Prevenir múltiplos cliques
+    if (State.salvandoPeca) {
+      Utils.showToast("⏳ Aguarde, salvando...", "info");
+      return Promise.reject("Já está salvando");
+    }
+    
+    State.salvandoPeca = true;
+    
     console.log("📤 Salvando peça no Firebase:", dadosPeca);
     
     var novoRef = State.db.ref('estoque').push();
     return novoRef.set(dadosPeca)
       .then(function() {
-        Utils.showToast("Peça salva com sucesso!", "success");
+        State.salvandoPeca = false;
+        Utils.showToast("✅ Peça salva com sucesso!", "success");
         console.log("✅ Peça salva com sucesso!");
         return true;
       })
       .catch(function(error) {
+        State.salvandoPeca = false;
         console.error("❌ Erro ao salvar peça:", error);
-        Utils.showToast("Erro ao salvar peça.", "error");
+        Utils.showToast("❌ Erro ao salvar peça: " + error.message, "error");
         return false;
       });
   },
+  
   // ============================================================
-  // NOVO: FUNÇÃO PARA ADICIONAR CATEGORIA
+  // NOVO: REMOVER PEÇA COM FEEDBACK OTIMISTA
   // ============================================================
+  excluirPecaNuvem: function(idPeca) {
+    if (!State.db) {
+      Utils.showToast("🚨 Sem conexão com Firebase", "error");
+      return Promise.reject("Sem conexão");
+    }
+    
+    if (State.removendoPeca) {
+      Utils.showToast("⏳ Aguarde, removendo...", "info");
+      return Promise.reject("Já está removendo");
+    }
+    
+    State.removendoPeca = true;
+    
+    return State.db.ref("estoque/" + idPeca).remove()
+      .then(function() {
+        State.removendoPeca = false;
+        Utils.showToast("✅ Peça removida com sucesso!", "success");
+        console.log("✅ Peça removida com sucesso!");
+        return true;
+      })
+      .catch(function(error) {
+        State.removendoPeca = false;
+        console.error("❌ Erro ao remover peça:", error);
+        Utils.showToast("❌ Erro ao remover peça: " + error.message, "error");
+        return false;
+      });
+  },
+  
   salvarCategoriaNuvem: function(nome) {
     if (!State.db) {
       Utils.showToast("🚨 Sem conexão com Firebase", "error");
@@ -293,7 +314,6 @@ var Database = {
       return Promise.reject("Nome vazio");
     }
     
-    // Verificar se já existe
     return State.db.ref('categorias').once('value').then(function(snapshot) {
       var data = snapshot.val();
       var existe = false;
@@ -310,19 +330,16 @@ var Database = {
         return Promise.reject("Categoria já existe");
       }
       
-      // Adicionar nova categoria
       var novaRef = State.db.ref('categorias').push();
       return novaRef.set({ nome: nome, criadoEm: Date.now() })
         .then(function() {
-          Utils.showToast("Categoria \"" + nome + "\" adicionada!", "success");
+          Utils.showToast("✅ Categoria \"" + nome + "\" adicionada!", "success");
           console.log("✅ Categoria adicionada:", nome);
           return true;
         });
     });
   },
-  // ============================================================
-  // NOVO: FUNÇÃO PARA REMOVER CATEGORIA
-  // ============================================================
+  
   removerCategoriaNuvem: function(nome) {
     if (!State.db) {
       Utils.showToast("🚨 Sem conexão com Firebase", "error");
@@ -334,7 +351,6 @@ var Database = {
       return Promise.reject("Nome vazio");
     }
     
-    // Verificar se existem temas com esta categoria
     return State.db.ref('estoque').once('value').then(function(snapshot) {
       var data = snapshot.val();
       var temasVinculados = [];
@@ -358,7 +374,6 @@ var Database = {
         return Promise.reject("Cancelado pelo usuário");
       }
       
-      // Encontrar e remover a categoria
       return State.db.ref('categorias').once('value').then(function(snapshot) {
         var data = snapshot.val();
         var chaveRemover = null;
@@ -373,7 +388,7 @@ var Database = {
         if (chaveRemover) {
           return State.db.ref('categorias/' + chaveRemover).remove()
             .then(function() {
-              Utils.showToast("Categoria \"" + nome + "\" removida!", "success");
+              Utils.showToast("✅ Categoria \"" + nome + "\" removida!", "success");
               console.log("✅ Categoria removida:", nome);
               return true;
             });
@@ -384,6 +399,7 @@ var Database = {
       });
     });
   },
+  
   listenPontoUsuario: function() {
     if (!State.db || !State.usuarioLogadoEmail) return;
     var chaveUsuario = State.usuarioLogadoEmail.replace(/[.#$[\]]/g, "_");
@@ -475,7 +491,7 @@ var Database = {
 };
 
 // ============================================================
-// FUNÇÕES GLOBAIS PARA CATEGORIAS (acessíveis pelo HTML)
+// FUNÇÕES GLOBAIS PARA CATEGORIAS
 // ============================================================
 
 window.adicionarCategoria = function(nome) {
@@ -516,13 +532,20 @@ var UI = {
     }
 
     // ============================================================
-    // CORREÇÃO: BOTÃO "SALVAR PEÇA NO ACERVO"
+    // CORREÇÃO: BOTÃO "SALVAR PEÇA NO ACERVO" COM FEEDBACK OTIMISTA
     // ============================================================
     var btnAdicionarPeca = document.getElementById("btn-adicionar-peca");
     if (btnAdicionarPeca) {
       btnAdicionarPeca.onclick = function(e) {
         e.preventDefault();
-        console.log("🔧 Botão Salvar Peça clicado!");
+        
+        // Prevenir múltiplos cliques
+        if (State.salvandoPeca) {
+          Utils.showToast("⏳ Salvando, aguarde...", "info");
+          return;
+        }
+        
+        console.time("⏱️ salvarPeca");
         
         var nome = document.getElementById("catalogo-peca-nome").value.trim();
         var qtd = parseInt(document.getElementById("catalogo-peca-qtd").value) || 0;
@@ -534,8 +557,15 @@ var UI = {
         
         if(!nome) {
           Utils.showToast("Preencha o nome do Item/Tema!", "warning");
+          console.timeEnd("⏱️ salvarPeca");
           return;
         }
+
+        // Feedback visual imediato
+        var textoOriginal = btnAdicionarPeca.innerHTML;
+        btnAdicionarPeca.innerHTML = "⏳ Salvando...";
+        btnAdicionarPeca.disabled = true;
+        btnAdicionarPeca.style.opacity = "0.7";
 
         var processarSalvar = function(imgUrl) {
           var dadosPeca = {
@@ -547,28 +577,42 @@ var UI = {
             criadoEm: Date.now()
           };
           
-          console.log("📦 Salvando:", dadosPeca);
+          console.time("⏱️ firebaseSalvar");
           
           Database.salvarPecaNuvem(dadosPeca).then(function(sucesso) {
+            console.timeEnd("⏱️ firebaseSalvar");
+            
+            // Restaurar botão
+            btnAdicionarPeca.innerHTML = textoOriginal;
+            btnAdicionarPeca.disabled = false;
+            btnAdicionarPeca.style.opacity = "1";
+            
             if (sucesso) {
-              // Limpar campos após salvar
+              // Limpar campos após salvar (otimista - já vai atualizar)
               document.getElementById("catalogo-peca-nome").value = "";
               document.getElementById("catalogo-peca-qtd").value = "1";
               document.getElementById("catalogo-peca-modelo").value = "";
               document.getElementById("catalogo-peca-imagem").value = "";
               
-              // O listener do Firebase vai atualizar automaticamente
-              console.log("✅ Peça salva, aguardando atualização automática...");
+              console.timeEnd("⏱️ salvarPeca");
             }
+          }).catch(function() {
+            btnAdicionarPeca.innerHTML = textoOriginal;
+            btnAdicionarPeca.disabled = false;
+            btnAdicionarPeca.style.opacity = "1";
+            console.timeEnd("⏱️ salvarPeca");
           });
         };
 
         if (fileInput && fileInput.files && fileInput.files[0]) {
+          console.time("⏱️ processarImagem");
           var reader = new FileReader();
           reader.onload = function(e) {
+            console.timeEnd("⏱️ processarImagem");
             processarSalvar(e.target.result);
           };
           reader.onerror = function() {
+            console.timeEnd("⏱️ processarImagem");
             Utils.showToast("Erro ao ler imagem. Salvando sem foto.", "warning");
             processarSalvar("https://placehold.co/100x100?text=Sem+Foto");
           };
@@ -577,11 +621,11 @@ var UI = {
           processarSalvar("https://placehold.co/100x100?text=Sem+Foto");
         }
       };
-      console.log("✅ Botão Salvar Peça configurado!");
+      console.log("✅ Botão Salvar Peça configurado com feedback otimista!");
     }
 
     // ============================================================
-    // CORREÇÃO: BOTÃO ADICIONAR CATEGORIA
+    // BOTÃO ADICIONAR CATEGORIA
     // ============================================================
     var btnAdicionarCategoria = document.getElementById("btn-adicionar-categoria");
     if (btnAdicionarCategoria) {
@@ -590,18 +634,23 @@ var UI = {
         var input = document.getElementById("input-nova-categoria");
         var nome = input.value.trim();
         if (nome) {
+          btnAdicionarCategoria.innerHTML = "⏳ Salvando...";
+          btnAdicionarCategoria.disabled = true;
+          
           window.adicionarCategoria(nome).then(function() {
             input.value = "";
             input.focus();
+            btnAdicionarCategoria.innerHTML = "➕ Adicionar";
+            btnAdicionarCategoria.disabled = false;
           }).catch(function() {
-            // Erro já tratado pelo Toast
+            btnAdicionarCategoria.innerHTML = "➕ Adicionar";
+            btnAdicionarCategoria.disabled = false;
           });
         } else {
           Utils.showToast("Digite um nome para a categoria!", "warning");
         }
       };
       
-      // Permitir Enter no campo
       var inputCategoria = document.getElementById("input-nova-categoria");
       if (inputCategoria) {
         inputCategoria.onkeypress = function(e) {
@@ -613,7 +662,7 @@ var UI = {
     }
 
     // ============================================================
-    // CORREÇÃO: BOTÃO REMOVER CATEGORIA
+    // BOTÃO REMOVER CATEGORIA
     // ============================================================
     var btnRemoverCategoria = document.getElementById("btn-remover-categoria");
     if (btnRemoverCategoria) {
@@ -622,7 +671,16 @@ var UI = {
         var select = document.getElementById("select-remover-categoria");
         var categoria = select.value;
         if (categoria) {
-          window.removerCategoria(categoria);
+          btnRemoverCategoria.innerHTML = "⏳ Removendo...";
+          btnRemoverCategoria.disabled = true;
+          
+          window.removerCategoria(categoria).then(function() {
+            btnRemoverCategoria.innerHTML = "🗑️ Remover";
+            btnRemoverCategoria.disabled = false;
+          }).catch(function() {
+            btnRemoverCategoria.innerHTML = "🗑️ Remover";
+            btnRemoverCategoria.disabled = false;
+          });
         } else {
           Utils.showToast("Selecione uma categoria para remover!", "warning");
         }
@@ -630,7 +688,7 @@ var UI = {
     }
 
     // ============================================================
-    // CORREÇÃO: BOTÃO REMOVER TEMA
+    // BOTÃO REMOVER TEMA
     // ============================================================
     var btnRemoverTema = document.getElementById("btn-remover-tema-admin");
     if (btnRemoverTema) {
@@ -647,11 +705,20 @@ var UI = {
         
         var temaNome = Object.keys(State.estoque)[index];
         if (confirm("Deseja realmente remover o tema \"" + temaNome + "\"?")) {
-          Database.excluirTemaNuvem(temaNome);
-          if (infoDiv) {
-            infoDiv.innerHTML = `<span style="color:var(--success);">✅ Tema removido com sucesso!</span>`;
-            setTimeout(function() { infoDiv.innerHTML = ''; }, 3000);
-          }
+          btnRemoverTema.innerHTML = "⏳ Removendo...";
+          btnRemoverTema.disabled = true;
+          
+          Database.excluirTemaNuvem(temaNome).then(function() {
+            btnRemoverTema.innerHTML = "🗑️ Remover Tema Selecionado";
+            btnRemoverTema.disabled = false;
+            if (infoDiv) {
+              infoDiv.innerHTML = `<span style="color:var(--success);">✅ Tema removido com sucesso!</span>`;
+              setTimeout(function() { infoDiv.innerHTML = ''; }, 3000);
+            }
+          }).catch(function() {
+            btnRemoverTema.innerHTML = "🗑️ Remover Tema Selecionado";
+            btnRemoverTema.disabled = false;
+          });
         }
       };
     }
@@ -761,6 +828,66 @@ var UI = {
         State.temaAtual = e.target.value.trim();
         self.renderSuggestions(e.target.value);
       };
+    }
+  },
+
+  // ============================================================
+  // NOVO: ATUALIZAR SELETORES DE CATEGORIA
+  // ============================================================
+  atualizarSeletoresCategoria: function(categorias) {
+    if (!categorias) categorias = [];
+    
+    // Atualizar select do formulário de adicionar peça
+    var selectCat = document.getElementById("catalogo-peca-categoria");
+    if (selectCat) {
+      var valorAtual = selectCat.value;
+      selectCat.innerHTML = '';
+      categorias.forEach(function(cat) {
+        var opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        selectCat.appendChild(opt);
+      });
+      if (categorias.includes(valorAtual)) {
+        selectCat.value = valorAtual;
+      }
+    }
+    
+    // Atualizar select de remover categoria
+    var selectRemover = document.getElementById("select-remover-categoria");
+    if (selectRemover) {
+      var valorAtual = selectRemover.value;
+      selectRemover.innerHTML = '<option value="">Selecione...</option>';
+      categorias.forEach(function(cat) {
+        var opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        selectRemover.appendChild(opt);
+      });
+      if (categorias.includes(valorAtual)) {
+        selectRemover.value = valorAtual;
+      }
+    }
+    
+    // Atualizar lista visual de categorias
+    var container = document.getElementById("lista-categorias-admin");
+    if (container) {
+      container.innerHTML = '';
+      categorias.forEach(function(cat) {
+        var div = document.createElement("div");
+        div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:#f8f0f2; border-radius:6px; border:1px solid #e1cbd4;";
+        div.innerHTML = `
+          <span style="font-size:13px;">📁 ${cat}</span>
+          <button onclick="window.removerCategoria('${cat}')" class="btn btn-danger" style="padding:2px 8px; font-size:10px; width:auto; margin-left:6px;">✕</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+    
+    // Atualizar contador
+    var contador = document.getElementById("contador-categorias");
+    if (contador) {
+      contador.textContent = categorias.length;
     }
   },
 
