@@ -84,6 +84,8 @@ var Database = {
       }
       State.db = firebase.database();
       this.listen();
+      // Iniciar listener de categorias
+      this.listenCategorias();
     } else {
       Utils.showToast("🚨 Erro de conexão: Biblioteca do Firebase não carregou.", "error");
     }
@@ -150,7 +152,7 @@ var Database = {
       }
       State.reservas = arr;
       UI.renderReservas();
-      UI.renderCatalogo(); // Atualiza o catálogo pois a disponibilidade de kits pode ter mudado
+      UI.renderCatalogo();
 
       var inputBuscaTemaFicha = document.getElementById("busca-tema-input") || document.getElementById("busca-tema");
       if (inputBuscaTemaFicha && inputBuscaTemaFicha.value.trim()) {
@@ -172,6 +174,214 @@ var Database = {
       }
       State.orcamentos = arr;
       UI.renderOrcamentos();
+    });
+  },
+  // ============================================================
+  // NOVO: LISTENER PARA CATEGORIAS EM TEMPO REAL
+  // ============================================================
+  listenCategorias: function() {
+    if (!State.db) return;
+    
+    console.log("🔌 Listener de categorias iniciado...");
+    
+    State.db.ref('categorias').on('value', function(snapshot) {
+      var data = snapshot.val();
+      var categorias = [];
+      
+      if (data && typeof data === 'object') {
+        Object.keys(data).forEach(function(key) {
+          if (data[key] && data[key].nome) {
+            categorias.push(data[key].nome);
+          }
+        });
+      }
+      
+      console.log("🔄 Categorias atualizadas em tempo real:", categorias);
+      
+      // Atualizar o select de categorias no formulário de adicionar peça
+      var selectCat = document.getElementById("catalogo-peca-categoria");
+      if (selectCat) {
+        var valorAtual = selectCat.value;
+        selectCat.innerHTML = '';
+        categorias.forEach(function(cat) {
+          var opt = document.createElement("option");
+          opt.value = cat;
+          opt.textContent = cat;
+          selectCat.appendChild(opt);
+        });
+        if (categorias.includes(valorAtual)) {
+          selectCat.value = valorAtual;
+        }
+      }
+      
+      // Atualizar select de remover categoria
+      var selectRemover = document.getElementById("select-remover-categoria");
+      if (selectRemover) {
+        var valorAtual = selectRemover.value;
+        selectRemover.innerHTML = '<option value="">Selecione...</option>';
+        categorias.forEach(function(cat) {
+          var opt = document.createElement("option");
+          opt.value = cat;
+          opt.textContent = cat;
+          selectRemover.appendChild(opt);
+        });
+        if (categorias.includes(valorAtual)) {
+          selectRemover.value = valorAtual;
+        }
+      }
+      
+      // Atualizar lista visual de categorias
+      var container = document.getElementById("lista-categorias-admin");
+      if (container) {
+        container.innerHTML = '';
+        categorias.forEach(function(cat) {
+          var div = document.createElement("div");
+          div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:#f8f0f2; border-radius:6px; border:1px solid #e1cbd4;";
+          div.innerHTML = `
+            <span style="font-size:13px;">📁 ${cat}</span>
+            <button onclick="window.removerCategoria('${cat}')" class="btn btn-danger" style="padding:2px 8px; font-size:10px; width:auto; margin-left:6px;">✕</button>
+          `;
+          container.appendChild(div);
+        });
+      }
+      
+      // Atualizar contador
+      var contador = document.getElementById("contador-categorias");
+      if (contador) {
+        contador.textContent = categorias.length;
+      }
+    }, function(error) {
+      console.error("❌ Erro no listener de categorias:", error);
+    });
+  },
+  // ============================================================
+  // NOVO: FUNÇÃO PARA ADICIONAR PEÇA
+  // ============================================================
+  salvarPecaNuvem: function(dadosPeca) {
+    if (!State.db) {
+      Utils.showToast("🚨 Sem conexão com Firebase", "error");
+      return Promise.reject("Sem conexão");
+    }
+    
+    console.log("📤 Salvando peça no Firebase:", dadosPeca);
+    
+    var novoRef = State.db.ref('estoque').push();
+    return novoRef.set(dadosPeca)
+      .then(function() {
+        Utils.showToast("Peça salva com sucesso!", "success");
+        console.log("✅ Peça salva com sucesso!");
+        return true;
+      })
+      .catch(function(error) {
+        console.error("❌ Erro ao salvar peça:", error);
+        Utils.showToast("Erro ao salvar peça.", "error");
+        return false;
+      });
+  },
+  // ============================================================
+  // NOVO: FUNÇÃO PARA ADICIONAR CATEGORIA
+  // ============================================================
+  salvarCategoriaNuvem: function(nome) {
+    if (!State.db) {
+      Utils.showToast("🚨 Sem conexão com Firebase", "error");
+      return Promise.reject("Sem conexão");
+    }
+    
+    nome = nome.trim();
+    if (!nome) {
+      Utils.showToast("Digite um nome para a categoria!", "warning");
+      return Promise.reject("Nome vazio");
+    }
+    
+    // Verificar se já existe
+    return State.db.ref('categorias').once('value').then(function(snapshot) {
+      var data = snapshot.val();
+      var existe = false;
+      if (data && typeof data === 'object') {
+        Object.keys(data).forEach(function(key) {
+          if (data[key] && data[key].nome && data[key].nome.toLowerCase() === nome.toLowerCase()) {
+            existe = true;
+          }
+        });
+      }
+      
+      if (existe) {
+        Utils.showToast("A categoria \"" + nome + "\" já existe!", "warning");
+        return Promise.reject("Categoria já existe");
+      }
+      
+      // Adicionar nova categoria
+      var novaRef = State.db.ref('categorias').push();
+      return novaRef.set({ nome: nome, criadoEm: Date.now() })
+        .then(function() {
+          Utils.showToast("Categoria \"" + nome + "\" adicionada!", "success");
+          console.log("✅ Categoria adicionada:", nome);
+          return true;
+        });
+    });
+  },
+  // ============================================================
+  // NOVO: FUNÇÃO PARA REMOVER CATEGORIA
+  // ============================================================
+  removerCategoriaNuvem: function(nome) {
+    if (!State.db) {
+      Utils.showToast("🚨 Sem conexão com Firebase", "error");
+      return Promise.reject("Sem conexão");
+    }
+    
+    if (!nome) {
+      Utils.showToast("Selecione uma categoria para remover!", "warning");
+      return Promise.reject("Nome vazio");
+    }
+    
+    // Verificar se existem temas com esta categoria
+    return State.db.ref('estoque').once('value').then(function(snapshot) {
+      var data = snapshot.val();
+      var temasVinculados = [];
+      
+      if (data && typeof data === 'object') {
+        Object.keys(data).forEach(function(key) {
+          var item = data[key];
+          if (item && item.categoria === nome) {
+            temasVinculados.push(item.nome || "Sem Nome");
+          }
+        });
+      }
+      
+      if (temasVinculados.length > 0) {
+        var msg = "⚠️ Não é possível remover a categoria \"" + nome + "\" pois ela possui " + temasVinculados.length + " tema(s) vinculado(s):\n\n" + temasVinculados.join('\n') + "\n\nRemova ou reassocie os temas primeiro.";
+        Utils.showToast(msg, "error");
+        return Promise.reject("Categoria possui temas vinculados");
+      }
+      
+      if (!confirm("Deseja realmente remover a categoria \"" + nome + "\"?")) {
+        return Promise.reject("Cancelado pelo usuário");
+      }
+      
+      // Encontrar e remover a categoria
+      return State.db.ref('categorias').once('value').then(function(snapshot) {
+        var data = snapshot.val();
+        var chaveRemover = null;
+        if (data && typeof data === 'object') {
+          Object.keys(data).forEach(function(key) {
+            if (data[key] && data[key].nome === nome) {
+              chaveRemover = key;
+            }
+          });
+        }
+        
+        if (chaveRemover) {
+          return State.db.ref('categorias/' + chaveRemover).remove()
+            .then(function() {
+              Utils.showToast("Categoria \"" + nome + "\" removida!", "success");
+              console.log("✅ Categoria removida:", nome);
+              return true;
+            });
+        } else {
+          Utils.showToast("Categoria não encontrada.", "error");
+          return Promise.reject("Categoria não encontrada");
+        }
+      });
     });
   },
   listenPontoUsuario: function() {
@@ -264,6 +474,18 @@ var Database = {
   }
 };
 
+// ============================================================
+// FUNÇÕES GLOBAIS PARA CATEGORIAS (acessíveis pelo HTML)
+// ============================================================
+
+window.adicionarCategoria = function(nome) {
+  return Database.salvarCategoriaNuvem(nome);
+};
+
+window.removerCategoria = function(nome) {
+  return Database.removerCategoriaNuvem(nome);
+};
+
 var UI = {
   init: function() {
     this.bindEvents();
@@ -291,6 +513,147 @@ var UI = {
           }
         })(id);
       }
+    }
+
+    // ============================================================
+    // CORREÇÃO: BOTÃO "SALVAR PEÇA NO ACERVO"
+    // ============================================================
+    var btnAdicionarPeca = document.getElementById("btn-adicionar-peca");
+    if (btnAdicionarPeca) {
+      btnAdicionarPeca.onclick = function(e) {
+        e.preventDefault();
+        console.log("🔧 Botão Salvar Peça clicado!");
+        
+        var nome = document.getElementById("catalogo-peca-nome").value.trim();
+        var qtd = parseInt(document.getElementById("catalogo-peca-qtd").value) || 0;
+        var categoria = document.getElementById("catalogo-peca-categoria").value;
+        var modelo = document.getElementById("catalogo-peca-modelo").value.trim();
+        var fileInput = document.getElementById("catalogo-peca-imagem");
+        
+        console.log("📝 Dados da peça:", { nome, qtd, categoria, modelo });
+        
+        if(!nome) {
+          Utils.showToast("Preencha o nome do Item/Tema!", "warning");
+          return;
+        }
+
+        var processarSalvar = function(imgUrl) {
+          var dadosPeca = {
+            nome: nome,
+            quantidade: qtd,
+            categoria: categoria || "Outros",
+            modelo: modelo || "Tema Geral",
+            imagem: imgUrl || "https://placehold.co/100x100?text=Sem+Foto",
+            criadoEm: Date.now()
+          };
+          
+          console.log("📦 Salvando:", dadosPeca);
+          
+          Database.salvarPecaNuvem(dadosPeca).then(function(sucesso) {
+            if (sucesso) {
+              // Limpar campos após salvar
+              document.getElementById("catalogo-peca-nome").value = "";
+              document.getElementById("catalogo-peca-qtd").value = "1";
+              document.getElementById("catalogo-peca-modelo").value = "";
+              document.getElementById("catalogo-peca-imagem").value = "";
+              
+              // O listener do Firebase vai atualizar automaticamente
+              console.log("✅ Peça salva, aguardando atualização automática...");
+            }
+          });
+        };
+
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            processarSalvar(e.target.result);
+          };
+          reader.onerror = function() {
+            Utils.showToast("Erro ao ler imagem. Salvando sem foto.", "warning");
+            processarSalvar("https://placehold.co/100x100?text=Sem+Foto");
+          };
+          reader.readAsDataURL(fileInput.files[0]);
+        } else {
+          processarSalvar("https://placehold.co/100x100?text=Sem+Foto");
+        }
+      };
+      console.log("✅ Botão Salvar Peça configurado!");
+    }
+
+    // ============================================================
+    // CORREÇÃO: BOTÃO ADICIONAR CATEGORIA
+    // ============================================================
+    var btnAdicionarCategoria = document.getElementById("btn-adicionar-categoria");
+    if (btnAdicionarCategoria) {
+      btnAdicionarCategoria.onclick = function(e) {
+        e.preventDefault();
+        var input = document.getElementById("input-nova-categoria");
+        var nome = input.value.trim();
+        if (nome) {
+          window.adicionarCategoria(nome).then(function() {
+            input.value = "";
+            input.focus();
+          }).catch(function() {
+            // Erro já tratado pelo Toast
+          });
+        } else {
+          Utils.showToast("Digite um nome para a categoria!", "warning");
+        }
+      };
+      
+      // Permitir Enter no campo
+      var inputCategoria = document.getElementById("input-nova-categoria");
+      if (inputCategoria) {
+        inputCategoria.onkeypress = function(e) {
+          if (e.key === "Enter") {
+            document.getElementById("btn-adicionar-categoria").click();
+          }
+        };
+      }
+    }
+
+    // ============================================================
+    // CORREÇÃO: BOTÃO REMOVER CATEGORIA
+    // ============================================================
+    var btnRemoverCategoria = document.getElementById("btn-remover-categoria");
+    if (btnRemoverCategoria) {
+      btnRemoverCategoria.onclick = function(e) {
+        e.preventDefault();
+        var select = document.getElementById("select-remover-categoria");
+        var categoria = select.value;
+        if (categoria) {
+          window.removerCategoria(categoria);
+        } else {
+          Utils.showToast("Selecione uma categoria para remover!", "warning");
+        }
+      };
+    }
+
+    // ============================================================
+    // CORREÇÃO: BOTÃO REMOVER TEMA
+    // ============================================================
+    var btnRemoverTema = document.getElementById("btn-remover-tema-admin");
+    if (btnRemoverTema) {
+      btnRemoverTema.onclick = function(e) {
+        e.preventDefault();
+        var select = document.getElementById("select-remover-tema");
+        var index = parseInt(select.value);
+        var infoDiv = document.getElementById("info-tema-remover");
+        
+        if (isNaN(index) || !State.estoque || !Object.keys(State.estoque)[index]) {
+          Utils.showToast("Selecione um tema válido para remover!", "warning");
+          return;
+        }
+        
+        var temaNome = Object.keys(State.estoque)[index];
+        if (confirm("Deseja realmente remover o tema \"" + temaNome + "\"?")) {
+          Database.excluirTemaNuvem(temaNome);
+          if (infoDiv) {
+            infoDiv.innerHTML = `<span style="color:var(--success);">✅ Tema removido com sucesso!</span>`;
+            setTimeout(function() { infoDiv.innerHTML = ''; }, 3000);
+          }
+        }
+      };
     }
 
     var botoesKit = document.querySelectorAll('.btn-kit-opcao');
@@ -354,7 +717,6 @@ var UI = {
       };
     }
 
-    // --- Lógica do Catálogo ---
     var btnAbrirCatalogo = document.getElementById("btn-abrir-catalogo") || document.getElementById("btn-ver-catalogo");
     if(btnAbrirCatalogo) {
       btnAbrirCatalogo.onclick = function(e) {
