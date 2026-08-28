@@ -30,7 +30,11 @@ var State = {
   carregando: true, 
   usuarioLogadoEmail: "",
   salvandoPeca: false,
-  removendoPeca: false
+  removendoPeca: false,
+  // ============================================================
+  // NOVO: CONTROLE DE CARREGAMENTO DO CATÁLOGO
+  // ============================================================
+  catalogoCarregado: false
 };
 
 // ============================================================
@@ -67,7 +71,7 @@ var LoadingOverlay = {
         max-width: 400px;
         animation: fadeInScale 0.3s ease;
       ">
-        <div style="font-size: 48px; margin-bottom: 15px;">⏳</div>
+        <div style="font-size: 48px; margin-bottom: 15px;" id="loading-icon">⏳</div>
         <div style="font-size: 20px; font-weight: 600; color: #2d3436; margin-bottom: 8px;" id="loading-message">
           Salvando...
         </div>
@@ -105,6 +109,10 @@ var LoadingOverlay = {
         50% { width: 70%; }
         100% { width: 100%; }
       }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
     `;
     document.head.appendChild(style);
     
@@ -118,9 +126,11 @@ var LoadingOverlay = {
     
     var msgEl = document.getElementById('loading-message');
     var subMsgEl = document.getElementById('loading-submessage');
+    var iconEl = document.getElementById('loading-icon');
     
     if (msgEl) msgEl.textContent = mensagem || 'Salvando...';
     if (subMsgEl) subMsgEl.textContent = submensagem || 'Aguarde um momento';
+    if (iconEl) iconEl.textContent = '⏳';
     
     overlay.style.display = 'flex';
   },
@@ -130,6 +140,235 @@ var LoadingOverlay = {
     if (overlay) {
       overlay.style.display = 'none';
     }
+  },
+  
+  // ============================================================
+  // NOVO: MENSAGEM DE SUCESSO RÁPIDA NO OVERLAY
+  // ============================================================
+  mostrarSucesso: function(mensagem, submensagem) {
+    this.criar();
+    var overlay = document.getElementById('loading-overlay');
+    if (!overlay) return;
+    
+    var msgEl = document.getElementById('loading-message');
+    var subMsgEl = document.getElementById('loading-submessage');
+    var iconEl = document.getElementById('loading-icon');
+    
+    if (msgEl) msgEl.textContent = mensagem || '✓ Concluído!';
+    if (subMsgEl) subMsgEl.textContent = submensagem || '';
+    if (iconEl) iconEl.textContent = '✅';
+    
+    overlay.style.display = 'flex';
+    
+    // Esconder automaticamente após 2 segundos
+    setTimeout(function() {
+      LoadingOverlay.esconder();
+    }, 2000);
+  }
+};
+
+// ============================================================
+// NOVO: INDICADOR DE CARREGAMENTO DO CATÁLOGO
+// ============================================================
+
+var CatalogoLoader = {
+  container: null,
+  timeoutId: null,
+  
+  criar: function() {
+    // Verificar se já existe
+    if (document.getElementById('catalogo-loader')) return;
+    
+    // Encontrar o container do catálogo
+    var catalogoContainer = document.getElementById('painel-catalogo-temas');
+    if (!catalogoContainer) {
+      // Tentar encontrar o container da tabela
+      var tabelaContainer = document.getElementById('lista-temas-gerenciados-corpo');
+      if (tabelaContainer) {
+        catalogoContainer = tabelaContainer.closest('.painel-relatorio-pontos') || tabelaContainer.parentElement;
+      }
+    }
+    
+    if (!catalogoContainer) return;
+    
+    // Criar o indicador de carregamento
+    var loader = document.createElement('div');
+    loader.id = 'catalogo-loader';
+    loader.style.cssText = `
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid var(--border-color, #e1cbd4);
+      margin: 10px 0;
+    `;
+    
+    loader.innerHTML = `
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+        <div style="
+          width: 40px;
+          height: 40px;
+          border: 4px solid #f0f0f0;
+          border-top-color: #a3536a;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        "></div>
+        <div style="font-size: 16px; font-weight: 500; color: #2d3436;" id="catalogo-loader-mensagem">
+          ⏳ Carregando catálogo...
+        </div>
+        <div style="font-size: 13px; color: #636e72;" id="catalogo-loader-submensagem">
+          Buscando dados do servidor
+        </div>
+      </div>
+    `;
+    
+    // Inserir antes da tabela
+    var tabela = document.getElementById('lista-temas-gerenciados-corpo');
+    if (tabela) {
+      catalogoContainer.insertBefore(loader, tabela.parentElement);
+    } else {
+      catalogoContainer.appendChild(loader);
+    }
+    
+    this.container = loader;
+  },
+  
+  mostrar: function(mensagem, submensagem) {
+    this.criar();
+    if (!this.container) return;
+    
+    var msgEl = document.getElementById('catalogo-loader-mensagem');
+    var subMsgEl = document.getElementById('catalogo-loader-submensagem');
+    
+    if (msgEl) msgEl.textContent = mensagem || '⏳ Carregando catálogo...';
+    if (subMsgEl) subMsgEl.textContent = submensagem || 'Buscando dados do servidor';
+    
+    this.container.style.display = 'block';
+    
+    // Ocultar a tabela enquanto carrega
+    var tabela = document.getElementById('lista-temas-gerenciados-corpo');
+    if (tabela) {
+      tabela.style.display = 'none';
+    }
+  },
+  
+  mostrarSucesso: function(mensagem) {
+    if (!this.container) return;
+    
+    var msgEl = document.getElementById('catalogo-loader-mensagem');
+    if (msgEl) {
+      msgEl.textContent = mensagem || '✅ Catálogo carregado com sucesso!';
+      msgEl.style.color = '#27ae60';
+    }
+    
+    var subMsgEl = document.getElementById('catalogo-loader-submensagem');
+    if (subMsgEl) {
+      subMsgEl.textContent = '';
+    }
+    
+    // Remover spinner e mostrar check
+    var spinner = this.container.querySelector('.spin-animation');
+    if (spinner) {
+      spinner.style.display = 'none';
+    }
+    
+    // Mostrar a tabela novamente
+    var tabela = document.getElementById('lista-temas-gerenciados-corpo');
+    if (tabela) {
+      tabela.style.display = '';
+    }
+    
+    // Esconder após 2.5 segundos
+    var self = this;
+    clearTimeout(self.timeoutId);
+    self.timeoutId = setTimeout(function() {
+      if (self.container) {
+        self.container.style.display = 'none';
+      }
+      // Restaurar cor da mensagem
+      if (msgEl) {
+        msgEl.style.color = '#2d3436';
+      }
+    }, 2500);
+  },
+  
+  mostrarErro: function(mensagem) {
+    if (!this.container) return;
+    
+    var msgEl = document.getElementById('catalogo-loader-mensagem');
+    if (msgEl) {
+      msgEl.textContent = mensagem || '⚠️ Não foi possível carregar o catálogo.';
+      msgEl.style.color = '#e74c3c';
+    }
+    
+    var subMsgEl = document.getElementById('catalogo-loader-submensagem');
+    if (subMsgEl) {
+      subMsgEl.textContent = 'Clique em "Tentar Novamente" ou recarregue a página.';
+    }
+    
+    // Adicionar botão tentar novamente
+    var btnContainer = this.container.querySelector('.loader-botoes');
+    if (!btnContainer) {
+      var btnDiv = document.createElement('div');
+      btnDiv.className = 'loader-botoes';
+      btnDiv.style.cssText = 'margin-top: 15px;';
+      btnDiv.innerHTML = `
+        <button onclick="window.recarregarCatalogo()" style="
+          padding: 8px 24px;
+          background: #a3536a;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+        ">🔄 Tentar Novamente</button>
+      `;
+      this.container.appendChild(btnDiv);
+    }
+    
+    this.container.style.display = 'block';
+  },
+  
+  esconder: function() {
+    if (this.container) {
+      this.container.style.display = 'none';
+    }
+    var tabela = document.getElementById('lista-temas-gerenciados-corpo');
+    if (tabela) {
+      tabela.style.display = '';
+    }
+  }
+};
+
+// Função global para recarregar o catálogo
+window.recarregarCatalogo = function() {
+  CatalogoLoader.mostrar('⏳ Recarregando catálogo...', 'Buscando dados do servidor');
+  // Forçar recarga dos dados
+  if (State.db) {
+    State.db.ref('estoque').once('value', function(snap) {
+      var val = snap.val();
+      if (val) {
+        if (Array.isArray(val)) {
+          var obj = {};
+          val.forEach(function(item, index) {
+            if (item) {
+              var nome = item.nome || item.tema || ("Tema " + index);
+              obj[nome] = typeof item === 'object' ? item : { kits: 1, png: "" };
+            }
+          });
+          State.estoque = obj;
+        } else {
+          State.estoque = val;
+        }
+      }
+      UI.renderCatalogo();
+      CatalogoLoader.mostrarSucesso('✅ Catálogo recarregado com sucesso!');
+    }).catch(function(error) {
+      console.error('❌ Erro ao recarregar catálogo:', error);
+      CatalogoLoader.mostrarErro('⚠️ Erro ao recarregar o catálogo.');
+    });
   }
 };
 
@@ -191,14 +430,22 @@ var Database = {
         firebase.initializeApp(CONFIG.firebase);
       }
       State.db = firebase.database();
+      
+      // ============================================================
+      // MOSTRAR CARREGAMENTO ANTES DE BUSCAR OS DADOS
+      // ============================================================
+      CatalogoLoader.mostrar('⏳ Carregando catálogo...', 'Buscando dados do servidor');
+      
       this.listen();
       this.listenCategorias();
     } else {
       Utils.showToast("🚨 Erro de conexão: Biblioteca do Firebase não carregou.", "error");
+      CatalogoLoader.mostrarErro('⚠️ Biblioteca do Firebase não carregou.');
     }
   },
   listen: function() {
     var timeoutRender = null;
+    var primeiraVez = true;
     
     State.db.ref('estoque').on('value', function(snap) {
       var val = snap.val();
@@ -230,11 +477,27 @@ var Database = {
         UI.renderReservas();
         UI.renderCatalogo();
         
+        // ============================================================
+        // CARREGAMENTO INICIAL CONCLUÍDO
+        // ============================================================
+        if (primeiraVez) {
+          primeiraVez = false;
+          State.catalogoCarregado = true;
+          // Mostrar sucesso após a primeira renderização
+          CatalogoLoader.mostrarSucesso('✅ Catálogo carregado com sucesso!');
+        }
+        
         var inputBuscaTemaFicha = document.getElementById("busca-tema-input") || document.getElementById("busca-tema");
         if (inputBuscaTemaFicha && inputBuscaTemaFicha.value.trim()) {
           UI.renderSuggestions(inputBuscaTemaFicha.value);
         }
       }, 200);
+    }, function(error) {
+      // ============================================================
+      // ERRO NO CARREGAMENTO DO ESTOQUE
+      // ============================================================
+      console.error("❌ Erro ao carregar estoque:", error);
+      CatalogoLoader.mostrarErro('⚠️ Não foi possível carregar o catálogo.');
     });
 
     State.db.ref('historico').on('value', function(snap) { 
@@ -297,6 +560,8 @@ var Database = {
     console.log("🔌 Listener de categorias iniciado...");
     
     var timeoutCategorias = null;
+    var primeiraVezCategorias = true;
+    
     State.db.ref('categorias').on('value', function(snapshot) {
       var data = snapshot.val();
       var categorias = [];
@@ -313,12 +578,23 @@ var Database = {
       timeoutCategorias = setTimeout(function() {
         console.log("🔄 Categorias atualizadas:", categorias.length);
         UI.atualizarSeletoresCategoria(categorias);
+        
+        if (primeiraVezCategorias) {
+          primeiraVezCategorias = false;
+          // Se o estoque já tiver carregado, não mostrar novamente
+          if (!State.catalogoCarregado) {
+            // O estoque ainda não carregou, mas as categorias sim
+          }
+        }
       }, 50);
     }, function(error) {
       console.error("❌ Erro no listener de categorias:", error);
     });
   },
   
+  // ============================================================
+  // SALVAR PEÇA COM FEEDBACK OTIMISTA + OVERLAY
+  // ============================================================
   salvarPecaNuvem: function(dadosPeca) {
     if (!State.db) {
       Utils.showToast("🚨 Sem conexão com Firebase", "error");
@@ -338,18 +614,22 @@ var Database = {
     return novoRef.set(dadosPeca)
       .then(function() {
         State.salvandoPeca = false;
-        Utils.showToast("✅ Peça salva com sucesso!", "success");
+        LoadingOverlay.mostrarSucesso('✅ Peça salva com sucesso!', '');
         console.log("✅ Peça salva com sucesso!");
         return true;
       })
       .catch(function(error) {
         State.salvandoPeca = false;
         console.error("❌ Erro ao salvar peça:", error);
+        LoadingOverlay.esconder();
         Utils.showToast("❌ Erro ao salvar peça: " + error.message, "error");
         return false;
       });
   },
   
+  // ============================================================
+  // REMOVER PEÇA COM FEEDBACK
+  // ============================================================
   excluirPecaNuvem: function(idPeca) {
     if (!State.db) {
       Utils.showToast("🚨 Sem conexão com Firebase", "error");
@@ -366,13 +646,14 @@ var Database = {
     return State.db.ref("estoque/" + idPeca).remove()
       .then(function() {
         State.removendoPeca = false;
-        Utils.showToast("✅ Peça removida com sucesso!", "success");
+        LoadingOverlay.mostrarSucesso('✅ Peça removida com sucesso!', '');
         console.log("✅ Peça removida com sucesso!");
         return true;
       })
       .catch(function(error) {
         State.removendoPeca = false;
         console.error("❌ Erro ao remover peça:", error);
+        LoadingOverlay.esconder();
         Utils.showToast("❌ Erro ao remover peça: " + error.message, "error");
         return false;
       });
@@ -409,7 +690,7 @@ var Database = {
       var novaRef = State.db.ref('categorias').push();
       return novaRef.set({ nome: nome, criadoEm: Date.now() })
         .then(function() {
-          Utils.showToast("✅ Categoria \"" + nome + "\" adicionada!", "success");
+          LoadingOverlay.mostrarSucesso('✅ Categoria adicionada com sucesso!', '');
           console.log("✅ Categoria adicionada:", nome);
           return true;
         });
@@ -464,7 +745,7 @@ var Database = {
         if (chaveRemover) {
           return State.db.ref('categorias/' + chaveRemover).remove()
             .then(function() {
-              Utils.showToast("✅ Categoria \"" + nome + "\" removida!", "success");
+              LoadingOverlay.mostrarSucesso('✅ Categoria removida com sucesso!', '');
               console.log("✅ Categoria removida:", nome);
               return true;
             });
@@ -538,12 +819,13 @@ var Database = {
     if(!State.db) return;
     return State.db.ref("estoque/" + nomeTema).remove()
     .then(function() { 
-      Utils.showToast("✅ Tema deletado do estoque.", "success");
+      LoadingOverlay.mostrarSucesso('✅ Tema removido com sucesso!', '');
       console.log("✅ Tema removido:", nomeTema);
       return true;
     })
     .catch(function(error) { 
       console.error("❌ Erro ao deletar tema:", error);
+      LoadingOverlay.esconder();
       Utils.showToast("❌ Erro ao deletar tema.", "error");
       return false;
     });
@@ -616,8 +898,7 @@ var UI = {
     }
 
     // ============================================================
-    // BOTÃO "SALVAR PEÇA NO ACERVO" COM TELINHA DE CARREGAMENTO
-    // ============================================================
+    // BOTÃO "SALVAR PEÇA NO ACERVO" COM OVERLAY    // ============================================================
     var btnAdicionarPeca = document.getElementById("btn-adicionar-peca");
     if (btnAdicionarPeca) {
       btnAdicionarPeca.onclick = function(e) {
@@ -640,7 +921,7 @@ var UI = {
         }
 
         LoadingOverlay.mostrar(
-          '🔄 Salvando Peça...',
+          '⏳ Salvando Peça...',
           'Tema: ' + nome
         );
         
@@ -657,9 +938,10 @@ var UI = {
           };
           
           Database.salvarPecaNuvem(dadosPeca).then(function(sucesso) {
-            LoadingOverlay.esconder();
             State.salvandoPeca = false;
-            
+            if (!sucesso) {
+              LoadingOverlay.esconder();
+            }
             if (sucesso) {
               document.getElementById("catalogo-peca-nome").value = "";
               document.getElementById("catalogo-peca-qtd").value = "1";
@@ -667,8 +949,8 @@ var UI = {
               document.getElementById("catalogo-peca-imagem").value = "";
             }
           }).catch(function() {
-            LoadingOverlay.esconder();
             State.salvandoPeca = false;
+            LoadingOverlay.esconder();
           });
         };
 
@@ -686,11 +968,11 @@ var UI = {
           processarSalvar("https://placehold.co/100x100?text=Sem+Foto");
         }
       };
-      console.log("✅ Botão Salvar Peça configurado com telinha de carregamento!");
+      console.log("✅ Botão Salvar Peça configurado com overlay!");
     }
 
     // ============================================================
-    // BOTÃO ADICIONAR CATEGORIA COM TELINHA
+    // BOTÃO ADICIONAR CATEGORIA
     // ============================================================
     var btnAdicionarCategoria = document.getElementById("btn-adicionar-categoria");
     if (btnAdicionarCategoria) {
@@ -700,12 +982,11 @@ var UI = {
         var nome = input.value.trim();
         if (nome) {
           LoadingOverlay.mostrar(
-            '🔄 Adicionando Categoria...',
+            '⏳ Adicionando Categoria...',
             'Categoria: ' + nome
           );
           
           window.adicionarCategoria(nome).then(function() {
-            LoadingOverlay.esconder();
             input.value = "";
             input.focus();
           }).catch(function() {
@@ -737,12 +1018,12 @@ var UI = {
         var categoria = select.value;
         if (categoria) {
           LoadingOverlay.mostrar(
-            '🔄 Removendo Categoria...',
+            '⏳ Removendo Categoria...',
             'Categoria: ' + categoria
           );
           
           window.removerCategoria(categoria).then(function() {
-            LoadingOverlay.esconder();
+            // Sucesso já tratado no Database
           }).catch(function() {
             LoadingOverlay.esconder();
           });
@@ -753,7 +1034,7 @@ var UI = {
     }
 
     // ============================================================
-    // BOTÃO REMOVER TEMA COM TELINHA
+    // BOTÃO REMOVER TEMA
     // ============================================================
     var btnRemoverTema = document.getElementById("btn-remover-tema-admin");
     if (btnRemoverTema) {
@@ -771,12 +1052,11 @@ var UI = {
         var temaNome = Object.keys(State.estoque)[index];
         if (confirm("Deseja realmente remover o tema \"" + temaNome + "\"?")) {
           LoadingOverlay.mostrar(
-            '🔄 Removendo Tema...',
+            '⏳ Removendo Tema...',
             'Tema: ' + temaNome
           );
           
           Database.excluirTemaNuvem(temaNome).then(function() {
-            LoadingOverlay.esconder();
             if (infoDiv) {
               infoDiv.innerHTML = `<span style="color:var(--success);">✅ Tema removido com sucesso!</span>`;
               setTimeout(function() { infoDiv.innerHTML = ''; }, 3000);
