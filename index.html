@@ -95,14 +95,15 @@
       cursor: pointer; transition: all 0.3s ease; border: none; width: 100%;
       display: inline-flex; justify-content: center; align-items: center; gap: 8px;
     }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
     .btn-primary { background-color: var(--primary); color: #fff; box-shadow: 0 4px 15px rgba(163, 105, 122, 0.3); }
-    .btn-primary:hover { background-color: var(--primary-dark); transform: translateY(-2px); }
+    .btn-primary:hover:not(:disabled) { background-color: var(--primary-dark); transform: translateY(-2px); }
     .btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); width: auto; padding: 8px 16px; font-size: 13px; cursor: pointer; }
-    .btn-outline:hover { background: var(--primary); color: #fff; }
+    .btn-outline:hover:not(:disabled) { background: var(--primary); color: #fff; }
     .btn-danger { background-color: #fff5f6; color: var(--error); border: 1px solid #fadbd8; }
-    .btn-danger:hover { background-color: var(--error); color: #fff; }
+    .btn-danger:hover:not(:disabled) { background-color: var(--error); color: #fff; }
     .btn-success { background-color: var(--success); color: #fff; }
-    .btn-success:hover { background-color: #219a52; transform: translateY(-2px); }
+    .btn-success:hover:not(:disabled) { background-color: #219a52; transform: translateY(-2px); }
     
     .painel-ponto {
       background: #fffafb; border: 1px solid var(--border-color); padding: 20px;
@@ -207,130 +208,63 @@
       border-radius: 8px;
     }
 
-    /* ESTILO PARA AS PÁGINAS DO CONTRATO NO PREVIEW */
+    /* ESTILOS DO MODAL DE STATUS/LOADING DA OPERAÇÃO */
+    .modal-loading-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center;
+      z-index: 20000; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+    }
+    .modal-loading-overlay.ativo { opacity: 1; pointer-events: auto; }
+    .modal-loading-box {
+      background: #ffffff; padding: 35px 30px; border-radius: 20px; text-align: center;
+      max-width: 400px; width: 85%; box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+      border: 2px solid var(--primary-light);
+    }
+    .spinner-loading {
+      width: 45px; height: 45px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary);
+      border-radius: 50%; animation: spin 0.9s linear infinite; margin: 0 auto 18px auto;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .modal-loading-titulo { font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+    .modal-loading-subtitulo { font-size: 13px; color: var(--text-muted); margin: 0; }
+
     .pagina-contrato {
-      background: white;
-      width: 210mm;
-      min-height: 297mm;
-      margin: 10px auto;
-      padding: 18mm 16mm;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      border-radius: 2px;
-      box-sizing: border-box;
-      page-break-after: always;
-      break-after: page;
-      font-family: 'Times New Roman', Times, serif;
-      font-size: 11pt;
-      line-height: 1.4;
-      text-align: justify;
-      position: relative;
+      background: white; width: 210mm; min-height: 297mm; margin: 10px auto;
+      padding: 18mm 16mm; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-radius: 2px;
+      box-sizing: border-box; page-break-after: always; break-after: page;
+      font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.4;
+      text-align: justify; position: relative;
     }
-    
-    .pagina-contrato .logo-container {
-      text-align: center;
-      margin-bottom: 6px;
-    }
-    
-    .pagina-contrato .logo-contrato {
-      max-width: 120px;
-      max-height: 50px;
-      height: auto;
-    }
-    
+    .pagina-contrato .logo-container { text-align: center; margin-bottom: 6px; }
+    .pagina-contrato .logo-contrato { max-width: 120px; max-height: 50px; height: auto; }
     .pagina-contrato .titulo-contrato {
-      text-align: center;
-      font-size: 15pt;
-      font-weight: bold;
-      text-transform: uppercase;
-      margin: 0 0 5px 0;
-      padding: 0;
-      letter-spacing: 1px;
+      text-align: center; font-size: 15pt; font-weight: bold; text-transform: uppercase;
+      margin: 0 0 5px 0; padding: 0; letter-spacing: 1px;
     }
-    .pagina-contrato .dados-contratada {
-      margin: 0;
-      padding: 0;
-      line-height: 1.3;
-    }
-    .pagina-contrato .dados-contratante {
-      margin: 2px 0 0 0;
-      padding: 0;
-      line-height: 1.3;
-    }
-    .pagina-contrato .clausula-titulo {
-      font-weight: bold;
-      font-size: 11.5pt;
-      margin: 5px 0 2px 0;
-      padding: 0;
-      text-transform: uppercase;
-    }
-    .pagina-contrato .clausula-texto {
-      margin: 0 0 2px 0;
-      padding: 0;
-      text-align: justify;
-    }
-    .pagina-contrato .paragrafo {
-      margin: 0 0 2px 18px;
-      padding: 0;
-      text-align: justify;
-    }
-    .pagina-contrato .assinatura {
-      margin-top: 14px;
-      text-align: center;
-    }
-    .pagina-contrato .linha-assinatura {
-      border-top: 1px solid #000;
-      width: 60%;
-      margin: 3px auto;
-      padding-top: 3px;
-    }
-    .pagina-contrato .assinatura-nome {
-      font-weight: bold;
-      font-size: 10pt;
-    }
-    .pagina-contrato .negrito {
-      font-weight: bold;
-    }
-    .pagina-contrato p {
-      margin: 0 0 2px 0;
-      padding: 0;
-    }
-    .pagina-contrato .mark {
-      background-color: #fef9e7;
-      padding: 0 2px;
-    }
+    .pagina-contrato .dados-contratada { margin: 0; padding: 0; line-height: 1.3; }
+    .pagina-contrato .dados-contratante { margin: 2px 0 0 0; padding: 0; line-height: 1.3; }
+    .pagina-contrato .clausula-titulo { font-weight: bold; font-size: 11.5pt; margin: 5px 0 2px 0; padding: 0; text-transform: uppercase; }
+    .pagina-contrato .clausula-texto { margin: 0 0 2px 0; padding: 0; text-align: justify; }
+    .pagina-contrato .paragrafo { margin: 0 0 2px 18px; padding: 0; text-align: justify; }
+    .pagina-contrato .assinatura { margin-top: 14px; text-align: center; }
+    .pagina-contrato .linha-assinatura { border-top: 1px solid #000; width: 60%; margin: 3px auto; padding-top: 3px; }
+    .pagina-contrato .assinatura-nome { font-weight: bold; font-size: 10pt; }
+    .pagina-contrato .negrito { font-weight: bold; }
+    .pagina-contrato p { margin: 0 0 2px 0; padding: 0; }
 
     .btn-pdf { background-color: #e67e22; color: #fff; }
     .btn-pdf:hover { background-color: #d35400; transform: translateY(-2px); }
 
     @media print {
-      .pagina-contrato {
-        box-shadow: none;
-        margin: 0;
-        padding: 18mm 16mm;
-        width: 100%;
-        min-height: 297mm;
-        page-break-after: always;
-        break-after: page;
-        border-radius: 0;
-      }
-      .visualizador-contrato-scroll {
-        max-height: none;
-        overflow-y: visible;
-        padding: 0;
-        background: white;
-      }
+      .pagina-contrato { box-shadow: none; margin: 0; padding: 18mm 16mm; width: 100%; min-height: 297mm; page-break-after: always; break-after: page; border-radius: 0; }
+      .visualizador-contrato-scroll { max-height: none; overflow-y: visible; padding: 0; background: white; }
       .no-print { display: none !important; }
     }
 
     @media (max-width: 600px) {
       .site-container { padding: 25px 20px; }
       .grid-2, .grid-3, .grid-4, .grid-kits { grid-template-columns: 1fr; }
-      .pagina-contrato {
-        width: 100%;
-        min-height: 297mm;
-        padding: 15mm 12mm;
-        margin: 5px auto;
-      }
+      .pagina-contrato { width: 100%; min-height: 297mm; padding: 15mm 12mm; margin: 5px auto; }
     }
   </style>
 </head>
@@ -351,7 +285,7 @@
         <label for="senha">Senha Segura:</label>
         <input type="password" id="senha" value="123456" placeholder="••••••••">
       </div>
-      <button type="button" id="btn-login-direto" class="btn btn-primary">Entrar no Panel</button>
+      <button type="button" id="btn-login-direto" class="btn btn-primary">Entrar no Painel</button>
     </section>
     
     <section id="secao-verificador" style="display: none;">
@@ -472,9 +406,6 @@
           <button type="button" id="btn-adicionar-peca" class="btn btn-primary" style="margin-top: 5px;">Salvar Peça no Acervo</button>
         </div>
 
-        <!-- ============================================ -->
-        <!-- PAINEL DE ADMINISTRAÇÃO DE CATEGORIAS - NOVO -->
-        <!-- ============================================ -->
         <div style="background: #f5f0f0; border: 1.5px solid #e1cbd4; padding: 15px; border-radius: 10px; margin-bottom: 20px; margin-top: 15px;">
           <h4 style="margin: 0 0 12px 0; color: var(--primary-dark); display: flex; justify-content: space-between; align-items: center;">
             <span>📂 Gerenciar Categorias</span>
@@ -495,13 +426,9 @@
           </div>
           
           <div id="lista-categorias-admin" style="display:flex; flex-wrap:wrap; gap:6px; padding:8px; background:#fff; border-radius:8px; min-height:40px; border:1px solid var(--border-color);">
-            <!-- As categorias serão renderizadas aqui -->
           </div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- PAINEL DE REMOVER TEMA - NOVO -->
-        <!-- ============================================ -->
         <div style="background: #fff5f5; border: 1.5px solid #f5c6c6; padding: 15px; border-radius: 10px; margin-top: 15px;">
           <h4 style="margin: 0 0 12px 0; color: var(--error); display: flex; justify-content: space-between; align-items: center;">
             <span>🗑️ Remover Tema/Peça</span>
@@ -851,13 +778,11 @@
           <input type="text" id="c-local" placeholder="Endereço Completo do Evento">
         </div>
         
-        <!-- SELEÇÃO DE PEÇAS EXISTENTE - NÃO ALTERAR -->
         <div class="input-group">
           <label>Selecione as Peças (Retiradas do Catálogo):</label>
           <select id="c-pecas" multiple style="height:70px; padding:5px;"></select>
         </div>
         
-        <!-- NOVA SEÇÃO: ITENS ADICIONAIS (Porcelanas, Bolos, etc.) -->
         <div class="input-group" style="margin-top: 5px; border-top: 1px dashed var(--border-color); padding-top: 15px;">
           <label style="font-weight: 600; color: var(--primary-dark);">🍽️ Itens Adicionais para Locação</label>
           <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Selecione os itens adicionais que farão parte da locação:</div>
@@ -949,7 +874,25 @@
     </div>
   </div>
 
+  <!-- TELA DE LOADING E STATUS DAS OPERAÇÕES -->
+  <div id="modal-status-operacao" class="modal-loading-overlay">
+    <div class="modal-loading-box">
+      <div id="spinner-status" class="spinner-loading"></div>
+      <div id="titulo-status-operacao" class="modal-loading-titulo">LANÇANDO TEMA...</div>
+      <p id="subtitulo-status-operacao" class="modal-loading-subtitulo">Salvando no acervo, aguarde.</p>
+    </div>
+  </div>
+
   <script>
+    // ============================================================
+    // ESTADO GLOBAL DO SISTEMA
+    // ============================================================
+    const State = {
+      salvandoPeca: false,
+      listenerEstoqueIniciado: false,
+      db: null
+    };
+
     // ============================================================
     // FIREBASE CONFIG
     // ============================================================
@@ -967,14 +910,73 @@
         firebase.initializeApp(firebaseConfig);
       }
       db = firebase.database();
+      State.db = db;
     } catch(err) {
       console.error("Erro no Firebase:", err);
     }
 
+    // ============================================================
+    // TELA / MODAL DE STATUS "LANÇANDO TEMA..."
+    // ============================================================
+    const ModalStatus = {
+      exibir: (titulo, subtitulo) => {
+        const modal = document.getElementById("modal-status-operacao");
+        const spinner = document.getElementById("spinner-status");
+        const t = document.getElementById("titulo-status-operacao");
+        const sub = document.getElementById("subtitulo-status-operacao");
+        
+        if (!modal) return;
+        spinner.style.display = "block";
+        spinner.style.borderColor = "#f3f3f3";
+        spinner.style.borderTopColor = "var(--primary)";
+        t.style.color = "var(--primary)";
+        t.innerText = titulo || "PROCESSANDO...";
+        sub.innerText = subtitulo || "Aguarde a confirmação.";
+        modal.classList.add("ativo");
+      },
+      sucesso: (mensagem, callback) => {
+        const spinner = document.getElementById("spinner-status");
+        const t = document.getElementById("titulo-status-operacao");
+        const sub = document.getElementById("subtitulo-status-operacao");
+        
+        if (spinner) spinner.style.display = "none";
+        if (t) {
+          t.style.color = "var(--success)";
+          t.innerText = "✓ SUCESSO";
+        }
+        if (sub) sub.innerText = mensagem || "Operação realizada com êxito.";
+
+        setTimeout(() => {
+          ModalStatus.fechar();
+          if (callback) callback();
+        }, 650);
+      },
+      erro: (mensagem) => {
+        const spinner = document.getElementById("spinner-status");
+        const t = document.getElementById("titulo-status-operacao");
+        const sub = document.getElementById("subtitulo-status-operacao");
+        
+        if (spinner) spinner.style.display = "none";
+        if (t) {
+          t.style.color = "var(--error)";
+          t.innerText = "ERRO NA OPERAÇÃO";
+        }
+        if (sub) sub.innerText = mensagem || "Não foi possível concluir. Tente novamente.";
+
+        setTimeout(() => {
+          ModalStatus.fechar();
+        }, 2200);
+      },
+      fechar: () => {
+        const modal = document.getElementById("modal-status-operacao");
+        if (modal) modal.classList.remove("ativo");
+      }
+    };
+
     const CloudDB = {
       salvar: (caminho, dados, callback) => {
         if (db) {
-          db.ref(caminho).set(dados).then(() => { if(callback) callback(true); });
+          db.ref(caminho).set(dados).then(() => { if(callback) callback(true); }).catch(e => { if(callback) callback(false, e); });
         } else {
           localStorage.setItem(caminho, JSON.stringify(dados));
           if(callback) callback(true);
@@ -999,7 +1001,7 @@
             } else {
               callback(defaultVal);
             }
-          });
+          }).catch(() => callback(defaultVal));
         } else {
           const val = localStorage.getItem(caminho);
           callback(val ? JSON.parse(val) : defaultVal);
@@ -1008,125 +1010,255 @@
     };
 
     // ============================================================
-    // GERENCIAMENTO DE CATEGORIAS - NOVO NÓ
+    // GERENCIAMENTO DE PEÇAS E ESTOQUE (OTIMIZADO)
     // ============================================================
+    const Database = {
+      salvarPecaNuvem: async function(peca) {
+        if (State.salvandoPeca) return;
+        State.salvandoPeca = true;
+        
+        const btnSalvar = document.getElementById("btn-adicionar-peca");
+        if (btnSalvar) btnSalvar.disabled = true;
 
+        ModalStatus.exibir("LANÇANDO TEMA...", "Salvando no acervo, aguarde.");
+
+        try {
+          if (db) {
+            const refEstoque = db.ref("estoque");
+            const newRef = peca.idFirebase ? db.ref("estoque/" + peca.idFirebase) : refEstoque.push();
+            const pecaId = peca.idFirebase || newRef.key;
+            
+            const payload = {
+              idFirebase: pecaId,
+              nome: peca.nome || "",
+              quantidade: parseInt(peca.quantidade) || 1,
+              categoria: peca.categoria || "Outros",
+              modelo: peca.modelo || "",
+              imagem: peca.imagem || "",
+              atualizadoEm: Date.now()
+            };
+
+            await newRef.set(payload);
+          } else {
+            const localData = JSON.parse(localStorage.getItem("estoque") || "[]");
+            localData.push(peca);
+            localStorage.setItem("estoque", JSON.stringify(localData));
+          }
+
+          ModalStatus.sucesso("✓ TEMA LANÇADO COM SUCESSO", () => {
+            document.getElementById("catalogo-peca-nome").value = "";
+            document.getElementById("catalogo-peca-qtd").value = "1";
+            document.getElementById("catalogo-peca-modelo").value = "";
+            document.getElementById("catalogo-peca-imagem").value = "";
+          });
+
+        } catch (error) {
+          console.error("Erro ao salvar peça:", error);
+          ModalStatus.erro("Não foi possível salvar a peça. Tente novamente.");
+        } finally {
+          State.salvandoPeca = false;
+          if (btnSalvar) btnSalvar.disabled = false;
+        }
+      },
+
+      removerPecaNuvem: async function(indexOuId) {
+        if (State.salvandoPeca) return;
+        State.salvandoPeca = true;
+
+        const btnRemover = document.getElementById("btn-remover-tema-admin");
+        if (btnRemover) btnRemover.disabled = true;
+
+        ModalStatus.exibir("REMOVENDO TEMA...", "Atualizando o acervo, aguarde.");
+
+        try {
+          const item = todosOsTemas[indexOuId];
+          if (!item) throw new Error("Item não localizado.");
+
+          if (db) {
+            if (item.idFirebase) {
+              await db.ref("estoque/" + item.idFirebase).remove();
+            } else {
+              const novalist = todosOsTemas.filter((_, idx) => idx !== parseInt(indexOuId));
+              await db.ref("estoque").set(novalist);
+            }
+          } else {
+            todosOsTemas.splice(indexOuId, 1);
+            localStorage.setItem("estoque", JSON.stringify(todosOsTemas));
+            renderizarTemas();
+          }
+
+          ModalStatus.sucesso("✓ TEMA REMOVIDO COM SUCESSO");
+        } catch (error) {
+          console.error("Erro ao remover peça:", error);
+          ModalStatus.erro("Não foi possível remover o tema.");
+        } finally {
+          State.salvandoPeca = false;
+          if (btnRemover) btnRemover.disabled = false;
+        }
+      }
+    };
+
+    // ============================================================
+    // CARREGAMENTO E OTIMIZAÇÃO DE LISTENERS DO ESTOQUE
+    // ============================================================
+    function carregarEstoqueIncremental() {
+      if (!db || State.listenerEstoqueIniciado) return;
+      State.listenerEstoqueIniciado = true;
+
+      const refEstoque = db.ref("estoque");
+
+      refEstoque.once("value").then((snapshot) => {
+        const val = snapshot.val();
+        todosOsTemas = [];
+        if (val) {
+          if (Array.isArray(val)) {
+            todosOsTemas = val.filter(i => i !== null);
+          } else if (typeof val === 'object') {
+            Object.keys(val).forEach(k => {
+              if (val[k]) todosOsTemas.push({ idFirebase: k, ...val[k] });
+            });
+          }
+        }
+        renderizarTemas();
+        
+        // Ativação dos escutadores incrementais sem re-baixar o banco inteiro
+        refEstoque.on("child_added", (childSnap) => {
+          const item = { idFirebase: childSnap.key, ...childSnap.val() };
+          const existe = todosOsTemas.some(t => t.idFirebase === item.idFirebase);
+          if (!existe) {
+            todosOsTemas.push(item);
+            renderizarTemas();
+          }
+        });
+
+        refEstoque.on("child_changed", (childSnap) => {
+          const item = { idFirebase: childSnap.key, ...childSnap.val() };
+          const idx = todosOsTemas.findIndex(t => t.idFirebase === item.idFirebase);
+          if (idx !== -1) {
+            todosOsTemas[idx] = item;
+            renderizarTemas();
+          }
+        });
+
+        refEstoque.on("child_removed", (childSnap) => {
+          const key = childSnap.key;
+          todosOsTemas = todosOsTemas.filter(t => t.idFirebase !== key);
+          renderizarTemas();
+        });
+      }).catch(() => {
+        CloudDB.buscar("estoque", [], (dados) => {
+          todosOsTemas = dados || [];
+          renderizarTemas();
+        });
+      });
+    }
+
+    function renderizarTemas() {
+      const corpo = document.getElementById("lista-temas-gerenciados-corpo");
+      const contador = document.getElementById("contador-catalogo-total");
+      
+      if (contador) contador.textContent = `${todosOsTemas.length} itens`;
+
+      if (!corpo) return;
+
+      if (todosOsTemas.length === 0) {
+        corpo.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#999; padding:15px;">Nenhum tema ou peça cadastrada.</td></tr>`;
+        return;
+      }
+
+      let html = "";
+      todosOsTemas.forEach((tema, idx) => {
+        const img = tema.imagem ? `<img src="${tema.imagem}" class="catalogo-foto" alt="Foto">` : `<div style="width:50px;height:50px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#888;">Sem Foto</div>`;
+        
+        html += `
+          <tr>
+            <td style="text-align:center;">${img}</td>
+            <td>
+              <strong>${tema.nome || "Sem Nome"}</strong><br>
+              <span style="font-size:11px; color:var(--text-muted);">
+                Categoria: ${tema.categoria || "Geral"} | Modelo: ${tema.modelo || "Padrão"}<br>
+                Qtd: <strong>${tema.quantidade || 1}</strong>
+              </span>
+            </td>
+            <td style="text-align:center;">
+              <button type="button" onclick="window.removerTema(${idx})" class="btn-acao-tabela btn-remover-orc" title="Remover Peça">🗑️</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      corpo.innerHTML = html;
+
+      // Atualiza Select de remoção
+      const selectRemover = document.getElementById("select-remover-tema");
+      if (selectRemover) {
+        const valorAtual = selectRemover.value;
+        selectRemover.innerHTML = '<option value="">Selecione um tema para remover...</option>';
+        todosOsTemas.forEach((item, idx) => {
+          const opt = document.createElement("option");
+          opt.value = idx;
+          const disponivel = item.quantidade > 0 ? `${item.quantidade} disponíveis` : 'ESGOTADO';
+          opt.textContent = `${item.nome} (${item.categoria || 'Geral'}) - ${disponivel}`;
+          selectRemover.appendChild(opt);
+        });
+        if (valorAtual && todosOsTemas[parseInt(valorAtual)]) {
+          selectRemover.value = valorAtual;
+        }
+      }
+    }
+
+    window.removerTema = function(index) {
+      const tema = todosOsTemas[index];
+      if (!tema) return;
+      if (confirm(`Deseja realmente remover o item "${tema.nome}"?`)) {
+        Database.removerPecaNuvem(index);
+      }
+    };
+
+    // ============================================================
+    // CATEGORIAS
+    // ============================================================
     let categoriasList = [];
-    let listenerCategoriasAtivo = false;
 
-    // Carregar categorias do Firebase
-    function carregarCategorias(callback) {
+    function carregarCategorias() {
       CloudDB.buscar("categorias", {}, (dados) => {
         if (dados && typeof dados === 'object') {
           const nomes = Object.keys(dados).filter(key => dados[key] && dados[key].nome);
           if (nomes.length > 0) {
             categoriasList = nomes;
           } else {
-            migrarCategoriasDoEstoque();
-            return;
+            categoriasList = ["Infantil", "Casamento", "15 Anos", "Outros"];
           }
         } else {
-          migrarCategoriasDoEstoque();
-          return;
+          categoriasList = ["Infantil", "Casamento", "15 Anos", "Outros"];
         }
-        if (callback) callback(categoriasList);
         atualizarInterfaceCategorias();
       });
     }
 
-    // Migrar categorias existentes para o novo nó
-    function migrarCategoriasDoEstoque() {
-      CloudDB.buscar("estoque", [], (temas) => {
-        const categoriasEncontradas = new Set();
-        if (temas) {
-          Object.keys(temas).forEach(k => {
-            const item = temas[k];
-            if (item && item.categoria) {
-              categoriasEncontradas.add(item.categoria);
-            }
-          });
-        }
-        
-        if (categoriasEncontradas.size === 0) {
-          ["Infantil", "Casamento", "15 Anos", "Outros"].forEach(c => categoriasEncontradas.add(c));
-        }
-        
-        const categoriasArray = Array.from(categoriasEncontradas);
-        salvarCategorias(categoriasArray, () => {
-          categoriasList = categoriasArray;
-          atualizarInterfaceCategorias();
+    function atualizarInterfaceCategorias() {
+      const contador = document.getElementById("contador-categorias");
+      if (contador) contador.textContent = categoriasList.length;
+      
+      const container = document.getElementById("lista-categorias-admin");
+      if (container) {
+        container.innerHTML = '';
+        categoriasList.forEach(cat => {
+          const div = document.createElement("div");
+          div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:#f8f0f2; border-radius:6px; border:1px solid #e1cbd4;";
+          div.innerHTML = `
+            <span style="font-size:13px;">📁 ${cat}</span>
+            <button type="button" onclick="removerCategoria('${cat}')" class="btn btn-danger" style="padding:2px 8px; font-size:10px; width:auto; margin-left:6px;">✕</button>
+          `;
+          container.appendChild(div);
         });
-      });
-    }
-
-    // Salvar categorias no Firebase
-    function salvarCategorias(categorias, callback) {
-      const obj = {};
-      categorias.forEach(cat => {
-        obj[cat] = { nome: cat, criadoEm: Date.now() };
-      });
-      CloudDB.salvar("categorias", obj, callback);
-    }
-
-    // Adicionar categoria
-    function adicionarCategoria(nome) {
-      nome = nome.trim();
-      if (!nome) {
-        alert("⚠️ Digite um nome para a categoria!");
-        return false;
       }
-      
-      if (categoriasList.some(c => c.toLowerCase() === nome.toLowerCase())) {
-        alert(`⚠️ A categoria "${nome}" já existe!`);
-        return false;
-      }
-      
-      categoriasList.push(nome);
-      salvarCategorias(categoriasList, () => {
-        atualizarInterfaceCategorias();
-        atualizarSelectCategoria();
-        console.log(`✅ Categoria "${nome}" adicionada!`);
-      });
-      return true;
+      atualizarSelectCategoria();
     }
 
-    // Remover categoria
-    function removerCategoria(nome) {
-      CloudDB.buscar("estoque", [], (temas) => {
-        const temasVinculados = [];
-        if (temas) {
-          Object.keys(temas).forEach(k => {
-            const item = temas[k];
-            if (item && item.categoria === nome) {
-              temasVinculados.push(item.nome || item.item || item.titulo || "Sem Nome");
-            }
-          });
-        }
-        
-        if (temasVinculados.length > 0) {
-          alert(`⚠️ Não é possível remover a categoria "${nome}" pois ela possui ${temasVinculados.length} tema(s) vinculado(s):\n\n${temasVinculados.join('\n')}\n\nRemova ou reassocie os temas primeiro.`);
-          return;
-        }
-        
-        if (confirm(`Deseja realmente remover a categoria "${nome}"?`)) {
-          const index = categoriasList.indexOf(nome);
-          if (index > -1) {
-            categoriasList.splice(index, 1);
-            salvarCategorias(categoriasList, () => {
-              atualizarInterfaceCategorias();
-              atualizarSelectCategoria();
-              console.log(`✅ Categoria "${nome}" removida!`);
-            });
-          }
-        }
-      });
-    }
-
-    // Atualizar o select de categoria no formulário de adicionar peça
     function atualizarSelectCategoria() {
       const selectCat = document.getElementById("catalogo-peca-categoria");
       if (selectCat) {
-        const valorAtual = selectCat.value;
         selectCat.innerHTML = '';
         categoriasList.forEach(cat => {
           const opt = document.createElement("option");
@@ -1134,1953 +1266,152 @@
           opt.textContent = cat;
           selectCat.appendChild(opt);
         });
-        if (categoriasList.includes(valorAtual)) {
-          selectCat.value = valorAtual;
-        }
-      }
-      
-      const selectRemover = document.getElementById("select-remover-categoria");
-      if (selectRemover) {
-        const valorAtual = selectRemover.value;
-        selectRemover.innerHTML = '<option value="">Selecione...</option>';
-        categoriasList.forEach(cat => {
-          const opt = document.createElement("option");
-          opt.value = cat;
-          opt.textContent = cat;
-          selectRemover.appendChild(opt);
-        });
-        if (categoriasList.includes(valorAtual)) {
-          selectRemover.value = valorAtual;
-        }
       }
     }
 
-    // Atualizar a interface de categorias
-    function atualizarInterfaceCategorias() {
-      const contador = document.getElementById("contador-categorias");
-      if (contador) {
-        contador.textContent = categoriasList.length;
-      }
+    function adicionarCategoria(nome) {
+      nome = nome.trim();
+      if (!nome) return alert("⚠️ Digite um nome para a categoria!");
+      if (categoriasList.some(c => c.toLowerCase() === nome.toLowerCase())) return alert(`⚠️ Categoria já existe!`);
       
-      const container = document.getElementById("lista-categorias-admin");
-      if (container) {
-        container.innerHTML = '';
-        categoriasList.forEach(cat => {
-          const div = document.createElement("div");
-          div.className = "categoria-item-admin";
-          div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:#f8f0f2; border-radius:6px; border:1px solid #e1cbd4;";
-          div.innerHTML = `
-            <span style="font-size:13px;">📁 ${cat}</span>
-            <button onclick="removerCategoria('${cat}')" class="btn btn-danger" style="padding:2px 8px; font-size:10px; width:auto; margin-left:6px;">✕</button>
-          `;
-          container.appendChild(div);
-        });
-      }
-      
-      atualizarSelectCategoria();
+      categoriasList.push(nome);
+      const obj = {};
+      categoriasList.forEach(c => obj[c] = { nome: c, criadoEm: Date.now() });
+      CloudDB.salvar("categorias", obj, () => {
+        atualizarInterfaceCategorias();
+      });
     }
 
-    // ============================================================
-    // LISTENER EM TEMPO REAL PARA CATEGORIAS
-    // ============================================================
-
-    function iniciarListenerCategorias() {
-      if (listenerCategoriasAtivo) return;
-      listenerCategoriasAtivo = true;
-      
-      if (db) {
-        db.ref('categorias').on('value', function(snapshot) {
-          const data = snapshot.val();
-          if (data && typeof data === 'object') {
-            const nomes = Object.keys(data).filter(key => data[key] && data[key].nome);
-            if (nomes.length > 0) {
-              categoriasList = nomes;
-            }
-          }
+    function removerCategoria(nome) {
+      if (confirm(`Remover a categoria "${nome}"?`)) {
+        categoriasList = categoriasList.filter(c => c !== nome);
+        const obj = {};
+        categoriasList.forEach(c => obj[c] = { nome: c, criadoEm: Date.now() });
+        CloudDB.salvar("categorias", obj, () => {
           atualizarInterfaceCategorias();
-          console.log(`🔄 Categorias atualizadas: ${categoriasList.length}`);
         });
       }
     }
 
     // ============================================================
-    // FUNÇÃO REMOVER TEMA MELHORADA
+    // GERENCIADOR DE EVENTOS DA INTERFACE
     // ============================================================
-
-    window.removerTema = function(index) {
-      const tema = todosOsTemas[index];
-      if (!tema) return;
-      
-      if(confirm(`Deseja realmente remover o item "${tema.nome}" da categoria "${tema.categoria}"?`)) {
-        CloudDB.buscar("estoque", [], (temas) => {
-          let listaLimpa;
-          if (Array.isArray(temas)) {
-            listaLimpa = [...temas];
-          } else if (temas && typeof temas === 'object') {
-            listaLimpa = Object.keys(temas).map(k => temas[k]);
-          } else {
-            listaLimpa = [];
-          }
-          
-          if (index < listaLimpa.length) {
-            listaLimpa.splice(index, 1);
-            CloudDB.salvar("estoque", listaLimpa, () => { 
-              console.log("✅ Tema removido!");
-            });
-          }
-        });
-      }
-    };
-
-    // ============================================================
-    // ATUALIZAR RENDERIZAÇÃO DE TEMAS COM SELECT DE REMOVER
-    // ============================================================
-
-    const renderizarTemasOriginal = renderizarTemas;
-
-    renderizarTemas = function() {
-      if (renderizarTemasOriginal) {
-        renderizarTemasOriginal();
-      }
-      
-      setTimeout(() => {
-        const selectRemover = document.getElementById("select-remover-tema");
-        if (selectRemover) {
-          const valorAtual = selectRemover.value;
-          selectRemover.innerHTML = '<option value="">Selecione um tema para remover...</option>';
-          todosOsTemas.forEach((item, idx) => {
-            const opt = document.createElement("option");
-            opt.value = idx;
-            const disponivel = item.quantidade > 0 ? `${item.quantidade} disponíveis` : 'ESGOTADO';
-            opt.textContent = `${item.nome} (${item.categoria}) - ${disponivel}`;
-            selectRemover.appendChild(opt);
-          });
-          if (valorAtual && todosOsTemas[parseInt(valorAtual)]) {
-            selectRemover.value = valorAtual;
-          }
-        }
-      }, 100);
-    };
-
-    // ============================================================
-    // EVENTOS DOS BOTÕES
-    // ============================================================
-
     document.addEventListener('DOMContentLoaded', function() {
-      const btnAdicionar = document.getElementById("btn-adicionar-categoria");
-      const inputCategoria = document.getElementById("input-nova-categoria");
-      const btnRemoverCat = document.getElementById("btn-remover-categoria");
-      const btnRemoverTema = document.getElementById("btn-remover-tema-admin");
-      const selectRemoverTema = document.getElementById("select-remover-tema");
-      const infoTemaRemover = document.getElementById("info-tema-remover");
+      carregarEstoqueIncremental();
+      carregarCategorias();
 
-      if (btnAdicionar) {
-        btnAdicionar.addEventListener("click", function() {
-          const nome = inputCategoria.value.trim();
-          if (adicionarCategoria(nome)) {
-            inputCategoria.value = "";
-            inputCategoria.focus();
-          }
-        });
-      }
+      // Transição de Login / Painel
+      document.getElementById("btn-login-direto").addEventListener("click", () => {
+        document.getElementById("secao-login").style.display = "none";
+        document.getElementById("secao-verificador").style.display = "block";
+      });
 
-      if (inputCategoria) {
-        inputCategoria.addEventListener("keypress", function(e) {
-          if (e.key === "Enter") {
-            document.getElementById("btn-adicionar-categoria").click();
-          }
-        });
-      }
+      document.getElementById("btn-logout-direto").addEventListener("click", () => {
+        document.getElementById("secao-verificador").style.display = "none";
+        document.getElementById("secao-login").style.display = "block";
+      });
 
-      if (btnRemoverCat) {
-        btnRemoverCat.addEventListener("click", function() {
-          const select = document.getElementById("select-remover-categoria");
-          const categoria = select.value;
-          if (!categoria) {
-            alert("⚠️ Selecione uma categoria para remover!");
-            return;
-          }
-          removerCategoria(categoria);
-        });
-      }
+      // Painéis Alternáveis
+      document.getElementById("btn-abrir-catalogo-temas").addEventListener("click", () => {
+        const p = document.getElementById("painel-catalogo-temas");
+        p.style.display = p.style.display === "none" ? "block" : "none";
+      });
 
-      if (btnRemoverTema) {
-        btnRemoverTema.addEventListener("click", function() {
-          const index = parseInt(selectRemoverTema.value);
-          if (isNaN(index) || !todosOsTemas[index]) {
-            alert("⚠️ Selecione um tema válido para remover!");
-            return;
-          }
-          
-          const tema = todosOsTemas[index];
-          if (infoTemaRemover) {
-            infoTemaRemover.innerHTML = `<span style="color:var(--primary);">📌 Removendo: <strong>${tema.nome}</strong> (${tema.categoria})</span>`;
-          }
-          
-          window.removerTema(index);
-          
-          setTimeout(() => {
-            if (infoTemaRemover) {
-              infoTemaRemover.innerHTML = `<span style="color:var(--success);">✅ Tema removido com sucesso!</span>`;
-              setTimeout(() => { infoTemaRemover.innerHTML = ''; }, 3000);
-            }
-          }, 500);
-        });
-      }
+      // Ação de Salvar Peça no Acervo
+      document.getElementById("btn-adicionar-peca").addEventListener("click", () => {
+        const nome = document.getElementById("catalogo-peca-nome").value.trim();
+        const qtd = parseInt(document.getElementById("catalogo-peca-qtd").value) || 1;
+        const categoria = document.getElementById("catalogo-peca-categoria").value;
+        const modelo = document.getElementById("catalogo-peca-modelo").value.trim();
+        const fileInput = document.getElementById("catalogo-peca-imagem");
 
-      if (selectRemoverTema) {
-        selectRemoverTema.addEventListener("change", function() {
-          const index = parseInt(this.value);
-          if (infoTemaRemover) {
-            if (!isNaN(index) && todosOsTemas[index]) {
-              const tema = todosOsTemas[index];
-              infoTemaRemover.innerHTML = `<span style="color:var(--primary);">📌 Selecionado: <strong>${tema.nome}</strong> (${tema.categoria}) - ${tema.quantidade} disponíveis</span>`;
-            } else {
-              infoTemaRemover.innerHTML = '';
-            }
-          }
-        });
-      }
+        if (!nome) {
+          alert("Por favor, preencha o nome do tema/peça!");
+          return;
+        }
+
+        const executarSalvar = (imagemBase64) => {
+          const novaPeca = {
+            nome: nome,
+            quantidade: qtd,
+            categoria: categoria,
+            modelo: modelo,
+            imagem: imagemBase64 || ""
+          };
+          Database.salvarPecaNuvem(novaPeca);
+        };
+
+        if (fileInput.files && fileInput.files[0]) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            executarSalvar(e.target.result);
+          };
+          reader.readAsDataURL(fileInput.files[0]);
+        } else {
+          executarSalvar("");
+        }
+      });
+
+      // Adicionar e Remover Categorias
+      document.getElementById("btn-adicionar-categoria").addEventListener("click", () => {
+        const input = document.getElementById("input-nova-categoria");
+        adicionarCategoria(input.value);
+        input.value = "";
+      });
+
+      document.getElementById("btn-remover-tema-admin").addEventListener("click", () => {
+        const select = document.getElementById("select-remover-tema");
+        const idx = parseInt(select.value);
+        if (!isNaN(idx)) {
+          window.removerTema(idx);
+        } else {
+          alert("Selecione um tema válido!");
+        }
+      });
     });
 
     // ============================================================
-    // MODELOS DE CONTRATO
+    // GERADOR DE CONTRATOS E MODAIS
     // ============================================================
-
     function gerarModeloComFrete(dados) {
-      const { nome, cpf, endereco, telefone, dataFesta, horario, valor, local, pecasSelecionadas, obs } = dados;
+      const { nome, cpf, endereco, telefone, dataFesta, valor, local, pecasSelecionadas, obs } = dados;
       const dataFmt = dataFesta ? dataFesta.split("-").reverse().join("/") : "____/____/______";
-      const dataFmtAno = dataFesta ? dataFesta.split("-")[2] + "/" + dataFesta.split("-")[1] + "/" + dataFesta.split("-")[0].slice(-2) : "__/__/__";
-      const pecasTexto = pecasSelecionadas && pecasSelecionadas.length > 0 
-        ? pecasSelecionadas.join(", ") 
-        : "__________________________________";
+      const pecasTexto = pecasSelecionadas && pecasSelecionadas.length > 0 ? pecasSelecionadas.join(", ") : "__________________________________";
       const valorFormatado = valor ? valor.toFixed(2).replace('.', ',') : "______,____";
       const valorMetade = valor ? (valor/2).toFixed(2).replace('.', ',') : "______,____";
       const dataAtual = new Date().toLocaleDateString('pt-BR');
-      const obsTexto = obs || "__________________________________";
-
-      const hoje = new Date();
-      const dataReserva = hoje.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-
-      const logoUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s";
 
       return `
         <div class="pagina-contrato">
           <div class="logo-container">
-            <img src="${logoUrl}" alt="Tralalá Decorações" class="logo-contrato">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" alt="Tralalá" class="logo-contrato">
           </div>
           <div class="titulo-contrato">CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO</div>
-          
-          <div class="dados-contratada">
-            <span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS
-          </div>
-          <div class="dados-contratada">
-            <span class="negrito">CNPJ:</span> 21.918.863/0001-12
-          </div>
-          <div class="dados-contratada" style="margin-bottom:4px;">
-            <span class="negrito">E-MAIL:</span> tralaladecoracoes@gmail.com
-          </div>
-          
-          <div class="dados-contratante">
-            <span class="negrito">CONTRATANTE:</span> ${nome || "_________________________"}
-          </div>
-          <div class="dados-contratante">
-            <span class="negrito">CPF:</span> ${cpf || "_________________________"}
-          </div>
-          <div class="dados-contratante">
-            <span class="negrito">ENDEREÇO CLIENTE:</span> ${endereco || "_________________________"}
-          </div>
-          <div class="dados-contratante">
-            <span class="negrito">local da festa:</span> ${local || "_________________________"}
-          </div>
-          <div class="dados-contratante">
-            <span class="negrito">Telefone:</span> ${telefone || "_________________________"}
-          </div>
-          <div class="dados-contratante" style="margin-bottom:6px;">
-            <span class="negrito">DATA DA FESTA:</span> ${dataFmt}
-          </div>
-          
-          <div style="margin-bottom:4px;">
-            As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.
-          </div>
-          
+          <div class="dados-contratada"><span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS</div>
+          <div class="dados-contratante"><span class="negrito">CONTRATANTE:</span> ${nome || "_________________________"}</div>
+          <div class="dados-contratante"><span class="negrito">CPF:</span> ${cpf || "_________________________"}</div>
+          <div class="dados-contratante"><span class="negrito">LOCAL DA FESTA:</span> ${local || "_________________________"}</div>
+          <div class="dados-contratante"><span class="negrito">DATA DA FESTA:</span> ${dataFmt}</div>
+          <br>
           <div class="clausula-titulo">DO OBJETO DO CONTRATO</div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 1ª.</span> É objeto do presente contrato a prestação de serviço de <span class="negrito">Aluguel</span> das peças: ${pecasTexto}, para o evento que se realizará no dia <span class="negrito">${dataFmt}</span>, conforme endereço especificado abaixo:
-          </div>
-          <div class="paragrafo">
-            <span class="negrito">LOCAL DA FESTA:</span> ${local || "_________________________"}
-          </div>
-          <div class="paragrafo">
-            <span class="negrito">Primeiro.</span> A alteração do local para entrega do objeto deste contrato implica em prévia comunicação da CONTRATANTE no prazo de 48 horas antes da entrega.
-          </div>
-          <div class="paragrafo">
-            <span class="negrito">Parágrafo Segundo.</span> Caso haja alteração do local para entrega, poderá haver alteração do valor do frete conforme localidade e distância.
-          </div>
-          <div class="paragrafo" style="margin-bottom:4px;">
-            <span class="negrito">Parágrafo Terceiro.</span> A CONTRATANTE não poderá, sem prévia autorização da CONTRATADA, sublocar, emprestar, ou ceder os móveis locados.
-          </div>
-          
-          <div class="clausula-titulo">OBRIGAÇÃO DA CONTRATANTE</div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 2ª.</span> A CONTRATANTE deverá fornecer à CONTRATADA todas as informações necessárias para a realização do serviço, devendo especificar o material, tipo e a quantidade.
-          </div>
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 3ª.</span> É dever da CONTRATANTE devolver o(s) produto(s) de acordo com o que foi locado no término da festa. A CONTRATADA efetuara a retirada dos itens no dia <span class="negrito">${dataFmt}</span>.
-          </div>
-          <div class="paragrafo" style="margin-bottom:4px;">
-            Parágrafo único. A CONTRATADA deverá entregar e buscar o produto no endereço mencionado na cláusula 1ª, em caso de a CONTRATANTE optar por fazer retirada do produto no local, deverá devolvê-lo no local mencionado na cláusula 1ª conforme combinado com a CONTRATADA.
-          </div>
-          
-          <div class="clausula-titulo">OBRIGAÇÃO DA CONTRATADA</div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 4ª.</span> É dever da CONTRATADA oferecer o serviço de acordo com as especificações da CONTRATANTE, devendo o material ser entregue no dia <span class="negrito">${dataFmt}</span> até as 13h00 no endereço já especificado na Cláusula 1ª.
-          </div>
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 5ª.</span> A CONTRATADA fornecerá as seguintes peças:
-          </div>
-          <div class="paragrafo" style="margin-bottom:4px;">
-            (X) ${pecasTexto}
-          </div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 6ª.</span> O serviço contratado no presente instrumento será remunerado pela quantia de <span class="negrito">R$ ${valorFormatado}</span>, pago no ato da reserva:
-          </div>
-          <div class="paragrafo">
-            - ${dataReserva} - R$ ${valorMetade} (no ato da reserva)
-          </div>
-          <div class="paragrafo" style="margin-bottom:4px;">
-            - ${dataFmt} - R$ ${valorMetade} (Na montagem da festa)
-          </div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Parágrafo primeiro.</span> Não será aceito, sob hipótese alguma, pagamento pós-festa.
-          </div>
-          <div class="clausula-texto">
-            <span class="negrito">Parágrafo Segundo.</span> No valor acima referido já está <span class="negrito">incluso frete</span>.
-          </div>
-          <div class="clausula-texto">
-            <span class="negrito">Parágrafo Terceiro.</span> O valor do frete é referente à entrega e à retirada que será realizada pela CONTRATADA no local do evento ou onde for combinado entre as PARTES.
-          </div>
-          <div class="clausula-texto" style="margin-bottom:4px;">
-            <span class="negrito">Parágrafo quarto. NÃO</span> está incluso no valor da locação de peças e mobílias, o serviço de arrumação de mesa, como colocar doces, bolo, lembrancinhas e personalizados feitos por terceiros, para esse serviço favor consultar valores com a CONTRATADA.
-          </div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 7ª.</span> O recibo do depósito da transferência bancária, referente ao sinal, efetuada na conta informada pela CONTRATADA, servirá para a CONTRATANTE como comprovante de cumprimento da obrigação de pagar.
-          </div>
-
-          <div class="clausula-titulo">DA DEVOLUÇÃO</div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 8ª.</span> Caso haja perda, Danos, Quebra ou não devolução dos itens, a CONTRATANTE arcará com 50% do valor de uma peça nova para reposição (caso haja recuperação). NÃO havendo recuperação, será cobrado o valor de mercado por cada item, em dinheiro ou outra forma que convier às PARTES. Em caso de quebra ou extravio de peças a CONTRATANTE assinará uma nota promissória se comprometendo-se com o pagamento que será devolvida após a quitação do débito.
-          </div>
-          <div class="paragrafo">
-            <span class="negrito">Parágrafo Primeiro:</span> É de responsabilidade da CONTRATANTE que na retirada da decoração, todas as peças alugadas estejam sobre a mesa, caso fique algum item, a CONTRATANTE se responsabilizará pela devolução, a recusa da devolução imediata, acarretará em multa de R$ 20,00, por diária/peça.
-          </div>
-          <div class="paragrafo">
-            <span class="negrito">Parágrafo segundo:</span> É dever da CONTRATANTE devolver as peças como foi entregue. É proibido, furar o bolo cenográfico, usar cola quente no painel, peças e mesas, usar confeitos coloridos, vela faísca estes itens danificam e mancham peças e mobília (uso estará sujeito em caso de avarias pagar pela recuperação ou peça nova caso não seja possível).
-          </div>
-          <div class="paragrafo" style="margin-bottom:4px;">
-            O tapete deverá ser devolvido como foi entregue sem doces e bolos, caso contrário pagará multa de limpeza de R$ 40,00 (quarenta reais).
-          </div>
-          
-          <div class="clausula-titulo">DO CANCELAMENTO</div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 9ª.</span> Em caso de desistência a CONTRATANTE arcará com a multa de quebra de contrato, 50% do valor total do seu contrato.
-          </div>
-          <div class="paragrafo">
-            <span class="negrito">Parágrafo primeiro:</span> Em caso de força maior, a CONTRATANTE, poderá solicitar uma carta crédito na quantia paga, para utilização de até um ano a partir da data da notificação. Sendo que essa carta crédito não poderá ser transferida para outro titular, nem prorrogada. Cabendo a CONTRATADA confirmar disponibilidade de peças e data. A CONTRATANTE deverá comprovar o fato ocorrido com documentos oficiais.
-          </div>
-          <div class="paragrafo" style="margin-bottom:4px;">
-            <span class="negrito">Parágrafo Segundo.</span> A Parte impossibilitada de cumprir sua obrigação deverá notificar a outra, de imediato, acerca da extensão do problema e o prazo estimado para remarcação da nova data.
-          </div>
-          
-          <div class="clausula-titulo">DAS CONDIÇÕES GERAIS</div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 10ª.</span> O orçamento ou aceite referente ao serviço contratado, enviado por email, faz parte integrante deste contrato.
-          </div>
-          <div class="clausula-texto" style="margin-bottom:4px;">
-            <span class="negrito">Observações:</span> ${obsTexto}
-          </div>
-          
-          <div class="clausula-titulo">DO FORO</div>
-          
-          <div class="clausula-texto" style="margin-bottom:8px;">
-            As Partes elegem o foro da Circunscrição Judiciária de Brasília - DF para dirimir os conflitos que porventura venham a surgir em decorrência da execução do presente contrato, com renúncia de qualquer outro, por mais privilegiado que seja.
-          </div>
-          
-          <div class="clausula-texto" style="margin-bottom:4px;">
-            E por assim estarem de acordo, o contrato será sendo assinado de forma digitalizada, sendo as vias compartilhadas em meio eletrônico e permitida a assinatura híbrida (física e digital).
-          </div>
-          
-          <div style="text-align: center; margin-bottom:6px;">
-            Brasília-DF, ${dataAtual}.
-          </div>
-          
-          <div class="assinatura">
-            <div class="linha-assinatura"></div>
-            <div class="assinatura-nome">TRALALÁ DECORAÇÕES DE FESTA</div>
-            <div style="font-size:9pt;">CNPJ: 21.918.863/0001-12</div>
-            <div style="font-size:9pt;">REPRESENTANTE LEGAL: ALINE ARAUJO DO VALLE</div>
-          </div>
-          
-          <div class="assinatura" style="margin-top:12px;">
-            <div class="linha-assinatura"></div>
-            <div class="assinatura-nome">${nome || "CONTRATANTE"}</div>
-            <div style="font-size:9pt;">CPF: ${cpf || "_________________________"}</div>
-          </div>
+          <div class="clausula-texto"><span class="negrito">Cláusula 1ª.</span> Aluguel das peças: ${pecasTexto}.</div>
+          <div class="clausula-titulo">VALORES E PAGAMENTO</div>
+          <div class="clausula-texto">Valor Total: R$ ${valorFormatado} (Sinal: R$ ${valorMetade}).</div>
+          <br>
+          <div style="text-align: center;">Brasília-DF, ${dataAtual}.</div>
         </div>
       `;
     }
 
-    function gerarModeloPegueMonte(dados) {
-      const { nome, cpf, endereco, telefone, dataFesta, horario, valor, local, pecasSelecionadas, obs } = dados;
-      const dataFmt = dataFesta ? dataFesta.split("-").reverse().join("/") : "____/____/______";
-      const pecasTexto = pecasSelecionadas && pecasSelecionadas.length > 0 
-        ? pecasSelecionadas.join(", ") 
-        : "__________________________________";
-      const valorFormatado = valor ? valor.toFixed(2).replace('.', ',') : "______,____";
-      const valorMetade = valor ? (valor/2).toFixed(2).replace('.', ',') : "______,____";
-      const dataAtual = new Date().toLocaleDateString('pt-BR');
-      const obsTexto = obs || "__________________________________";
-
-      let dataRetirada = "";
-      let dataDevolucao = "";
-      if (dataFesta) {
-        const dt = new Date(dataFesta);
-        dt.setDate(dt.getDate() - 2);
-        dataRetirada = dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-        dt.setDate(dt.getDate() + 4);
-        dataDevolucao = dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-      }
-
-      const hoje = new Date();
-      const dataReserva = hoje.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-
-      const logoUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s";
-
-      return `
-        <div class="pagina-contrato">
-          <div class="logo-container">
-            <img src="${logoUrl}" alt="Tralalá Decorações" class="logo-contrato">
-          </div>
-          <div class="titulo-contrato">CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO</div>
-          
-          <div class="dados-contratada">
-            <span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS
-          </div>
-          <div class="dados-contratada">
-            <span class="negrito">CNPJ:</span> 21.918.863/0001-12
-          </div>
-          <div class="dados-contratada" style="margin-bottom:4px;">
-            <span class="negrito">E-MAIL:</span> tralaladecoracoes@gmail.com
-          </div>
-          
-          <div class="dados-contratante">
-            <span class="negrito">CONTRATANTE:</span> ${nome || "_________________________"}
-          </div>
-          <div class="dados-contratante">
-            <span class="negrito">CPF:</span> ${cpf || "_________________________"}
-          </div>
-          <div class="dados-contratante">
-            <span class="negrito">ENDEREÇO CLIENTE:</span> ${endereco || "_________________________"}
-          </div>
-          <div class="dados-contratante">
-            <span class="negrito">Telefone:</span> ${telefone || "_________________________"}
-          </div>
-          <div class="dados-contratante" style="margin-bottom:6px;">
-            <span class="negrito">DATA DA FESTA:</span> ${dataFmt}
-          </div>
-          
-          <div style="margin-bottom:4px;">
-            As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.
-          </div>
-          
-          <div class="clausula-titulo">DO OBJETO DO CONTRATO</div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 1ª.</span> É objeto do presente contrato a prestação de serviço de <span class="negrito">Aluguel</span> das peças: ${pecasTexto}, à CONTRATANTE (especificado na Cláusula 5ª), que a CONTRATADA declara ser de sua propriedade, para o evento que se realizará no dia <span class="negrito">${dataFmt}</span>.
-          </div>
-          <div class="paragrafo" style="margin-bottom:4px;">
-            <span class="negrito">Parágrafo primeiro.</span> A CONTRATANTE não poderá, sem prévia autorização da CONTRATADA, sublocar, emprestar, ou ceder os móveis locados.
-          </div>
-          
-          <div class="clausula-titulo">OBRIGAÇÃO DA CONTRATANTE</div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 2ª.</span> É dever da CONTRATANTE devolver o(s) produto(s) de acordo com o que foi locado no dia <span class="negrito">${dataDevolucao || "__/__/____"} de 08h00 às 11h</span>, caso não seja entregue na data e horário combinado será cobrado o valor de 1 aluguel para cada dia de atraso.
-          </div>
-          <div class="paragrafo" style="margin-bottom:4px;">
-            Parágrafo único. A CONTRATANTE deverá retirar e entregar os itens no endereço no seguinte endereço <span class="negrito">${endereco || "_________________________"}</span>, no dia ${dataRetirada || "__/__/____"} às 13h, munido de cópia do comprovante de residência em seu nome, cópia ou foto CPF e RG documentos necessários para a retirada das peças.
-          </div>
-          
-          <div class="clausula-titulo">OBRIGAÇÃO DA CONTRATADA</div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 3ª.</span> É dever da CONTRATADA oferecer os itens de acordo com as especificações do contrato.
-          </div>
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 4ª.</span> O serviço contratado no presente instrumento será remunerado pela quantia de <span class="negrito">R$ ${valorFormatado}</span>, pago no ato da reserva.
-          </div>
-          <div class="paragrafo">
-            ${dataReserva} - R$ ${valorMetade} (na reserva do kit)
-          </div>
-          <div class="paragrafo" style="margin-bottom:4px;">
-            ${dataRetirada || "__/__/____"} - R$ ${valorMetade} (na retirada do kit)
-          </div>
-          
-          <div class="clausula-texto" style="margin-bottom:4px;">
-            <span class="negrito">Parágrafo primeiro.</span> Não será aceito, sob hipótese alguma, pagamento pós-festa.
-          </div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 7ª.</span> O recibo do depósito da transferência bancária, referente ao valor, efetuada na conta informada pela CONTRATADA, servirá para a CONTRATANTE como comprovante de cumprimento da obrigação de pagar.
-          </div>
-
-          <div class="clausula-titulo">DA DEVOLUÇÃO</div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 8ª.</span> Caso haja perda, Danos, Quebra ou não devolução dos itens, a CONTRATANTE arcará com 50% do valor de uma peça nova para reposição (caso haja recuperação). NÃO havendo recuperação, será cobrado o valor de mercado por cada item, em dinheiro ou outra forma que convier às PARTES. Em caso de quebra ou extravio de peças a CONTRATANTE assinará uma nota promissória se comprometendo-se com o pagamento que será devolvida após a quitação do débito.
-          </div>
-          <div class="paragrafo">
-            <span class="negrito">Parágrafo primeiro:</span> É dever da CONTRATANTE devolver as peças como foi entregue. É proibido, furar o bolo cenográfico, usar cola quente no painel, peças e mesas, usar confeitos coloridos, vela faísca estes itens danificam e mancham peças e mobília (uso estará sujeito em caso de avarias, pagar pela recuperação ou peça nova caso não seja possível).
-          </div>
-          <div class="paragrafo" style="margin-bottom:4px;">
-            O tapete deverá ser devolvido como foi entregue sem doces e bolos, caso contrário pagará multa de limpeza de R$ 40,00 (quarenta reais).
-          </div>
-          
-          <div class="clausula-titulo">DO CANCELAMENTO</div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 9ª.</span> Em caso de desistência a CONTRATANTE arcará com a multa de quebra de contrato, 50% do valor total do seu contrato.
-          </div>
-          <div class="paragrafo">
-            <span class="negrito">Parágrafo primeiro:</span> Em caso de força maior, a CONTRATANTE, poderá solicitar uma carta crédito na quantia paga, para utilização de até um ano a partir da data da notificação. Sendo que essa carta crédito não poderá ser transferida para outro titular, nem prorrogada. Cabendo a CONTRATADA confirmar disponibilidade de peças e data. A CONTRATANTE deverá comprovar o fato ocorrido com documentos oficiais.
-          </div>
-          <div class="paragrafo" style="margin-bottom:4px;">
-            <span class="negrito">Parágrafo Segundo.</span> A Parte impossibilitada de cumprir sua obrigação deverá notificar a outra, de imediato, acerca da extensão do problema e o prazo estimado para remarcação da nova data.
-          </div>
-          
-          <div class="clausula-titulo">DAS CONDIÇÕES GERAIS</div>
-          
-          <div class="clausula-texto">
-            <span class="negrito">Cláusula 10ª.</span> O contrato ou aceite referente ao serviço contratado, enviado por whatsapp, faz parte integrante deste contrato.
-          </div>
-          <div class="clausula-texto" style="margin-bottom:4px;">
-            <span class="negrito">Observações:</span> ${obsTexto}
-          </div>
-          
-          <div class="clausula-titulo">DO FORO</div>
-          
-          <div class="clausula-texto" style="margin-bottom:8px;">
-            As Partes elegem o foro da Circunscrição Judiciária de Brasília - DF para dirimir os conflitos que porventura venham a surgir em decorrência da execução do presente contrato, com renúncia de qualquer outro, por mais privilegiado que seja.
-          </div>
-          
-          <div class="clausula-texto" style="margin-bottom:4px;">
-            E por assim estarem de acordo, o contrato será sendo assinado de forma digitalizada, sendo as vias compartilhadas em meio eletrônico e permitida a assinatura híbrida (física e digital).
-          </div>
-          
-          <div style="text-align: center; margin-bottom:6px;">
-            Brasília-DF, ${dataAtual}.
-          </div>
-          
-          <div class="assinatura">
-            <div class="linha-assinatura"></div>
-            <div class="assinatura-nome">TRALALÁ DECORAÇÕES DE FESTA</div>
-            <div style="font-size:9pt;">CNPJ: 21.918.863/0001-12</div>
-            <div style="font-size:9pt;">REPRESENTANTE LEGAL: ALINE ARAUJO DO VALLE</div>
-          </div>
-          
-          <div class="assinatura" style="margin-top:12px;">
-            <div class="linha-assinatura"></div>
-            <div class="assinatura-nome">${nome || "CONTRATANTE"}</div>
-            <div style="font-size:9pt;">CPF: ${cpf || "_________________________"}</div>
-          </div>
-        </div>
-      `;
-    }
-
-    function gerarContratoHtml(dados) {
-      const modelo = dados.modelo || "com-frete";
-      if (modelo === "pegue-monte") {
-        return gerarModeloPegueMonte(dados);
-      } else {
-        return gerarModeloComFrete(dados);
-      }
-    }
-
-    // ============================================================
-    // CONTROLES DO MODAL
-    // ============================================================
     const btnAbrirGerador = document.getElementById("btn-abrir-gerador-contrato");
     const btnFecharGerador = document.getElementById("btn-fechar-modal-contrato");
     const modalContrato = document.getElementById("modal-gerador-contrato");
 
-    btnAbrirGerador.addEventListener("click", () => {
-      modalContrato.classList.add("ativo");
-      atualizarListaPecasContrato();
-      renderizarHistoricoContratos();
-    });
-    btnFecharGerador.addEventListener("click", () => modalContrato.classList.remove("ativo"));
-
-    const modalVisualizar = document.getElementById("modal-visualizar-contrato");
-    const btnFecharVisualizacao = document.getElementById("btn-fechar-visualizacao");
-    const btnBaixarPdf = document.getElementById("btn-baixar-pdf-contrato");
-    const btnImprimirContrato = document.getElementById("btn-imprimir-contrato");
-
-    btnFecharVisualizacao.addEventListener("click", () => {
-      modalVisualizar.classList.remove("ativo");
-    });
-
-    function atualizarListaPecasContrato() {
-      const selectPecas = document.getElementById("c-pecas");
-      selectPecas.innerHTML = "";
-      todosOsTemas.forEach(tema => {
-        const opt = document.createElement("option");
-        opt.value = tema.nome;
-        opt.innerText = `${tema.nome} (${tema.modelo})`;
-        selectPecas.appendChild(opt);
-      });
+    if (btnAbrirGerador) {
+      btnAbrirGerador.addEventListener("click", () => modalContrato.classList.add("ativo"));
     }
-
-    // ============================================================
-    // BOTÃO GERAR E SALVAR CONTRATO
-    // ============================================================
-    document.getElementById("btn-gerar-salvar-contrato").addEventListener("click", () => {
-      const nome = document.getElementById("c-nome").value.trim();
-      const cpf = document.getElementById("c-cpf").value.trim();
-      const dataFesta = document.getElementById("c-data").value;
-      const horario = document.getElementById("c-horario").value;
-      const valor = parseFloat(document.getElementById("c-valor").value) || 0;
-      const endereco = document.getElementById("c-endereco").value.trim();
-      const telefone = document.getElementById("c-telefone").value.trim();
-      const local = document.getElementById("c-local").value.trim();
-      const obs = document.getElementById("c-obs").value.trim();
-      const modelo = document.getElementById("c-modelo").value;
-      
-      const pecasSelecionadas = Array.from(document.getElementById("c-pecas").selectedOptions).map(option => option.value);
-      
-      const porcelanas = Array.from(document.getElementById("c-porcelanas").selectedOptions).map(option => option.value);
-      const bolos = Array.from(document.getElementById("c-bolos").selectedOptions).map(option => option.value);
-      const decoracao = Array.from(document.getElementById("c-decoracao").selectedOptions).map(option => option.value);
-      const outros = Array.from(document.getElementById("c-outros").selectedOptions).map(option => option.value);
-      const itensAdicionais = [...porcelanas, ...bolos, ...decoracao, ...outros];
-
-      if(!nome || !cpf || !dataFesta || !local) {
-        alert("Preencha Nome, CPF, Data da Festa e Local do Evento!");
-        return;
-      }
-
-      const dadosContrato = {
-        nome, cpf, dataFesta, horario, valor, endereco, telefone, local, obs, modelo,
-        pecas: pecasSelecionadas,
-        itensAdicionais: itensAdicionais,
-        criadoEm: new Date().toLocaleString('pt-BR')
-      };
-
-      const textoHtml = gerarContratoHtml(dadosContrato);
-
-      CloudDB.buscar("contratos", [], (contratosSalvos) => {
-        contratosSalvos.push({
-          ...dadosContrato,
-          textoHtml: textoHtml,
-          textoContrato: textoHtml.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-        });
-
-        CloudDB.salvar("contratos", contratosSalvos, () => {
-          alert("Contrato gravado com sucesso!");
-          renderizarHistoricoContratos();
-        });
-      });
-    });
-
-    // ============================================================
-    // BOTÃO GERAR PDF
-    // ============================================================
-    document.getElementById("btn-gerar-pdf-contrato").addEventListener("click", () => {
-      const nome = document.getElementById("c-nome").value.trim();
-      const cpf = document.getElementById("c-cpf").value.trim();
-      const dataFesta = document.getElementById("c-data").value;
-      const horario = document.getElementById("c-horario").value;
-      const valor = parseFloat(document.getElementById("c-valor").value) || 0;
-      const endereco = document.getElementById("c-endereco").value.trim();
-      const telefone = document.getElementById("c-telefone").value.trim();
-      const local = document.getElementById("c-local").value.trim();
-      const obs = document.getElementById("c-obs").value.trim();
-      const modelo = document.getElementById("c-modelo").value;
-      
-      const pecasSelecionadas = Array.from(document.getElementById("c-pecas").selectedOptions).map(option => option.value);
-      
-      const porcelanas = Array.from(document.getElementById("c-porcelanas").selectedOptions).map(option => option.value);
-      const bolos = Array.from(document.getElementById("c-bolos").selectedOptions).map(option => option.value);
-      const decoracao = Array.from(document.getElementById("c-decoracao").selectedOptions).map(option => option.value);
-      const outros = Array.from(document.getElementById("c-outros").selectedOptions).map(option => option.value);
-      const itensAdicionais = [...porcelanas, ...bolos, ...decoracao, ...outros];
-
-      if(!nome || !cpf || !dataFesta || !local) {
-        alert("Preencha Nome, CPF, Data da Festa e Local do Evento!");
-        return;
-      }
-
-      const dadosContrato = {
-        nome, cpf, dataFesta, horario, valor, endereco, telefone, local, obs, modelo,
-        pecasSelecionadas,
-        itensAdicionais
-      };
-
-      const htmlContrato = gerarContratoHtml(dadosContrato);
-      
-      document.getElementById("contrato-preview-content").innerHTML = htmlContrato;
-      
-      modalVisualizar.classList.add("ativo");
-      
-      setTimeout(() => {
-        const scrollContainer = document.getElementById("visualizador-scroll");
-        if (scrollContainer) scrollContainer.scrollTop = 0;
-      }, 100);
-    });
-
-    // ============================================================
-    // BAIXAR PDF
-    // ============================================================
-    btnBaixarPdf.addEventListener("click", () => {
-      const element = document.getElementById("contrato-preview-content");
-      
-      const opt = {
-        margin: 0,
-        filename: `Contrato_Tralala_${document.getElementById("c-nome").value.trim() || "cliente"}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true,
-          letterRendering: true,
-          scrollY: 0,
-          windowHeight: element.scrollHeight
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'portrait',
-          compress: true
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      };
-      
-      html2pdf().set(opt).from(element).save();
-    });
-
-    // ============================================================
-    // IMPRIMIR
-    // ============================================================
-    btnImprimirContrato.addEventListener("click", () => {
-      const content = document.getElementById("contrato-preview-content").innerHTML;
-      const win = window.open('', '', 'width=800,height=600');
-      win.document.write(`
-        <html>
-          <head>
-            <title>Contrato Tralalá</title>
-            <style>
-              body { 
-                font-family: 'Times New Roman', Times, serif; 
-                padding: 0; 
-                margin: 0;
-                background: white;
-              }
-              .pagina-contrato {
-                width: 210mm;
-                min-height: 297mm;
-                padding: 18mm 16mm;
-                margin: 0 auto;
-                box-sizing: border-box;
-                page-break-after: always;
-                break-after: page;
-                font-family: 'Times New Roman', Times, serif;
-                font-size: 11pt;
-                line-height: 1.4;
-                text-align: justify;
-              }
-              .pagina-contrato .logo-container {
-                text-align: center;
-                margin-bottom: 6px;
-              }
-              .pagina-contrato .logo-contrato {
-                max-width: 120px;
-                max-height: 50px;
-                height: auto;
-              }
-              .pagina-contrato .titulo-contrato {
-                text-align: center;
-                font-size: 15pt;
-                font-weight: bold;
-                text-transform: uppercase;
-                margin: 0 0 5px 0;
-                padding: 0;
-                letter-spacing: 1px;
-              }
-              .pagina-contrato .dados-contratada {
-                margin: 0;
-                padding: 0;
-                line-height: 1.3;
-              }
-              .pagina-contrato .dados-contratante {
-                margin: 2px 0 0 0;
-                padding: 0;
-                line-height: 1.3;
-              }
-              .pagina-contrato .clausula-titulo {
-                font-weight: bold;
-                font-size: 11.5pt;
-                margin: 5px 0 2px 0;
-                padding: 0;
-                text-transform: uppercase;
-              }
-              .pagina-contrato .clausula-texto {
-                margin: 0 0 2px 0;
-                padding: 0;
-                text-align: justify;
-              }
-              .pagina-contrato .paragrafo {
-                margin: 0 0 2px 18px;
-                padding: 0;
-                text-align: justify;
-              }
-              .pagina-contrato .assinatura {
-                margin-top: 14px;
-                text-align: center;
-              }
-              .pagina-contrato .linha-assinatura {
-                border-top: 1px solid #000;
-                width: 60%;
-                margin: 3px auto;
-                padding-top: 3px;
-              }
-              .pagina-contrato .assinatura-nome {
-                font-weight: bold;
-                font-size: 10pt;
-              }
-              .pagina-contrato .negrito {
-                font-weight: bold;
-              }
-              .pagina-contrato p {
-                margin: 0 0 2px 0;
-                padding: 0;
-              }
-              .pagina-contrato .mark {
-                background-color: #fef9e7;
-                padding: 0 2px;
-              }
-              @page {
-                margin: 0;
-                size: A4;
-              }
-              @media print {
-                body { margin: 0; padding: 0; }
-                .pagina-contrato {
-                  box-shadow: none;
-                  margin: 0;
-                  padding: 18mm 16mm;
-                  width: 100%;
-                  min-height: 297mm;
-                  page-break-after: always;
-                  break-after: page;
-                  border-radius: 0;
-                }
-              }
-            </style>
-          </head>
-          <body>${content}</body>
-        </html>
-      `);
-      win.document.close();
-      win.print();
-    });
-
-    // ============================================================
-    // HISTÓRICO DE CONTRATOS
-    // ============================================================
-    function renderizarHistoricoContratos() {
-      CloudDB.buscar("contratos", [], (contratos) => {
-        const container = document.getElementById("historico-contratos-lista");
-        container.innerHTML = "";
-        
-        if(!contratos || contratos.length === 0) {
-          container.innerHTML = `<p style="color:#999; font-size:12px; text-align:center;">Nenhum contrato salvo.</p>`;
-          return;
-        }
-
-        contratos.forEach((c, idx) => {
-          const div = document.createElement("div");
-          div.className = "card-contrato";
-          div.style.padding = "12px";
-          const modeloLabel = c.modelo === "pegue-monte" ? "🏠 Pegue e Monte" : "📦 Com Frete";
-          div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; font-size:12px;">
-              <strong>📄 ${c.nome}</strong>
-              <span style="color:#e67e22;">R$ ${(c.valor || 0).toFixed(2)}</span>
-            </div>
-            <small style="color:#888; display:block; margin:4px 0;">
-              ${modeloLabel} | ${c.dataFesta ? c.dataFesta.split("-").reverse().join("/") : "N/A"} | ${c.criadoEm}
-            </small>
-            <div style="margin-top:8px; display:flex; gap:10px; flex-wrap:wrap;">
-              <button type="button" onclick="window.visualizarContrato(${idx})" class="btn btn-outline" style="font-size:11px; padding:4px 8px; border-color:#3498db; color:#3498db;">📄 Visualizar</button>
-              <button type="button" onclick="window.baixarContratoTexto(${idx})" class="btn btn-outline" style="font-size:11px; padding:4px 8px;">💾 Baixar TXT</button>
-              <button type="button" onclick="window.imprimirContratoDireto(${idx})" class="btn btn-outline" style="font-size:11px; padding:4px 8px; border-color:#27ae60; color:#27ae60;">🖨️ Imprimir</button>
-            </div>
-          `;
-          container.appendChild(div);
-        });
-      });
-    }
-
-    window.visualizarContrato = function(index) {
-      CloudDB.buscar("contratos", [], (contratos) => {
-        const c = contratos[index];
-        if(!c) return;
-        document.getElementById("contrato-preview-content").innerHTML = c.textoHtml || gerarContratoHtml(c);
-        modalVisualizar.classList.add("ativo");
-        setTimeout(() => {
-          const scrollContainer = document.getElementById("visualizador-scroll");
-          if (scrollContainer) scrollContainer.scrollTop = 0;
-        }, 100);
-      });
-    };
-
-    window.baixarContratoTexto = function(index) {
-      CloudDB.buscar("contratos", [], (contratos) => {
-        const c = contratos[index];
-        if(!c) return;
-        const texto = c.textoContrato || c.textoHtml?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || "Contrato não disponível";
-        const blob = new Blob([texto], { type: "text/plain;charset=utf-8" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `Contrato_Tralala_${c.nome.replace(/\s+/g, '_')}.txt`;
-        link.click();
-      });
-    };
-
-    window.imprimirContratoDireto = function(index) {
-      CloudDB.buscar("contratos", [], (contratos) => {
-        const c = contratos[index];
-        if(!c) return;
-        const conteudo = c.textoHtml || gerarContratoHtml(c);
-        const janelaImpressao = window.open('', '', 'width=800,height=600');
-        janelaImpressao.document.write(`
-          <html>
-            <head>
-              <title>Contrato Tralalá</title>
-              <style>
-                body { 
-                  font-family: 'Times New Roman', Times, serif; 
-                  padding: 0; 
-                  margin: 0;
-                  background: white;
-                }
-                .pagina-contrato {
-                  width: 210mm;
-                  min-height: 297mm;
-                  padding: 18mm 16mm;
-                  margin: 0 auto;
-                  box-sizing: border-box;
-                  page-break-after: always;
-                  break-after: page;
-                  font-family: 'Times New Roman', Times, serif;
-                  font-size: 11pt;
-                  line-height: 1.4;
-                  text-align: justify;
-                }
-                .pagina-contrato .logo-container {
-                  text-align: center;
-                  margin-bottom: 6px;
-                }
-                .pagina-contrato .logo-contrato {
-                  max-width: 120px;
-                  max-height: 50px;
-                  height: auto;
-                }
-                .pagina-contrato .titulo-contrato {
-                  text-align: center;
-                  font-size: 15pt;
-                  font-weight: bold;
-                  text-transform: uppercase;
-                  margin: 0 0 5px 0;
-                  padding: 0;
-                  letter-spacing: 1px;
-                }
-                .pagina-contrato .dados-contratada {
-                  margin: 0;
-                  padding: 0;
-                  line-height: 1.3;
-                }
-                .pagina-contrato .dados-contratante {
-                  margin: 2px 0 0 0;
-                  padding: 0;
-                  line-height: 1.3;
-                }
-                .pagina-contrato .clausula-titulo {
-                  font-weight: bold;
-                  font-size: 11.5pt;
-                  margin: 5px 0 2px 0;
-                  padding: 0;
-                  text-transform: uppercase;
-                }
-                .pagina-contrato .clausula-texto {
-                  margin: 0 0 2px 0;
-                  padding: 0;
-                  text-align: justify;
-                }
-                .pagina-contrato .paragrafo {
-                  margin: 0 0 2px 18px;
-                  padding: 0;
-                  text-align: justify;
-                }
-                .pagina-contrato .assinatura {
-                  margin-top: 14px;
-                  text-align: center;
-                }
-                .pagina-contrato .linha-assinatura {
-                  border-top: 1px solid #000;
-                  width: 60%;
-                  margin: 3px auto;
-                  padding-top: 3px;
-                }
-                .pagina-contrato .assinatura-nome {
-                  font-weight: bold;
-                  font-size: 10pt;
-                }
-                .pagina-contrato .negrito {
-                  font-weight: bold;
-                }
-                .pagina-contrato p {
-                  margin: 0 0 2px 0;
-                  padding: 0;
-                }
-                .pagina-contrato .mark {
-                  background-color: #fef9e7;
-                  padding: 0 2px;
-                }
-                @page {
-                  margin: 0;
-                  size: A4;
-                }
-                @media print {
-                  body { margin: 0; padding: 0; }
-                  .pagina-contrato {
-                    box-shadow: none;
-                    margin: 0;
-                    padding: 18mm 16mm;
-                    width: 100%;
-                    min-height: 297mm;
-                    page-break-after: always;
-                    break-after: page;
-                    border-radius: 0;
-                  }
-                }
-              </style>
-            </head>
-            <body>${conteudo}</body>
-          </html>
-        `);
-        janelaImpressao.document.close();
-        janelaImpressao.print();
-      });
-    };
-
-    // ============================================================
-    // PONTO ELETRÔNICO
-    // ============================================================
-    function renderizarPontos() {
-      CloudDB.buscar("pontos", [], (pontos) => {
-        const corpo = document.getElementById("lista-pontos-geral-corpo");
-        corpo.innerHTML = "";
-        if (!pontos || pontos.length === 0) {
-          document.getElementById("ponto-status-hoje").innerText = "Sem marcações registradas no nó 'pontos'";
-          return;
-        }
-        const ultimo = pontos[pontos.length - 1];
-        document.getElementById("ponto-status-hoje").innerText = `Último registro: ${ultimo.tipo} às ${ultimo.hora} (${ultimo.data})`;
-        [...pontos].reverse().forEach(p => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `<td>Administrador</td><td>${p.data}</td><td>${p.tipo === 'Entrada' ? p.hora : '-'}</td><td>${p.tipo === 'Saída' ? p.hora : '-'}</td>`;
-          corpo.appendChild(tr);
-        });
-      });
-    }
-
-    document.getElementById("btn-ponto-entrada").addEventListener("click", () => registrarPonto("Entrada"));
-    document.getElementById("btn-ponto-saida").addEventListener("click", () => registrarPonto("Saída"));
-    document.getElementById("btn-abrir-relatorio-pontos").addEventListener("click", () => {
-      const el = document.getElementById("painel-relatorio-pontos-geral");
-      el.style.display = el.style.display === "none" ? "block" : "none";
-    });
-
-    function registrarPonto(tipo) {
-      const agora = new Date();
-      const d = agora.toLocaleDateString('pt-BR');
-      const h = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      CloudDB.buscar("pontos", [], (p) => {
-        p.push({ tipo, data: d, hora: h });
-        CloudDB.salvar("pontos", p, () => { alert("Ponto registrado!"); renderizarPontos(); });
-      });
-    }
-
-    // ============================================================
-    // MONTAGEM NO LOCAL
-    // ============================================================
-    const chkMontarLocal = document.getElementById("chk-montar-local");
-    const painelMontagemLocal = document.getElementById("painel-montagem-local");
-    const mlPecasEstoque = document.getElementById("ml-pecas-estoque");
-    const mlMesasEstoque = document.getElementById("ml-mesas-estoque");
-
-    chkMontarLocal.addEventListener("change", () => {
-      if (chkMontarLocal.checked) {
-        painelMontagemLocal.style.display = "block";
-        alimentarSeletoresMontagemEstoque();
-      } else {
-        painelMontagemLocal.style.display = "none";
-      }
-    });
-
-    function alimentarSeletoresMontagemEstoque() {
-      CloudDB.buscar("estoque", [], (estoque) => {
-        mlPecasEstoque.innerHTML = "";
-        mlMesasEstoque.innerHTML = "";
-
-        const itens = [];
-        if (estoque) {
-          Object.keys(estoque).forEach(k => {
-            const item = estoque[k];
-            if (item && typeof item === 'object') {
-              const itemNome = item.nome || item.item || item.titulo || "Sem Nome";
-              const qtd = item.quantidade !== undefined ? item.quantidade : 1;
-              if (qtd > 0) {
-                itens.push({ nome: itemNome, modelo: item.modelo || "" });
-              }
-            }
-          });
-        }
-
-        if (itens.length === 0) {
-          mlPecasEstoque.innerHTML = `<span style="font-size:12px; color:#999; padding:5px;">Nenhuma peça disponível no estoque</span>`;
-          mlMesasEstoque.innerHTML = `<span style="font-size:12px; color:#999; padding:5px;">Nenhuma mesa disponível no estoque</span>`;
-          return;
-        }
-
-        itens.forEach(item => {
-          const divPeca = document.createElement("div");
-          divPeca.className = "multi-select-item";
-          divPeca.innerHTML = `<label><input type="checkbox" class="chk-peca-item" value="${item.nome}"> ${item.nome}</label>`;
-          mlPecasEstoque.appendChild(divPeca);
-
-          const nomeL = item.nome.toLowerCase();
-          const modeloL = item.modelo.toLowerCase();
-          if (nomeL.includes("mesa") || nomeL.includes("cilindro") || modeloL.includes("mesa") || modeloL.includes("cilindro")) {
-            const divMesa = document.createElement("div");
-            divMesa.className = "multi-select-item";
-            divMesa.innerHTML = `<label><input type="checkbox" class="chk-mesa-item" value="${item.nome}"> ${item.nome}</label>`;
-            mlMesasEstoque.appendChild(divMesa);
-          }
-        });
-
-        if (mlMesasEstoque.innerHTML === "") {
-          mlMesasEstoque.innerHTML = `<span style="font-size:11px; color:#999; padding:5px;">Nenhum cilindro/mesa identificado no catálogo</span>`;
-        }
-      });
-    }
-
-    // ============================================================
-    // CÁLCULO FINANCEIRO
-    // ============================================================
-    const inputValorFesta = document.getElementById("valor-festa");
-    const inputValorFrete = document.getElementById("valor-frete");
-    const inputValorTotal = document.getElementById("valor-total");
-    const inputValorSinal = document.getElementById("valor-sinal");
-    const inputValorRestante = document.getElementById("valor-restante");
-
-    function calcularFinanceiro() {
-      const festa = parseFloat(inputValorFesta.value) || 0;
-      const frete = parseFloat(inputValorFrete.value) || 0;
-      const total = festa + frete;
-      inputValorTotal.value = total.toFixed(2);
-
-      const sinal = parseFloat(inputValorSinal.value) || 0;
-      const restante = total - sinal;
-      inputValorRestante.value = restante.toFixed(2);
-    }
-
-    inputValorFesta.addEventListener("input", calcularFinanceiro);
-    inputValorSinal.addEventListener("input", calcularFinanceiro);
-
-    // ============================================================
-    // CALCULADORA DE FRETE
-    // ============================================================
-    const inputKM = document.getElementById("calc-km");
-    const inputLitro = document.getElementById("calc-valor-litro");
-    const outCombustivel = document.getElementById("calc-total-combustivel");
-    const outManutencao = document.getElementById("calc-manutencao");
-    const outCobrar = document.getElementById("calc-cobrar-cliente");
-    const inputFreteReal = document.getElementById("valor-frete");
-
-    function calcularFreteFórmula() {
-      const km = parseFloat(inputKM.value) || 0;
-      const precoL = parseFloat(inputLitro.value) || 0;
-      if (km <= 0) {
-        outCombustivel.innerText = "R$ 0.00";
-        outManutencao.innerText = "R$ 0.00";
-        outCobrar.innerText = "R$ 0.00";
-        inputFreteReal.value = "0.00";
-        calcularFinanceiro();
-        return;
-      }
-      const litrosNecessarios = km / 9;
-      const custoCombustivel = litrosNecessarios * precoL;
-      const taxaManutencao = custoCombustivel * 0.20;
-      const totalFreteFinal = custoCombustivel + taxaManutencao;
-
-      outCombustivel.innerText = `R$ ${custoCombustivel.toFixed(2)}`;
-      outManutencao.innerText = `R$ ${taxaManutencao.toFixed(2)}`;
-      outCobrar.innerText = `R$ ${totalFreteFinal.toFixed(2)}`;
-      inputFreteReal.value = totalFreteFinal.toFixed(2);
-      calcularFinanceiro();
-    }
-    inputKM.addEventListener("input", calcularFreteFórmula);
-    inputLitro.addEventListener("input", calcularFreteFórmula);
-
-    // ============================================================
-    // REUNIÕES
-    // ============================================================
-    const btnSalvarReuniao = document.getElementById("btn-salvar-reuniao-avulsa");
-    btnSalvarReuniao.addEventListener("click", () => {
-      const cliente = document.getElementById("reuniao-cliente").value.trim();
-      const dataHora = document.getElementById("reuniao-data-hora").value;
-      const pauta = document.getElementById("reuniao-pauta").value.trim();
-
-      if (!cliente || !dataHora) {
-        alert("Preencha o Nome da Cliente e a Data/Hora!");
-        return;
-      }
-
-      CloudDB.buscar("reunioes_agendadas", [], (dados) => {
-        dados.push({ cliente, dataHora, pauta });
-        CloudDB.salvar("reunioes_agendadas", dados, () => {
-          alert("Reunião agendada!");
-          document.getElementById("reuniao-cliente").value = "";
-          document.getElementById("reuniao-data-hora").value = "";
-          document.getElementById("reuniao-pauta").value = "";
-          renderizarReunioes();
-        });
-      });
-    });
-
-    function renderizarReunioes() {
-      CloudDB.buscar("reunioes_agendadas", [], (dados) => {
-        const conteiner = document.getElementById("lista-reunioes-container");
-        conteiner.innerHTML = "";
-        if (!dados || dados.length === 0) {
-          conteiner.innerHTML = `<p style="color: #999; text-align: center;">Nenhuma reunião agendada.</p>`;
-          return;
-        }
-
-        dados.forEach((re, index) => {
-          const div = document.createElement("div");
-          div.className = "card-reuniao";
-          const dataFmt = new Date(re.dataHora).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-          div.innerHTML = `
-            <div style="display: flex; justify-content: space-between; font-weight: 600;">
-              <span>👤 ${re.cliente}</span>
-              <span style="color: #3498db;">📅 ${dataFmt}</span>
-            </div>
-            <p style="margin: 5px 0; font-size: 13px; color: var(--text-muted);">🎯 Pauta: ${re.pauta || 'Não definida'}</p>
-            <button onclick="removerReuniao(${index})" class="btn btn-danger" style="padding: 4px 8px; font-size: 11px; width: auto; margin-top: 5px;">Remover</button>
-          `;
-          conteiner.appendChild(div);
-        });
-      });
-    }
-
-    window.removerReuniao = function(index) {
-      if (confirm("Deseja remover esta reunião?")) {
-        CloudDB.buscar("reunioes_agendadas", [], (dados) => {
-          dados.splice(index, 1);
-          CloudDB.salvar("reunioes_agendadas", dados, () => { renderizarReunioes(); });
-        });
-      }
-    }
-
-    // ============================================================
-    // PRODUTOS DO ESTOQUE
-    // ============================================================
-    const btnAdicionarPeca = document.getElementById("btn-adicionar-peca");
-    btnAdicionarPeca.addEventListener("click", () => {
-      const nome = document.getElementById("catalogo-peca-nome").value.trim();
-      const qtd = parseInt(document.getElementById("catalogo-peca-qtd").value) || 0;
-      const categoria = document.getElementById("catalogo-peca-categoria").value;
-      const modelo = document.getElementById("catalogo-peca-modelo").value.trim();
-      const fileInput = document.getElementById("catalogo-peca-imagem");
-
-      if(!nome) {
-        alert("Preencha o nome do Item/Tema!");
-        return;
-      }
-
-      const processarSalvar = (imgUrl) => {
-        CloudDB.buscar("estoque", [], (estoque) => {
-          estoque.push({ 
-            nome: nome, 
-            quantidade: qtd,
-            categoria: categoria || "Outros", 
-            modelo: modelo || "Tema Geral", 
-            imagem: imgUrl 
-          });
-          CloudDB.salvar("estoque", estoque, () => {
-            alert("Item salvo!");
-            document.getElementById("catalogo-peca-nome").value = "";
-            document.getElementById("catalogo-peca-qtd").value = "1";
-            document.getElementById("catalogo-peca-modelo").value = "";
-            document.getElementById("catalogo-peca-imagem").value = "";
-            renderizarTemas();
-            alimentarSeletoresMontagemEstoque();
-          });
-        });
-      };
-
-      if (fileInput.files && fileInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const base64Data = e.target.result;
-          CloudDB.buscar("fotos_acervo", [], (fotos) => {
-            fotos.push({ nome: nome, data: base64Data, timestamp: new Date().toISOString() });
-            CloudDB.salvar("fotos_acervo", fotos, () => {
-              processarSalvar(base64Data);
-            });
-          });
-        };
-        reader.readAsDataURL(fileInput.files[0]);
-      } else {
-        processarSalvar("https://placehold.co/100x100?text=Sem+Foto");
-      }
-    });
-
-    function renderizarTemas() {
-      CloudDB.buscar("estoque", [], (temas) => {
-        todosOsTemas = [];
-        if (temas) {
-          Object.keys(temas).forEach(k => {
-            const item = temas[k];
-            if (item && typeof item === 'object') {
-              const itemNome = item.nome || item.item || item.titulo || "Sem Nome";
-              todosOsTemas.push({
-                id: k,
-                nome: itemNome,
-                quantidade: item.quantidade !== undefined ? item.quantidade : 1,
-                categoria: item.categoria || "Outros",
-                modelo: item.modelo || "Tema Geral",
-                imagem: item.imagem || "https://placehold.co/100x100?text=Sem+Foto"
-              });
-            }
-          });
-        }
-
-        document.getElementById("contador-catalogo-total").innerText = `${todosOsTemas.length} itens`;
-        const corpo = document.getElementById("lista-temas-gerenciados-corpo");
-        corpo.innerHTML = "";
-
-        if (todosOsTemas.length === 0) {
-          corpo.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#999; padding: 10px;">Catálogo vazio.</td></tr>`;
-          return;
-        }
-
-        const categoriesMap = {};
-        todosOsTemas.forEach((item, index) => {
-          const cat = item.categoria || "Outros";
-          if (!categoriesMap[cat]) categoriesMap[cat] = [];
-          categoriesMap[cat].push({ ...item, originalIndex: index });
-        });
-
-        Object.keys(categoriesMap).sort().forEach(cat => {
-          const trCat = document.createElement("tr");
-          trCat.className = "categoria-header-linha";
-          trCat.innerHTML = `<td colspan="3" style="font-size: 13px; text-transform: uppercase;">📂 ${cat} (${categoriesMap[cat].length})</td>`;
-          corpo.appendChild(trCat);
-
-          categoriesMap[cat].forEach(item => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td><img src="${item.imagem}" class="catalogo-foto" alt="Foto" onerror="this.src='https://placehold.co/100x100?text=Sem+Foto'"></td>
-              <td>
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                  <strong>${item.nome}</strong> 
-                  <span style="font-size: 11px; color: var(--success); font-weight: 600;">(Qtd: ${item.quantidade})</span>
-                  <button onclick="editarPecaCatalogo(${item.originalIndex})" style="background:none; border:none; cursor:pointer; font-size:14px; padding:0;" title="Editar">✏️</button>
-                </div>
-                <small style="color:var(--primary);">${item.modelo}</small>
-              </td>
-              <td style="text-align: center;"><button onclick="removerTema(${item.originalIndex})" class="btn btn-danger" style="padding: 4px 8px; width: auto; font-size: 11px; margin: 0 auto;">🗑️</button></td>
-            `;
-            corpo.appendChild(tr);
-          });
-        });
-      });
-    }
-
-    window.editarPecaCatalogo = function(index) {
-      CloudDB.buscar("estoque", [], (temas) => {
-        const item = temas[index];
-        if(!item) return;
-
-        const nomeAtual = item.nome || item.item || item.titulo || "Sem Nome";
-        const qtdAtual = item.quantidade !== undefined ? item.quantidade : 1;
-        const modeloAtual = item.modelo || "Tema Geral";
-
-        const novoNome = prompt("Editar Nome:", nomeAtual);
-        if (novoNome === null) return; 
-
-        const novaQtd = prompt("Editar Quantidade:", qtdAtual);
-        if (novaQtd === null) return;
-
-        const novoModelo = prompt("Editar Modelo:", modeloAtual);
-        if (novoModelo === null) return;
-
-        item.nome = novoNome.trim();
-        item.quantidade = parseInt(novaQtd) || 0;
-        item.modelo = novoModelo.trim();
-
-        temas[index] = item;
-
-        CloudDB.salvar("estoque", temas, () => {
-          alert("Item atualizado!");
-          renderizarTemas();
-          alimentarSeletoresMontagemEstoque();
-        });
-      });
-    };
-
-    // ============================================================
-    // SUGESTÕES DE TEMA
-    // ============================================================
-    const filtroTemaInput = document.getElementById("filtro-tema-input");
-    const wrapperListaSugestoes = document.getElementById("wrapper-lista-sugestoes");
-    const hiddenTemaSelecionado = document.getElementById("busca-tema-input");
-
-    filtroTemaInput.addEventListener("input", (e) => {
-      const t = e.target.value.toLowerCase().trim();
-      wrapperListaSugestoes.innerHTML = "";
-      if(!t) { wrapperListaSugestoes.style.display = "none"; return; }
-      const matches = todosOsTemas.filter(item => item.nome.toLowerCase().includes(t));
-      if(matches.length === 0) {
-        wrapperListaSugestoes.innerHTML = `<div class="sugestao-vazia" style="padding:10px; font-size:12px; color:#999;">Nenhum resultado...</div>`;
-      } else {
-        matches.forEach((item) => {
-          const div = document.createElement("div");
-          div.className = "sugestao-item";
-          div.innerHTML = `<span><strong>${item.nome}</strong> <small>(${item.categoria})</small></span>`;
-          div.addEventListener("click", () => {
-            filtroTemaInput.value = item.nome;
-            hiddenTemaSelecionado.value = item.nome;
-            wrapperListaSugestoes.style.display = "none";
-          });
-          wrapperListaSugestoes.appendChild(div);
-        });
-      }
-      wrapperListaSugestoes.style.display = "block";
-    });
-
-    // ============================================================
-    // RELATÓRIOS
-    // ============================================================
-    const seletorMes = document.getElementById("seletor-mes-planilha");
-    const tabelaPlanilha = document.getElementById("tabela-planilha-corpo").getElementsByTagName('tbody')[0];
-
-    function preencherPlanilhaMes(mes) {
-      CloudDB.buscar(`planilhas_faturamento/${mes}`, [], (dados) => {
-        tabelaPlanilha.innerHTML = "";
-        if(!dados || dados.length === 0) {
-          adicionarLinhaNaTabela();
-        } else {
-          dados.forEach(item => {
-            adicionarLinhaNaTabela(item.agendamento, item.kit, item.valor);
-          });
-        }
-      });
-    }
-
-    function adicionarLinhaNaTabela(agendamento = "", kit = "Kit Básico", valor = "") {
-      const novaLinha = tabelaPlanilha.insertRow();
-      novaLinha.innerHTML = `
-        <td><input type="text" class="input-tabela input-nome-agendamento" placeholder="Nome" value="${agendamento}"></td>
-        <td>
-          <select class="seletor-kit-tabela select-kit-venda">
-            <option value="Só um Bolinho" ${kit === 'Só um Bolinho' ? 'selected' : ''}>🧁 Só um Bolinho</option>
-            <option value="Kit Básico" ${kit === 'Kit Básico' ? 'selected' : ''}>📦 Kit Básico</option>
-            <option value="Kit Prata" ${kit === 'Kit Prata' ? 'selected' : ''}>🥈 Kit Prata</option>
-            <option value="Kit Ouro" ${kit === 'Kit Ouro' ? 'selected' : ''}>🥇 Kit Ouro</option>
-          </select>
-        </td>
-        <td><input type="number" class="input-tabela input-valor-venda" placeholder="0.00" value="${valor}"></td>
-        <td style="text-align: center;"><button type="button" class="btn-remover-linha btn btn-danger" style="padding: 4px 8px; font-size: 12px; width: auto; margin: 0 auto;">🗑️</button></td>
-      `;
-      novaLinha.querySelector(".btn-remover-linha").addEventListener("click", () => { novaLinha.remove(); });
-    }
-
-    document.getElementById("btn-adicionar-linha-planilha").addEventListener("click", () => adicionarLinhaNaTabela());
-    seletorMes.addEventListener("change", (e) => preencherPlanilhaMes(e.target.value));
-
-    document.getElementById("btn-salvar-dados-planilha").addEventListener("click", () => {
-      const mesAtual = seletorMes.value;
-      const nomes = document.querySelectorAll(".input-nome-agendamento");
-      const kits = document.querySelectorAll(".select-kit-venda");
-      const valores = document.querySelectorAll(".input-valor-venda");
-
-      const payload = [];
-      nomes.forEach((inputNome, index) => {
-        if(inputNome.value.trim() !== "") {
-          payload.push({
-            agendamento: inputNome.value,
-            kit: kits[index].value,
-            valor: parseFloat(valores[index].value) || 0
-          });
-        }
-      });
-
-      CloudDB.salvar(`planilhas_faturamento/${mesAtual}`, payload, () => {
-        alert(`Relatório do Mês de ${mesAtual} atualizado!`);
-        renderizarGraficoAnual();
-      });
-    });
-
-    document.getElementById("btn-gerar-resumo-mensal").addEventListener("click", () => {
-      const mesProcurado = prompt("Qual mês deseja consultar? (Ex: Janeiro, Fevereiro...):");
-      if (!mesProcurado) return;
-      const mesCapitalizado = mesProcurado.charAt(0).toUpperCase() + mesProcurado.slice(1).toLowerCase();
-
-      CloudDB.buscar(`planilhas_faturamento/${mesCapitalizado}`, [], (dados) => {
-        if (!dados || dados.length === 0) {
-          alert(`Nenhum faturamento para: ${mesCapitalizado}`);
-          return;
-        }
-
-        let totalFaturamento = 0;
-        let resumoTexto = `📊 FATURAMENTO - ${mesCapitalizado.toUpperCase()} 📊\n\n`;
-
-        dados.forEach((d, idx) => {
-          const val = parseFloat(d.valor) || 0;
-          totalFaturamento += val;
-          resumoTexto += `${idx + 1}. ${d.agendamento} | ${d.kit} | R$ ${val.toFixed(2)}\n`;
-        });
-
-        resumoTexto += `\n💰 TOTAL: R$ ${totalFaturamento.toFixed(2)}`;
-        alert(resumoTexto);
-      });
-    });
-
-    document.getElementById("btn-transformar-grafico").addEventListener("click", () => {
-      const el = document.getElementById("painel-grafico-faturamento");
-      el.style.display = "block";
-      renderizarGraficoAnual();
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-
-    function sincronizarReservasComPlanilhas(callbackSincronizacao) {
-      CloudDB.buscar("reservas", [], (todasReservas) => {
-        const novasPlanilhas = {};
-        mesesAno.forEach(m => { novasPlanilhas[m] = []; });
-
-        todasReservas.forEach(res => {
-          if (res.data) {
-            const partes = res.data.split("-");
-            if (partes.length >= 2) {
-              const mesIndex = parseInt(partes[1], 10) - 1;
-              if (mesIndex >= 0 && mesIndex < 12) {
-                const nomeMes = mesesAno[mesIndex];
-                novasPlanilhas[nomeMes].push({
-                  agendamento: res.cliente || "Cliente",
-                  kit: res.kit || "Kit Básico",
-                  valor: parseFloat(res.preco) || 0
-                });
-              }
-            }
-          }
-        });
-
-        let salvasContador = 0;
-        mesesAno.forEach(m => {
-          CloudDB.salvar(`planilhas_faturamento/${m}`, novasPlanilhas[m], () => {
-            salvasContador++;
-            if (salvasContador === 12 && callbackSincronizacao) callbackSincronizacao();
-          });
-        });
-      });
-    }
-
-    function renderizarGraficoAnual() {
-      CloudDB.buscar("planilhas_faturamento", {}, (dadosFaturamentos) => {
-        const valoresAnuais = mesesAno.map(mes => {
-          const registros = dadosFaturamentos[mes] || [];
-          return registros.reduce((acc, curr) => acc + (parseFloat(curr.valor) || 0), 0);
-        });
-
-        const ctx = document.getElementById('graficoAnual').getContext('2d');
-        if (chartInstance) chartInstance.destroy();
-
-        chartInstance = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: mesesAno,
-            datasets: [{
-              label: 'Faturamento (R$)',
-              data: valoresAnuais,
-              backgroundColor: 'rgba(163, 83, 106, 0.7)',
-              borderColor: 'rgba(163, 83, 106, 1)',
-              borderWidth: 2,
-              borderRadius: 6
-            }]
-          },
-          options: { responsive: true, scales: { y: { beginAtZero: true } } }
-        });
-      });
-    }
-
-    document.getElementById("btn-toggle-grafico").addEventListener("click", () => {
-      const el = document.getElementById("painel-grafico-faturamento");
-      el.style.display = el.style.display === "none" ? "block" : "none";
-      if (el.style.display === "block") renderizarGraficoAnual();
-    });
-
-    // ============================================================
-    // ORÇAMENTOS
-    // ============================================================
-    const btnSalvarComoOrcamento = document.getElementById("btn-salvar-como-orcamento");
-    btnSalvarComoOrcamento.addEventListener("click", () => {
-      const cliente = document.getElementById("nome-cliente").value.trim();
-      const tema = document.getElementById("busca-tema-input").value || document.getElementById("filtro-tema-input").value;
-      const preco = parseFloat(document.getElementById("valor-total").value) || 0;
-
-      if(!cliente) {
-        alert("Preencha o 'Nome do Cliente'!");
-        return;
-      }
-
-      CloudDB.buscar("orcamentos_novos", [], (orcamentos) => {
-        orcamentos.push({ cliente, tema: tema || "Sem Tema", kit: kitSelecionado || "Não Selecionado", valor: preco });
-        CloudDB.salvar("orcamentos_novos", orcamentos, () => {
-          alert(`Orçamento de "${cliente}" salvo!`);
-          limparFormulario();
-          renderizarOrcamentosInternos();
-        });
-      });
-    });
-
-    const tabelaOrcamentosInterno = document.getElementById("lista-orcamentos-interno-corpo");
-    function renderizarOrcamentosInternos() {
-      CloudDB.buscar("orcamentos_novos", [], (dados) => {
-        tabelaOrcamentosInterno.innerHTML = "";
-        if(!dados || dados.length === 0) {
-          tabelaOrcamentosInterno.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999; padding:15px;">Nenhum orçamento salvo.</td></tr>`;
-          return;
-        }
-        dados.forEach((item, index) => {
-          const novaLinha = tabelaOrcamentosInterno.insertRow();
-          novaLinha.innerHTML = `
-            <td><strong>${item.cliente || "N/A"}</strong></td>
-            <td>${item.tema || "Geral"}<br><span style="color:var(--primary); font-size:10px;">${item.kit || "Básico"}</span></td>
-            <td>R$ ${(parseFloat(item.valor) || 0).toFixed(2)}</td>
-            <td style="text-align: center; white-space: nowrap;">
-              <button type="button" onclick="promoverOrcamentoParaReserva(${index})" class="btn-acao-tabela btn-promover">✅</button>
-              <button type="button" onclick="deletarOrcamentoDoPainel(${index})" class="btn-acao-tabela btn-remover-orc">🗑️</button>
-            </td>
-          `;
-        });
-      });
-    }
-
-    window.promoverOrcamentoParaReserva = function(index) {
-      CloudDB.buscar("orcamentos_novos", [], (orcamentos) => {
-        const item = orcamentos[index];
-        if(!item) return;
-
-        const dataEvento = prompt(`Data do evento para "${item.cliente}"? (AAAA-MM-DD)`);
-        if(!dataEvento) return;
-
-        const sinalPago = parseFloat(prompt("Valor do Sinal (R$)?", "0.00")) || 0;
-        const obs = prompt("Observações?", "") || "Nenhuma";
-
-        CloudDB.buscar("reservas", [], (reservas) => {
-          reservas.push({ cliente: item.cliente, data: dataEvento, tema: item.tema, kit: item.kit, preco: parseFloat(item.valor) || 0, sinal: sinalPago, frete: 0, obs });
-          CloudDB.salvar("reservas", reservas, () => {
-            orcamentos.splice(index, 1);
-            CloudDB.salvar("orcamentos_novos", orcamentos, () => {
-              sincronizarReservasComPlanilhas(() => {
-                alert("Orçamento promovido a reserva!");
-                renderOrcamentosEAgendamentos();
-                preencherPlanilhaMes(seletorMes.value);
-                renderizarGraficoAnual();
-              });
-            });
-          });
-        });
-      });
-    };
-
-    function renderOrcamentosEAgendamentos() {
-      renderizarOrcamentosInternos();
-      renderizarReservas();
-    }
-
-    window.deletarOrcamentoDoPainel = function(index) {
-      if(confirm("Excluir este orçamento?")) {
-        CloudDB.buscar("orcamentos_novos", [], (dados) => {
-          dados.splice(index, 1);
-          CloudDB.salvar("orcamentos_novos", dados, () => { renderizarOrcamentosInternos(); });
-        });
-      }
-    };
-
-    document.getElementById("btn-abrir-orcamentos").addEventListener("click", () => {
-      document.getElementById("card-orcamentos-integrado").scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-
-    // ============================================================
-    // CONTROLES DE ABAS
-    // ============================================================
-    document.getElementById("btn-abrir-central-relatorios").addEventListener("click", () => { fecharTodasAsAbas(); document.getElementById("secao-central-relatorios").style.display = "block"; });
-    document.getElementById("btn-fechar-central-relatorios").addEventListener("click", () => { document.getElementById("secao-central-relatorios").style.display = "none"; });
-    document.getElementById("btn-abrir-catalogo-temas").addEventListener("click", () => {
-      const el = document.getElementById("painel-catalogo-temas");
-      fecharTodasAsAbas();
-      el.style.display = el.style.display === "none" ? "block" : "none";
-      if(el.style.display === "block") renderizarTemas();
-    });
-    document.getElementById("btn-abrir-reunioes-painel").addEventListener("click", () => {
-      const el = document.getElementById("painel-reunioes-exclusivo");
-      fecharTodasAsAbas();
-      el.style.display = el.style.display === "none" ? "block" : "none";
-      if(el.style.display === "block") renderizarReunioes();
-    });
-    document.getElementById("btn-fechar-reunioes").addEventListener("click", () => { document.getElementById("painel-reunioes-exclusivo").style.display = "none"; });
-
-    function fecharTodasAsAbas() {
-      document.getElementById("secao-central-relatorios").style.display = "none";
-      document.getElementById("painel-catalogo-temas").style.display = "none";
-      document.getElementById("painel-reunioes-exclusivo").style.display = "none";
-    }
-
-    // ============================================================
-    // RESERVAS
-    // ============================================================
-    const btnSalvarReserva = document.getElementById("btn-confirmar-agendamento");
-    let kitSelecionado = "";
-
-    document.querySelectorAll(".btn-kit-opcao").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        document.querySelectorAll(".btn-kit-opcao").forEach(b => b.classList.remove("ativo"));
-        e.target.classList.add("ativo");
-        kitSelecionado = e.target.getAttribute("data-kit");
-      });
-    });
-
-    function renderizarReservas() {
-      CloudDB.buscar("reservas", [], (reservas) => {
-        const conteiner = document.getElementById("lista-reservas-render");
-        conteiner.innerHTML = "";
-        if(!reservas || reservas.length === 0) {
-          conteiner.innerHTML = `<p style="text-align: center; color: #999;">Nenhum agendamento ativo.</p>`;
-          return;
-        }
-        reservas.forEach((res, index) => {
-          const v = parseFloat(res.preco) || 0;
-          const s = parseFloat(res.sinal) || 0;
-          const f = parseFloat(res.frete) || 0;
-          const falta = v - s;
-
-          let infoMontagem = "Não solicitado";
-          if (res.montarLocal === true || res.montarLocal === "Sim") {
-            infoMontagem = `
-              <strong>Sim</strong><br>
-              <span style="font-size:11px; color:#555;">
-                • Peças: ${res.mlQtdPecas || 0} (${res.mlPecasEscolhidas || "Nenhuma"})<br>
-                • LED: ${res.mlLed || "Não"} | Balão: ${res.mlBalao || "Não"}<br>
-                • Cilindros: ${res.mlQtdCilindros || 0} | Mesas: ${res.mlQtdMesas || 0} (${res.mlMesasEscolhidas || "Nenhuma"})
-              </span>
-            `;
-          }
-
-          const div = document.createElement("div");
-          div.className = "card-reserva";
-          div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-              <strong>👤 ${res.cliente}</strong><small>📅 ${res.data}</small>
-            </div>
-            <p>🎨 Tema: ${res.tema || "Geral"} | 📦 Kit: ${res.kit || "N/A"}</p>
-            <p>💰 Festa: R$ ${(v - f).toFixed(2)} | Frete: R$ ${f.toFixed(2)} | Total: R$ ${v.toFixed(2)}</p>
-            <p>💳 Sinal: R$ ${s.toFixed(2)} | <span style="color:${falta > 0 ? 'var(--error)' : 'var(--success)'}; font-weight:600;">Falta: R$ ${falta.toFixed(2)}</span></p>
-            <p>🛠️ Montagem: ${infoMontagem}</p>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-              <button onclick="editarReservaParaFormulario(${index})" class="btn btn-outline" style="padding: 6px; font-size:11px; width:auto;">✏️ Editar</button>
-              <button onclick="removerReserva(${index})" class="btn btn-danger" style="padding: 6px; font-size:11px; width:auto; margin:0;">Deletar</button>
-            </div>
-          `;
-          conteiner.appendChild(div);
-        });
-      });
-    }
-
-    window.editarReservaParaFormulario = function(index) {
-      CloudDB.buscar("reservas", [], (reservas) => {
-        const res = reservas[index];
-        if(!res) return;
-
-        document.getElementById("titulo-form-reserva").innerText = `✏️ Editando: ${res.cliente}`;
-        document.getElementById("editando-id-reserva").value = index;
-        document.getElementById("btn-cancelar-edicao").style.display = "block";
-
-        document.getElementById("nome-cliente").value = res.cliente || "";
-        document.getElementById("data").value = res.data || "";
-        document.getElementById("filtro-tema-input").value = res.tema || "";
-        document.getElementById("busca-tema-input").value = res.tema || "";
-        
-        const f = parseFloat(res.frete) || 0;
-        const total = parseFloat(res.preco) || 0;
-        document.getElementById("valor-festa").value = (total - f).toFixed(2);
-        document.getElementById("valor-frete").value = f.toFixed(2);
-        document.getElementById("valor-sinal").value = (parseFloat(res.sinal) || 0).toFixed(2);
-        
-        kitSelecionado = res.kit || "";
-        document.querySelectorAll(".btn-kit-opcao").forEach(btn => {
-          btn.classList.toggle("ativo", btn.getAttribute("data-kit") === kitSelecionado);
-        });
-
-        if (res.montarLocal === true || res.montarLocal === "Sim") {
-          chkMontarLocal.checked = true;
-          painelMontagemLocal.style.display = "block";
-          alimentarSeletoresMontagemEstoque();
-        } else {
-          chkMontarLocal.checked = false;
-          painelMontagemLocal.style.display = "none";
-        }
-        document.getElementById("adicionais-festa").value = res.obs || "";
-        calcularFinanceiro();
-      });
-    };
-
-    document.getElementById("btn-cancelar-edicao").addEventListener("click", () => limparFormulario());
-
-    function limparFormulario() {
-      document.getElementById("titulo-form-reserva").innerText = "Agendar Nova Festa";
-      document.getElementById("editando-id-reserva").value = "";
-      document.getElementById("btn-cancelar-edicao").style.display = "none";
-      document.getElementById("form-contrato-avulso").reset();
-      limparCamposLocais();
-    }
-
-    function limparCamposLocais() {
-      document.getElementById("nome-cliente").value = "";
-      document.getElementById("data").value = "";
-      document.getElementById("filtro-tema-input").value = "";
-      document.getElementById("busca-tema-input").value = "";
-      document.getElementById("valor-festa").value = "0.00";
-      document.getElementById("valor-frete").value = "0.00";
-      document.getElementById("valor-sinal").value = "0.00";
-      document.getElementById("calc-km").value = "";
-      chkMontarLocal.checked = false;
-      painelMontagemLocal.style.display = "none";
-      document.querySelectorAll(".btn-kit-opcao").forEach(b => b.classList.remove("ativo"));
-      kitSelecionado = "";
-      calcularFinanceiro();
-    }
-
-    window.removerReserva = function(index) {
-      if(confirm("Deletar este agendamento?")) {
-        CloudDB.buscar("reservas", [], (res) => { 
-          res.splice(index, 1); 
-          CloudDB.salvar("reservas", res, () => { 
-            sincronizarReservasComPlanilhas(() => {
-              renderizarReservas();
-              preencherPlanilhaMes(seletorMes.value);
-              renderizarGraficoAnual();
-            });
-          }); 
-        });
-      }
-    };
-
-    btnSalvarReserva.addEventListener("click", () => {
-      const cliente = document.getElementById("nome-cliente").value.trim();
-      const data = document.getElementById("data").value;
-      const tema = document.getElementById("busca-tema-input").value || document.getElementById("filtro-tema-input").value;
-      const precoTotal = parseFloat(document.getElementById("valor-total").value) || 0;
-      const sinal = parseFloat(document.getElementById("valor-sinal").value) || 0;
-      const frete = parseFloat(document.getElementById("valor-frete").value) || 0;
-      const obs = document.getElementById("adicionais-festa").value;
-      const editId = document.getElementById("editando-id-reserva").value;
-
-      if(!cliente || !data || !kitSelecionado) {
-        alert("Preencha os campos obrigatórios!");
-        return;
-      }
-
-      const montarLocal = chkMontarLocal.checked;
-      const dadosReserva = {
-        cliente, data, tema, kit: kitSelecionado, preco: precoTotal, sinal, frete, obs, montarLocal
-      };
-
-      CloudDB.buscar("reservas", [], (res) => {
-        if (editId !== "") res[parseInt(editId)] = dadosReserva;
-        else res.push(dadosReserva);
-
-        CloudDB.salvar("reservas", res, () => {
-          sincronizarReservasComPlanilhas(() => {
-            alert("Salvo com sucesso!");
-            limparFormulario();
-            renderizarReservas();
-            preencherPlanilhaMes(seletorMes.value);
-            renderizarGraficoAnual();
-          });
-        });
-      });
-    });
-
-    // ============================================================
-    // INICIALIZAÇÃO DO SISTEMA
-    // ============================================================
-    const secaoLogin = document.getElementById("secao-login");
-    const secaoVerificador = document.getElementById("secao-verificador");
-
-    document.getElementById("btn-login-direto").addEventListener("click", () => {
-      secaoLogin.style.display = "none";
-      secaoVerificador.style.display = "block";
-      inicializarSistema();
-    });
-
-    document.getElementById("btn-logout-direto").addEventListener("click", () => {
-      secaoVerificador.style.display = "none";
-      secaoLogin.style.display = "block";
-    });
-
-    function inicializarSistema() {
-      console.log('🚀 Inicializando sistema...');
-      
-      carregarCategorias(() => {
-        iniciarListenerCategorias();
-        
-        renderizarPontos();
-        renderizarReservas();
-        renderizarTemas();
-        renderizarOrcamentosInternos();
-        alimentarSeletoresMontagemEstoque();
-        
-        sincronizarReservasComPlanilhas(() => {
-          preencherPlanilhaMes(seletorMes.value);
-          renderizarGraficoAnual();
-        });
-        
-        atualizarInterfaceCategorias();
-        console.log('✅ Sistema inicializado com sucesso!');
-      });
+    if (btnFecharGerador) {
+      btnFecharGerador.addEventListener("click", () => modalContrato.classList.remove("ativo"));
     }
   </script>
 </body>
