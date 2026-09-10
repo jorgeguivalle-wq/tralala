@@ -112,7 +112,7 @@ var CatalogoLoader = {
       '<div style="font-size:16px;font-weight:500;color:#2d3436;" id="catalogo-loader-mensagem">⏳ Carregando catálogo...</div>' +
       '<div style="font-size:13px;color:#636e72;" id="catalogo-loader-submensagem">Buscando dados do servidor</div></div>';
     var tabela = document.getElementById('lista-temas-gerenciados-corpo');
-    if (tabela) {
+    if (tabela && tabela.parentElement) {
       catalogoContainer.insertBefore(loader, tabela.parentElement);
     } else {
       catalogoContainer.appendChild(loader);
@@ -156,7 +156,7 @@ var CatalogoLoader = {
       msgEl.style.color = '#e74c3c';
     }
     var subMsgEl = document.getElementById('catalogo-loader-submensagem');
-    if (subMsgEl) subMsgEl.textContent = 'Clique em "Tentar Novamente" ou recarregue a página.';
+    if (subMsgEl) subMsgEl.textContent = 'Recarregue a página para tentar novamente.';
     this.container.style.display = 'block';
   },
   esconder: function() {
@@ -299,7 +299,7 @@ var Database = {
           CatalogoLoader.mostrarSucesso('✅ Catálogo carregado com sucesso!');
         }
         
-        var inputBuscaTemaFicha = document.getElementById("busca-tema-input") || document.getElementById("busca-tema");
+        var inputBuscaTemaFicha = document.getElementById("filtro-tema-input") || document.getElementById("busca-tema-input") || document.getElementById("busca-tema");
         if (inputBuscaTemaFicha && inputBuscaTemaFicha.value.trim()) {
           UI.renderSuggestions(inputBuscaTemaFicha.value);
         }
@@ -339,11 +339,7 @@ var Database = {
       State.reservas = arr;
       UI.renderReservas();
       UI.renderCatalogo();
-
-      var inputBuscaTemaFicha = document.getElementById("busca-tema-input") || document.getElementById("busca-tema");
-      if (inputBuscaTemaFicha && inputBuscaTemaFicha.value.trim()) {
-        UI.renderSuggestions(inputBuscaTemaFicha.value);
-      }
+      UI.renderTabelaTemasGerenciados();
     });
 
     State.db.ref('orcamentos').on('value', function(snap) {
@@ -408,7 +404,6 @@ var Database = {
       .then(function() {
         State.salvandoPeca = false;
         LoadingOverlay.mostrarSucesso('✅ Peça salva com sucesso!', '');
-        console.log("✅ Peça salva com sucesso!");
         return true;
       })
       .catch(function(error) {
@@ -434,7 +429,6 @@ var Database = {
       .then(function() {
         State.removendoPeca = false;
         LoadingOverlay.mostrarSucesso('✅ Peça removida com sucesso!', '');
-        console.log("✅ Peça removida com sucesso!");
         return true;
       })
       .catch(function(error) {
@@ -474,7 +468,6 @@ var Database = {
       return novaRef.set({ nome: nome, criadoEm: Date.now() })
         .then(function() {
           LoadingOverlay.mostrarSucesso('✅ Categoria adicionada com sucesso!', '');
-          console.log("✅ Categoria adicionada:", nome);
           return true;
         });
     });
@@ -501,8 +494,7 @@ var Database = {
         });
       }
       if (temasVinculados.length > 0) {
-        var msg = "⚠️ Não é possível remover a categoria \"" + nome + "\" pois ela possui " + temasVinculados.length + " tema(s) vinculado(s):\n\n" + temasVinculados.join('\n') + "\n\nRemova ou reassocie os temas primeiro.";
-        Utils.showToast(msg, "error");
+        Utils.showToast("⚠️ Categoria possui " + temasVinculados.length + " tema(s) vinculado(s). Remova-os primeiro.", "error");
         return Promise.reject("Categoria possui temas vinculados");
       }
       if (!confirm("Deseja realmente remover a categoria \"" + nome + "\"?")) {
@@ -522,7 +514,6 @@ var Database = {
           return State.db.ref('categorias/' + chaveRemover).remove()
             .then(function() {
               LoadingOverlay.mostrarSucesso('✅ Categoria removida com sucesso!', '');
-              console.log("✅ Categoria removida:", nome);
               return true;
             });
         } else {
@@ -588,12 +579,11 @@ var Database = {
       return false;
     });
   },
-  excluirTemaNuvem: function(nomeTema) {
+  excluirTemaNuvem: function(chave) {
     if(!State.db) return;
-    return State.db.ref("estoque/" + nomeTema).remove()
+    return State.db.ref("estoque/" + chave).remove()
     .then(function() { 
       LoadingOverlay.mostrarSucesso('✅ Tema removido com sucesso!', '');
-      console.log("✅ Tema removido:", nomeTema);
       return true;
     })
     .catch(function(error) { 
@@ -627,10 +617,6 @@ var Database = {
     if(!State.db) return Promise.reject("Sem conexão");
     return State.db.ref("reservas/" + idReserva).remove();
   },
-  
-  // ============================================================
-  // REUNIÕES — NOVO (usa estrutura Firebase existente 'reunioes')
-  // ============================================================
   salvarReuniaoNuvem: function(dadosReuniao) {
     if(!State.db) return Promise.reject("Sem conexão");
     var novoRef = State.db.ref('reunioes').push();
@@ -660,23 +646,14 @@ var Database = {
   }
 };
 
-window.adicionarCategoria = function(nome) {
-  return Database.salvarCategoriaNuvem(nome);
-};
-
-window.removerCategoria = function(nome) {
-  return Database.removerCategoriaNuvem(nome);
-};
+window.adicionarCategoria = function(nome) { return Database.salvarCategoriaNuvem(nome); };
+window.removerCategoria = function(nome) { return Database.removerCategoriaNuvem(nome); };
 
 var UI = {
   init: function() {
     this.bindEvents();
-    this.carregarOrcamentos();
   },
   
-  // ============================================================
-  // MÉTODO AUXILIAR PARA ENCONTRAR ELEMENTO (compatível com aliases)
-  // ============================================================
   el: function(ids) {
     if (typeof ids === 'string') ids = [ids];
     for (var i = 0; i < ids.length; i++) {
@@ -688,9 +665,34 @@ var UI = {
   
   bindEvents: function() {
     var self = this;
+    
+    // ============================================================
+    // LOGIN / LOGOUT — REGISTRADOS PRIMEIRO, SEMPRE FUNCIONAM
+    // ============================================================
+    var btnLogin = document.getElementById("btn-login-direto");
+    if (btnLogin) {
+      btnLogin.onclick = function(e) {
+        if (e) e.preventDefault();
+        self.handleLogin();
+      };
+    }
+    var btnLogout = document.getElementById("btn-logout-direto");
+    if (btnLogout) {
+      btnLogout.onclick = function(e) {
+        if (e) e.preventDefault();
+        self.handleLogout();
+      };
+    }
+    
+    // Suporte a Enter no campo de senha
+    var senhaEl = document.getElementById("senha");
+    if (senhaEl) {
+      senhaEl.onkeypress = function(e) {
+        if (e.key === "Enter" && btnLogin) btnLogin.click();
+      };
+    }
+
     var mapeamentoBotoes = {
-      "btn-login-direto": function() { self.handleLogin(); },
-      "btn-logout-direto": function() { self.handleLogout(); },
       "btn-ponto-entrada": function() { Database.registrarPonto('entrada'); },
       "btn-ponto-saida": function() { Database.registrarPonto('saida'); },
       "btn-abrir-relatorio-pontos": function() { self.toggleRelatorioPontos(); },
@@ -722,11 +724,16 @@ var UI = {
           Utils.showToast("⏳ Salvando, aguarde...", "info");
           return;
         }
-        var nome = document.getElementById("catalogo-peca-nome").value.trim();
-        var qtd = parseInt(document.getElementById("catalogo-peca-qtd").value) || 0;
-        var categoria = document.getElementById("catalogo-peca-categoria").value;
-        var modelo = document.getElementById("catalogo-peca-modelo").value.trim();
+        var nomeEl = document.getElementById("catalogo-peca-nome");
+        var qtdEl = document.getElementById("catalogo-peca-qtd");
+        var catEl = document.getElementById("catalogo-peca-categoria");
+        var modEl = document.getElementById("catalogo-peca-modelo");
         var fileInput = document.getElementById("catalogo-peca-imagem");
+        
+        var nome = nomeEl ? nomeEl.value.trim() : "";
+        var qtd = qtdEl ? (parseInt(qtdEl.value) || 0) : 0;
+        var categoria = catEl ? catEl.value : "Outros";
+        var modelo = modEl ? modEl.value.trim() : "";
         
         if(!nome) {
           Utils.showToast("Preencha o nome do Item/Tema!", "warning");
@@ -749,10 +756,10 @@ var UI = {
             State.salvandoPeca = false;
             if (!sucesso) LoadingOverlay.esconder();
             if (sucesso) {
-              document.getElementById("catalogo-peca-nome").value = "";
-              document.getElementById("catalogo-peca-qtd").value = "1";
-              document.getElementById("catalogo-peca-modelo").value = "";
-              document.getElementById("catalogo-peca-imagem").value = "";
+              if (nomeEl) nomeEl.value = "";
+              if (qtdEl) qtdEl.value = "1";
+              if (modEl) modEl.value = "";
+              if (fileInput) fileInput.value = "";
             }
           }).catch(function() {
             State.salvandoPeca = false;
@@ -775,19 +782,18 @@ var UI = {
     }
 
     // ============================================================
-    // BOTÃO ADICIONAR CATEGORIA
+    // CATEGORIAS
     // ============================================================
     var btnAdicionarCategoria = document.getElementById("btn-adicionar-categoria");
     if (btnAdicionarCategoria) {
       btnAdicionarCategoria.onclick = function(e) {
         e.preventDefault();
         var input = document.getElementById("input-nova-categoria");
-        var nome = input.value.trim();
+        var nome = input ? input.value.trim() : "";
         if (nome) {
           LoadingOverlay.mostrar('⏳ Adicionando Categoria...', 'Categoria: ' + nome);
           window.adicionarCategoria(nome).then(function() {
-            input.value = "";
-            input.focus();
+            if (input) { input.value = ""; input.focus(); }
           }).catch(function() { LoadingOverlay.esconder(); });
         } else {
           Utils.showToast("Digite um nome para a categoria!", "warning");
@@ -802,15 +808,12 @@ var UI = {
       }
     }
 
-    // ============================================================
-    // BOTÃO REMOVER CATEGORIA
-    // ============================================================
     var btnRemoverCategoria = document.getElementById("btn-remover-categoria");
     if (btnRemoverCategoria) {
       btnRemoverCategoria.onclick = function(e) {
         e.preventDefault();
         var select = document.getElementById("select-remover-categoria");
-        var categoria = select.value;
+        var categoria = select ? select.value : "";
         if (categoria) {
           LoadingOverlay.mostrar('⏳ Removendo Categoria...', 'Categoria: ' + categoria);
           window.removerCategoria(categoria).then(function() {}).catch(function() { LoadingOverlay.esconder(); });
@@ -821,7 +824,7 @@ var UI = {
     }
 
     // ============================================================
-    // BOTÃO REMOVER TEMA (por select)
+    // REMOVER TEMA
     // ============================================================
     var btnRemoverTema = document.getElementById("btn-remover-tema-admin");
     if (btnRemoverTema) {
@@ -832,17 +835,14 @@ var UI = {
         var valorSelecionado = select.value;
         var infoDiv = document.getElementById("info-tema-remover");
         
-        // O select pode conter: (a) índice numérico (formato antigo) ou (b) chave Firebase
         if (!valorSelecionado) {
           Utils.showToast("Selecione um tema válido para remover!", "warning");
           return;
         }
         
-        // Tentar primeiro como chave Firebase (chave do objeto State.estoque ou idFirebase)
         var temaNome = null;
         var chaveParaRemover = null;
         
-        // Procurar por idFirebase ou pela chave do objeto
         for (var k in State.estoque) {
           if (!State.estoque.hasOwnProperty(k)) continue;
           var item = State.estoque[k];
@@ -853,7 +853,6 @@ var UI = {
           }
         }
         
-        // Fallback: tentar como índice numérico
         if (!temaNome && !isNaN(parseInt(valorSelecionado))) {
           var idx = parseInt(valorSelecionado);
           var chaves = Object.keys(State.estoque);
@@ -882,7 +881,7 @@ var UI = {
     }
 
     // ============================================================
-    // BOTÕES DE KIT (corrigido)
+    // BOTÕES DE KIT
     // ============================================================
     var botoesKit = document.querySelectorAll('.btn-kit-opcao');
     botoesKit.forEach(function(btn) {
@@ -895,16 +894,18 @@ var UI = {
         State.kitAtual = nomeKit;
         Utils.showToast("Kit \"" + nomeKit + "\" selecionado!", "success");
 
-        var painelMontagem = document.getElementById("painel-perguntas-montar-local") || document.getElementById("painel-montagem-local");
+        var painelMontagem = document.getElementById("painel-montagem-local") || document.getElementById("painel-perguntas-montar-local");
+        var chkMontar = document.getElementById("chk-montar-local");
         if (painelMontagem) {
-          painelMontagem.style.display = (nomeKit === "Montar no Local") ? "block" : (document.getElementById("chk-montar-local") && document.getElementById("chk-montar-local").checked ? "block" : "none");
+          if (nomeKit === "Montar no Local" || (chkMontar && chkMontar.checked)) {
+            painelMontagem.style.display = "block";
+          } else {
+            painelMontagem.style.display = "none";
+          }
         }
       };
     });
 
-    // ============================================================
-    // CHECKBOX "MONTAR NO LOCAL"
-    // ============================================================
     var chkMontar = document.getElementById("chk-montar-local");
     if (chkMontar) {
       chkMontar.onchange = function() {
@@ -914,8 +915,7 @@ var UI = {
     }
 
     // ============================================================
-    // CALCULADORA DE FRETE (IDs unificados: aceita ambas as nomenclaturas)
-    // Fórmula: litros = KM / 9 ; total = litros * valorLitro
+    // CALCULADORA DE FRETE
     // ============================================================
     var calcularFrete = function() {
       var inputKm = self.el(['calc-km', 'frete-km']);
@@ -944,12 +944,10 @@ var UI = {
         if (txtManutencao) txtManutencao.innerText = "R$ " + manutencao.toFixed(2);
         if (boxResultado) boxResultado.style.display = 'block';
         
-        // Atualizar campos do formulário de reserva (frete + total)
-        if (inputFrete) {
-          inputFrete.value = totalComManutencao.toFixed(2);
-        }
+        if (inputFrete) inputFrete.value = totalComManutencao.toFixed(2);
         if (inputTotal) {
-          var valorFesta = parseFloat((document.getElementById('valor-festa') || {}).value) || 0;
+          var vf = document.getElementById('valor-festa');
+          var valorFesta = vf ? (parseFloat(vf.value) || 0) : 0;
           inputTotal.value = (valorFesta + totalComManutencao).toFixed(2);
         }
       } else {
@@ -964,16 +962,9 @@ var UI = {
 
     var inputKm = self.el(['calc-km', 'frete-km']);
     var inputLitro = self.el(['calc-valor-litro', 'frete-valor-litro']);
-    if (inputKm) {
-      inputKm.oninput = calcularFrete;
-      inputKm.onchange = calcularFrete;
-    }
-    if (inputLitro) {
-      inputLitro.oninput = calcularFrete;
-      inputLitro.onchange = calcularFrete;
-    }
+    if (inputKm) { inputKm.oninput = calcularFrete; inputKm.onchange = calcularFrete; }
+    if (inputLitro) { inputLitro.oninput = calcularFrete; inputLitro.onchange = calcularFrete; }
 
-    // Recalcular total quando valor da festa mudar
     var inputValorFesta = document.getElementById('valor-festa');
     if (inputValorFesta) {
       inputValorFesta.oninput = function() {
@@ -983,7 +974,6 @@ var UI = {
         if (inputTotal) inputTotal.value = (total + frete).toFixed(2);
       };
     }
-    // Recalcular restante quando sinal mudar
     var inputSinal = document.getElementById('valor-sinal');
     if (inputSinal) {
       inputSinal.oninput = function() {
@@ -995,7 +985,7 @@ var UI = {
     }
 
     // ============================================================
-    // BUSCAS E SUGESTÕES
+    // BUSCAS
     // ============================================================
     var inputBuscaReserva = document.getElementById("busca-reserva");
     if (inputBuscaReserva) {
@@ -1023,6 +1013,7 @@ var UI = {
         if(setorCatalogo) {
           setorCatalogo.style.display = (setorCatalogo.style.display === "none" || setorCatalogo.style.display === "") ? "block" : "none";
           self.renderCatalogo();
+          self.renderTabelaTemasGerenciados();
         }
       };
     }
@@ -1052,7 +1043,7 @@ var UI = {
     }
 
     // ============================================================
-    // BUSCA DE TEMA NA FICHA DE RESERVA — usa 'filtro-tema-input' (visível) do HTML
+    // BUSCA DE TEMA NA FICHA DE RESERVA
     // ============================================================
     var inputBuscaTemaFicha = document.getElementById("filtro-tema-input") || document.getElementById("busca-tema-input") || document.getElementById("busca-tema");
     if(inputBuscaTemaFicha) {
@@ -1066,19 +1057,7 @@ var UI = {
     }
 
     // ============================================================
-    // BOTÃO "VER ORÇAMENTOS" — garante que abre o painel certo
-    // ============================================================
-    var btnVerOrc = document.getElementById("btn-abrir-orcamentos");
-    if (btnVerOrc) {
-      // Já mapeado em mapeamentoBotoes, mas garantimos que o painel exista
-      btnVerOrc.onclick = function(e) {
-        e.preventDefault();
-        self.toggleOrcamentos();
-      };
-    }
-
-    // ============================================================
-    // BOTÃO "VENDA MENSAL" — btn-abrir-central-relatorios
+    // "VENDA MENSAL" — btn-abrir-central-relatorios
     // ============================================================
     var btnCentral = document.getElementById("btn-abrir-central-relatorios");
     if (btnCentral) {
@@ -1101,7 +1080,7 @@ var UI = {
     }
 
     // ============================================================
-    // BOTÃO "AGENDAR REUNIÕES" — btn-abrir-reunioes-painel
+    // REUNIÕES
     // ============================================================
     var btnReunioes = document.getElementById("btn-abrir-reunioes-painel");
     if (btnReunioes) {
@@ -1126,11 +1105,12 @@ var UI = {
     if (btnSalvarReuniao) {
       btnSalvarReuniao.onclick = function(e) {
         e.preventDefault();
-        var cliente = (document.getElementById("reuniao-cliente") || {}).value || "";
-        var dataHora = (document.getElementById("reuniao-data-hora") || {}).value || "";
-        var pauta = (document.getElementById("reuniao-pauta") || {}).value || "";
-        cliente = cliente.trim();
-        pauta = pauta.trim();
+        var clienteEl = document.getElementById("reuniao-cliente");
+        var dataHoraEl = document.getElementById("reuniao-data-hora");
+        var pautaEl = document.getElementById("reuniao-pauta");
+        var cliente = clienteEl ? clienteEl.value.trim() : "";
+        var dataHora = dataHoraEl ? dataHoraEl.value : "";
+        var pauta = pautaEl ? pautaEl.value.trim() : "";
         if (!cliente || !dataHora) {
           Utils.showToast("Preencha o cliente e a data/hora da reunião.", "warning");
           return;
@@ -1143,12 +1123,9 @@ var UI = {
           criadoEm: Date.now()
         }).then(function() {
           LoadingOverlay.mostrarSucesso('✅ Reunião agendada!', '');
-          var elC = document.getElementById("reuniao-cliente");
-          var elD = document.getElementById("reuniao-data-hora");
-          var elP = document.getElementById("reuniao-pauta");
-          if (elC) elC.value = "";
-          if (elD) elD.value = "";
-          if (elP) elP.value = "";
+          if (clienteEl) clienteEl.value = "";
+          if (dataHoraEl) dataHoraEl.value = "";
+          if (pautaEl) pautaEl.value = "";
         }).catch(function(err) {
           LoadingOverlay.esconder();
           Utils.showToast("Erro ao agendar reunião: " + err, "error");
@@ -1157,7 +1134,7 @@ var UI = {
     }
 
     // ============================================================
-    // GERADOR DE CONTRATO — abrir/fechar modal
+    // GERADOR DE CONTRATO
     // ============================================================
     var btnAbrirGerador = document.getElementById("btn-abrir-gerador-contrato");
     var btnFecharGerador = document.getElementById("btn-fechar-modal-contrato");
@@ -1176,8 +1153,6 @@ var UI = {
         modalContrato.classList.remove("ativo");
       };
     }
-
-    // Fechar modais ao clicar fora
     if (modalContrato) {
       modalContrato.addEventListener('click', function(e) {
         if (e.target === modalContrato) modalContrato.classList.remove("ativo");
@@ -1193,11 +1168,7 @@ var UI = {
     }
   },
   
-  // ============================================================
-  // PAINEL DE REUNIÕES
-  // ============================================================
   iniciarPainelReunioes: function() {
-    var self = this;
     Database.listenReunioes(function(lista) {
       var container = document.getElementById("lista-reunioes-container");
       if (!container) return;
@@ -1222,21 +1193,19 @@ var UI = {
     });
   },
   
-  // ============================================================
-  // PLANILHA DE VENDAS (Venda Mensal)
-  // ============================================================
   renderPlanilhaVendas: function() {
     var tbody = document.querySelector("#tabela-planilha-corpo tbody");
     if (!tbody) return;
     var mesSelecionado = (document.getElementById("seletor-mes-planilha") || {}).value || "";
+    
+    var nomesMeses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
     
     var reservasDoMes = State.reservas.filter(function(r) {
       if (!r.data) return false;
       var partes = r.data.split("-");
       if (partes.length !== 3) return false;
       var mesIdx = parseInt(partes[1]) - 1;
-      var nomeMes = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"][mesIdx];
-      return nomeMes === mesSelecionado;
+      return nomesMeses[mesIdx] === mesSelecionado;
     });
     
     if (reservasDoMes.length === 0) {
@@ -1258,25 +1227,11 @@ var UI = {
     tbody.innerHTML = html;
   },
   
-  // ============================================================
-  // ORÇAMENTOS
-  // ============================================================
-  carregarOrcamentos: function() {
-    var self = this;
-    // Renderiza a partir do listener de State.orcamentos (já iniciado em Database.listen)
-    // Aqui só garante a renderização inicial quando o painel abrir
-  },
-  
-  // ============================================================
-  // GERADOR DE CONTRATO — busca de tema com sugestões
-  // ============================================================
   bindBuscaTemaContrato: function() {
     var self = this;
-    // Cria (se não existir) um input de busca ao lado do select
     var campoLocal = document.getElementById("c-local");
     if (!campoLocal) return;
     
-    // Se já criamos o wrapper, não duplica
     if (document.getElementById("contrato-tema-busca-wrapper")) return;
     
     var wrapper = document.createElement("div");
@@ -1292,7 +1247,6 @@ var UI = {
       '</div>' +
       '<input type="hidden" id="contrato-tema-selecionado" value="">';
     
-    // Inserir depois do campo "Local do Evento"
     if (campoLocal.parentNode) {
       campoLocal.parentNode.parentNode.insertBefore(wrapper, campoLocal.parentNode.nextSibling);
     }
@@ -1308,7 +1262,6 @@ var UI = {
           if (caixaSug) caixaSug.style.display = "none";
           return;
         }
-        // Busca tolerante: normaliza acentos
         var normalizar = function(s) {
           return (s || "").toString().toLowerCase()
             .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -1337,9 +1290,6 @@ var UI = {
     }
   },
   
-  // ============================================================
-  // GERADOR DE CONTRATO — popular select de peças por tema
-  // ============================================================
   popularSelectPecasContrato: function(temaSelecionado) {
     var selectPecas = document.getElementById("c-pecas");
     if (!selectPecas) return;
@@ -1348,7 +1298,6 @@ var UI = {
     selectPecas.innerHTML = "";
     
     if (!tema) {
-      // Sem tema: listar todas as peças do estoque
       Object.keys(State.estoque).forEach(function(chave) {
         var item = State.estoque[chave];
         var nome = (item && item.nome) ? item.nome : chave;
@@ -1360,7 +1309,6 @@ var UI = {
       return;
     }
     
-    // Com tema: listar peças vinculadas ao tema (por categoria ou por nome)
     var infoTema = State.estoque[tema];
     var categoriaTema = infoTema && infoTema.categoria ? infoTema.categoria : "";
     
@@ -1369,17 +1317,13 @@ var UI = {
       var item = State.estoque[chave];
       if (!item) return;
       var nome = item.nome || chave;
-      // Se o item é o próprio tema
       if (nome === tema || chave === tema) {
         pecasDoTema.push({ nome: nome, item: item });
-      }
-      // Ou se compartilha a mesma categoria
-      else if (categoriaTema && item.categoria === categoriaTema) {
+      } else if (categoriaTema && item.categoria === categoriaTema) {
         pecasDoTema.push({ nome: nome, item: item });
       }
     });
     
-    // Se não achou nada vinculado, mostra todas
     if (pecasDoTema.length === 0) {
       Object.keys(State.estoque).forEach(function(chave) {
         var item = State.estoque[chave];
@@ -1413,14 +1357,12 @@ var UI = {
         opt.textContent = cat;
         selectCat.appendChild(opt);
       });
-      if (categorias.indexOf(valorAtual) !== -1) {
-        selectCat.value = valorAtual;
-      }
+      if (categorias.indexOf(valorAtual) !== -1) selectCat.value = valorAtual;
     }
     
     var selectRemover = document.getElementById("select-remover-categoria");
     if (selectRemover) {
-      var valorAtual = selectRemover.value;
+      var valorAtual2 = selectRemover.value;
       selectRemover.innerHTML = '<option value="">Selecione...</option>';
       categorias.forEach(function(cat) {
         var opt = document.createElement("option");
@@ -1428,14 +1370,9 @@ var UI = {
         opt.textContent = cat;
         selectRemover.appendChild(opt);
       });
-      if (categorias.indexOf(valorAtual) !== -1) {
-        selectRemover.value = valorAtual;
-      }
+      if (categorias.indexOf(valorAtual2) !== -1) selectRemover.value = valorAtual2;
     }
     
-    // ============================================================
-    // RENDERIZAR LISTA DE CATEGORIAS — CORRIGIDO: usa NOME REAL, não índice
-    // ============================================================
     var container = document.getElementById("lista-categorias-admin");
     if (container) {
       container.innerHTML = '';
@@ -1443,15 +1380,13 @@ var UI = {
         var div = document.createElement("div");
         div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:#f8f0f2; border-radius:6px; border:1px solid #e1cbd4;";
         div.innerHTML = '<span style="font-size:13px;">📁 ' + cat + '</span>' +
-          '<button type="button" onclick="window.removerCategoria(\'' + cat + '\')" class="btn btn-danger" style="padding:2px 8px; font-size:10px; width:auto; margin-left:6px;">✕</button>';
+          '<button type="button" onclick="window.removerCategoria(\'' + cat.replace(/'/g, "\\'") + '\')" class="btn btn-danger" style="padding:2px 8px; font-size:10px; width:auto; margin-left:6px;">✕</button>';
         container.appendChild(div);
       });
     }
     
     var contador = document.getElementById("contador-categorias");
-    if (contador) {
-      contador.textContent = categorias.length;
-    }
+    if (contador) contador.textContent = categorias.length;
   },
 
   handleSalvarFesta: function() {
@@ -1471,7 +1406,6 @@ var UI = {
     var frete = elFrete ? (parseFloat(elFrete.value) || 0) : 0;
     var valorFesta = elValorFesta ? (parseFloat(elValorFesta.value) || 0) : 0;
     
-    // Pega o tema: primeiro do input hidden, depois do filtro visível
     var inputTemaHidden = document.getElementById("busca-tema-input");
     var inputTemaFiltro = document.getElementById("filtro-tema-input");
     if (inputTemaHidden && inputTemaHidden.value.trim()) {
@@ -1497,9 +1431,7 @@ var UI = {
 
     var reservasAtivas = 0;
     State.reservas.forEach(function(res) {
-      if (res && res.tema && res.tema.toLowerCase().trim() === temaBuscaNormalizado) {
-        reservasAtivas++;
-      }
+      if (res && res.tema && res.tema.toLowerCase().trim() === temaBuscaNormalizado) reservasAtivas++;
     });
 
     var livres = kitsCadastrados - reservasAtivas;
@@ -1539,7 +1471,7 @@ var UI = {
         if(inputTemaHidden) inputTemaHidden.value = "";
         if(inputTemaFiltro) inputTemaFiltro.value = "";
         document.querySelectorAll('.btn-kit-opcao').forEach(function(b) { b.classList.remove('ativo'); });
-        var painelMontagem = document.getElementById("painel-perguntas-montar-local") || document.getElementById("painel-montagem-local");
+        var painelMontagem = document.getElementById("painel-montagem-local") || document.getElementById("painel-perguntas-montar-local");
         if (painelMontagem) painelMontagem.style.display = "none";
       }
     });
@@ -1573,7 +1505,7 @@ var UI = {
     
     if(!nomeCliente) return Utils.showToast("Preencha o campo do nome do cliente para salvar o orçamento.", "warning");
     
-    var dadosOrcamento = {
+    Database.salvarOrcamentoNuvem({
       cliente: nomeCliente,
       tema: State.temaAtual || "Não selecionado",
       kit: State.kitAtual || "",
@@ -1582,24 +1514,41 @@ var UI = {
       obs: obs,
       dataCriacao: Utils.getHojeDataString(),
       horaCriacao: Utils.getHoraString()
-    };
-    Database.salvarOrcamentoNuvem(dadosOrcamento);
+    });
   },
 
   handleLogin: function() {
-    var email = document.getElementById("email").value.trim();
-    var senha = document.getElementById("senha").value;
+    var emailEl = document.getElementById("email");
+    var senhaEl = document.getElementById("senha");
+    var email = emailEl ? emailEl.value.trim() : "";
+    var senha = senhaEl ? senhaEl.value : "";
+
+    if (!email || !senha) {
+      Utils.showToast("Preencha e-mail e senha.", "warning");
+      return;
+    }
+
     if (CONFIG.usuarios[email] === senha) {
       State.usuarioLogadoEmail = email;
-      document.getElementById("secao-login").style.display = "none";
-      document.getElementById("secao-verificador").style.display = "block";
-      document.getElementById("nome-usuario").innerHTML = "👤 <b>" + email.split('@')[0] + "</b>";
+
+      var secLogin = document.getElementById("secao-login");
+      var secVerif = document.getElementById("secao-verificador");
+      if (secLogin) secLogin.style.display = "none";
+      if (secVerif) secVerif.style.display = "block";
+
+      var nomeUsuario = document.getElementById("nome-usuario");
+      if (nomeUsuario) nomeUsuario.innerHTML = "👤 <b>" + email.split('@')[0] + "</b>";
+
       var abaEditar = document.getElementById("aba-editar");
       if (abaEditar) abaEditar.style.display = "block";
+
       Utils.showToast("Login realizado!", "success");
-      Database.listenPontoUsuario();
-    } else Utils.showToast("E-mail ou senha incorretos.", "error");
+      try { Database.listenPontoUsuario(); } catch (e) { console.warn("Aviso ponto:", e); }
+    } else {
+      Utils.showToast("E-mail ou senha incorretos.", "error");
+    }
   },
+  
   handleLogout: function() { window.location.reload(); },
 
   toggleRelatorioPontos: function() {
@@ -1607,22 +1556,16 @@ var UI = {
     if(p) p.style.display = p.style.display === "none" ? "block" : "none";
   },
   
-  // ============================================================
-  // "VER ORÇAMENTOS" — alterna painel e garante renderização
-  // ============================================================
   toggleOrcamentos: function() {
     var p = document.getElementById("painel-orcamentos-salvos") || document.getElementById("card-orcamentos-integrado");
     if (p) {
       var displayAtual = window.getComputedStyle(p).display;
       p.style.display = (displayAtual === "none") ? "block" : "none";
-      if (p.style.display === "block") {
-        this.renderOrcamentos();
-      }
+      if (p.style.display === "block") this.renderOrcamentos();
     }
   },
 
   handleEditorBusca: function(termo) {
-    var self = this;
     var caixa = document.getElementById("editor-sugestoes") || document.getElementById("lista-sugestoes-editor");
     if(!caixa) return;
     termo = termo.toLowerCase().trim();
@@ -1646,25 +1589,18 @@ var UI = {
         if(elBusca) elBusca.value = "";
         
         caixa.style.display = "none";
-
-        var btnPreview = document.getElementById("btn-preview-png") || document.getElementById("btn-preview");
-        if(btnPreview) btnPreview.click();
       };
       caixa.appendChild(item);
     });
     caixa.style.display = filtrados.length ? "block" : "none";
   },
 
-  // ============================================================
-  // SUGESTÕES DE TEMA — busca tolerante a maiúsculas/acentos/parciais
-  // ============================================================
   renderSuggestions: function(termo) {
     var caixa = document.getElementById("wrapper-lista-sugestoes") || document.getElementById("lista-sugestoes-temas") || document.getElementById("lista-sugestoes");
     if(!caixa) return;
     termo = (termo || "").toString();
     if(!termo.trim()) { caixa.style.display = "none"; caixa.innerHTML = ""; return; }
 
-    // Normalização: minúsculas + remoção de acentos
     var normalizar = function(s) {
       return (s || "").toString().toLowerCase()
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -1676,24 +1612,17 @@ var UI = {
     });
     caixa.innerHTML = "";
 
-    if (filtrados.length === 0) {
-      caixa.style.display = "none";
-      return;
-    }
+    if (filtrados.length === 0) { caixa.style.display = "none"; return; }
 
     filtrados.forEach(function(tema) {
       var objTema = State.estoque[tema] || {};
       var item = document.createElement("div");
       item.className = "sugestao-item";
-      // classe alternativa usada em CSS
-      item.classList.add("item-sugestao");
 
       var kitsCadastrados = objTema.kits ? (parseInt(objTema.kits) || 0) : (parseInt(objTema.quantidade) || 0);
       var reservasAtivas = 0;
       State.reservas.forEach(function(res) {
-        if (res && res.tema && res.tema.toLowerCase().trim() === tema.toLowerCase().trim()) {
-          reservasAtivas++;
-        }
+        if (res && res.tema && res.tema.toLowerCase().trim() === tema.toLowerCase().trim()) reservasAtivas++;
       });
       var livres = kitsCadastrados - reservasAtivas;
 
@@ -1749,9 +1678,7 @@ var UI = {
 
       var reservasAtivas = 0;
       State.reservas.forEach(function(res) {
-        if (res && res.tema && res.tema.toLowerCase().trim() === nomeTema.toLowerCase().trim()) {
-          reservasAtivas++;
-        }
+        if (res && res.tema && res.tema.toLowerCase().trim() === nomeTema.toLowerCase().trim()) reservasAtivas++;
       });
       var livres = kitsCadastrados - reservasAtivas;
       var statusEstoque = livres > 0 
@@ -1769,9 +1696,6 @@ var UI = {
     });
   },
   
-  // ============================================================
-  // RENDERIZAR TABELA DE TEMAS GERENCIADOS (dentro do painel catálogo)
-  // ============================================================
   renderTabelaTemasGerenciados: function() {
     var corpo = document.getElementById("lista-temas-gerenciados-corpo");
     if (!corpo) return;
@@ -1802,12 +1726,11 @@ var UI = {
       corpo.innerHTML = html;
     }
     
-    // Atualizar select de remoção
     var selectRemover = document.getElementById("select-remover-tema");
     if (selectRemover) {
       var valorAtual = selectRemover.value;
       selectRemover.innerHTML = '<option value="">Selecione um tema para remover...</option>';
-      Object.keys(State.estoque).forEach(function(chave, idx) {
+      Object.keys(State.estoque).forEach(function(chave) {
         var item = State.estoque[chave] || {};
         var nome = item.nome || chave;
         var opt = document.createElement("option");
@@ -1898,9 +1821,6 @@ var UI = {
     });
   },
 
-  // ============================================================
-  // ORÇAMENTOS — renderiza lista no painel "card-orcamentos-integrado"
-  // ============================================================
   renderOrcamentos: function() {
     var container = document.getElementById("lista-orcamentos-render") 
                   || document.getElementById("orcamentos-render")
@@ -1909,7 +1829,6 @@ var UI = {
     container.innerHTML = "";
 
     if (State.orcamentos.length === 0) {
-      // Se for tbody, usa <tr>
       if (container.tagName === "TBODY") {
         container.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#777;">Nenhum orçamento salvo.</td></tr>';
       } else {
@@ -1946,7 +1865,9 @@ var UI = {
   },
 
   renderRelatorioGeralPontos: function(dadosPontos) {
-    var container = document.getElementById("lista-relatorio-pontos-render") || document.getElementById("relatorio-pontos-render") || document.querySelector("#lista-pontos-geral-corpo");
+    var container = document.getElementById("lista-relatorio-pontos-render") 
+                  || document.getElementById("relatorio-pontos-render") 
+                  || document.querySelector("#lista-pontos-geral-corpo");
     if (!container) return;
     container.innerHTML = "";
     
@@ -2027,7 +1948,6 @@ window.ExcluirOrcamento = function(idOrcamento) {
 window.PromoverOrcamento = function(idOrcamento) {
   var orc = State.orcamentos.filter(function(o) { return o.id === idOrcamento; })[0];
   if (!orc) return;
-  // Pré-preenche o formulário com os dados do orçamento
   var elCliente = document.getElementById("nome-cliente");
   var elData = document.getElementById("data");
   var elTotal = document.getElementById("valor-total");
@@ -2060,33 +1980,49 @@ window.removerTemaPorChave = function(chave) {
   var nome = item.nome || chave;
   if (confirm("Deseja realmente remover \"" + nome + "\"?")) {
     LoadingOverlay.mostrar('⏳ Removendo Tema...', 'Tema: ' + nome);
-    Database.excluirTemaNuvem(chave).then(function() {
-      // sucesso já é mostrado pelo overlay
-    }).catch(function() {
+    Database.excluirTemaNuvem(chave).then(function() {}).catch(function() {
       LoadingOverlay.esconder();
     });
   }
 };
 
 // ============================================================
-// INICIALIZAÇÃO — só roda se o HTML ainda não tiver inicializado
-// (evita duplicação caso o HTML inline também tente rodar)
+// INICIALIZAÇÃO — dispara assim que o DOM estiver pronto
 // ============================================================
-window.addEventListener('load', function() {
-  // Se o HTML inline já inicializou o Firebase, State.db já está pronto.
-  // Aqui só garantimos que o UI.init() rode depois que o DOM está pronto.
-  if (!window.__tralala_ui_iniciada) {
-    window.__tralala_ui_iniciada = true;
-    // Se ninguém inicializou o Database ainda, inicializa agora
-    if (!State.db) {
-      try {
-        if (typeof firebase !== 'undefined') {
-          Database.init();
-        }
-      } catch (e) { console.error("Erro init Database:", e); }
-    }
+function __tralala_inicializar() {
+  if (window.__tralala_ui_iniciada) return;
+  window.__tralala_ui_iniciada = true;
+
+  // Inicializa Firebase se ainda não foi
+  if (!State.db && typeof firebase !== 'undefined') {
     try {
-      UI.init();
-    } catch (e) { console.error("Erro init UI:", e); }
+      if (!firebase.apps.length) {
+        firebase.initializeApp(CONFIG.firebase);
+      }
+      State.db = firebase.database();
+      CatalogoLoader.mostrar('⏳ Carregando catálogo...', 'Buscando dados do servidor');
+      Database.listen();
+      Database.listenCategorias();
+    } catch (e) {
+      console.error("Erro init Database:", e);
+    }
   }
+
+  // Inicializa a UI (registra TODOS os cliques, incluindo login)
+  try {
+    UI.init();
+    console.log("✅ UI inicializada com sucesso");
+  } catch (e) {
+    console.error("❌ Erro ao inicializar UI:", e);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', __tralala_inicializar);
+} else {
+  __tralala_inicializar();
+}
+
+window.addEventListener('load', function() {
+  if (!window.__tralala_ui_iniciada) __tralala_inicializar();
 });
