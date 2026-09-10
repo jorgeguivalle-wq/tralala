@@ -16,6 +16,10 @@ var CONFIG = {
   temasDefault: {
     "Astronauta": { kits: 1, png: "" },
     "Princesas": { kits: 1, png: "" }
+  },
+  frete: {
+    consumoKmPorLitro: 9,
+    percentualManutencao: 0.20
   }
 };
 
@@ -28,6 +32,14 @@ var State = {
   categorias: [],
   temaAtual: "", 
   kitAtual: "", 
+  montarNoLocal: false,
+  frete: {
+    km: 0,
+    precoCombustivel: 0,
+    custoCombustivel: 0,
+    manutencao: 0,
+    freteTotal: 0
+  },
   carregando: true, 
   usuarioLogadoEmail: "",
   salvandoPeca: false,
@@ -36,7 +48,7 @@ var State = {
 };
 
 // ============================================================
-// TELINHA DE CARREGAMENTO (OVERLAY)
+// OVERLAY DE CARREGAMENTO
 // ============================================================
 var LoadingOverlay = {
   criar: function() {
@@ -97,12 +109,6 @@ var CatalogoLoader = {
   criar: function() {
     if (document.getElementById('catalogo-loader')) return;
     var catalogoContainer = document.getElementById('painel-catalogo-temas');
-    if (!catalogoContainer) {
-      var tabelaContainer = document.getElementById('lista-temas-gerenciados-corpo');
-      if (tabelaContainer) {
-        catalogoContainer = tabelaContainer.closest('.painel-relatorio-pontos') || tabelaContainer.parentElement;
-      }
-    }
     if (!catalogoContainer) return;
     var loader = document.createElement('div');
     loader.id = 'catalogo-loader';
@@ -166,34 +172,9 @@ var CatalogoLoader = {
   }
 };
 
-window.recarregarCatalogo = function() {
-  CatalogoLoader.mostrar('⏳ Recarregando catálogo...', 'Buscando dados do servidor');
-  if (State.db) {
-    State.db.ref('estoque').once('value', function(snap) {
-      var val = snap.val();
-      if (val) {
-        if (Array.isArray(val)) {
-          var obj = {};
-          val.forEach(function(item, index) {
-            if (item) {
-              var nome = item.nome || item.tema || ("Tema " + index);
-              obj[nome] = typeof item === 'object' ? item : { kits: 1, png: "" };
-            }
-          });
-          State.estoque = obj;
-        } else {
-          State.estoque = val;
-        }
-      }
-      UI.renderCatalogo();
-      CatalogoLoader.mostrarSucesso('✅ Catálogo recarregado com sucesso!');
-    }).catch(function(error) {
-      console.error('❌ Erro ao recarregar catálogo:', error);
-      CatalogoLoader.mostrarErro('⚠️ Erro ao recarregar o catálogo.');
-    });
-  }
-};
-
+// ============================================================
+// UTILS
+// ============================================================
 var Utils = {
   showToast: function(message, type) {
     if (!type) type = 'info';
@@ -217,7 +198,9 @@ var Utils = {
     }, 3500);
   },
   formatCurrency: function(value) { 
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(value) || 0); 
+    var v = parseFloat(value);
+    if (isNaN(v) || !isFinite(v)) v = 0;
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v); 
   },
   formatDateBR: function(dateString) { 
     if (!dateString) return "Não informada"; 
@@ -237,6 +220,104 @@ var Utils = {
   }
 };
 
+// ============================================================
+// MÓDULO DEDICADO DA CALCULADORA DE FRETE
+// Fórmula oficial:
+//   litros          = km / 9
+//   custoCombustivel = litros * precoCombustivel
+//   manutencao      = custoCombustivel * 0.20
+//   freteTotal      = custoCombustivel + manutencao
+// ============================================================
+var FreteCalc = {
+  ler: function() {
+    var kmEl = document.getElementById('calc-km') || document.getElementById('frete-km');
+    var precoEl = document.getElementById('calc-valor-litro') || document.getElementById('frete-valor-litro');
+    var km = kmEl ? parseFloat(kmEl.value) : 0;
+    var preco = precoEl ? parseFloat(precoEl.value) : 0;
+    if (isNaN(km) || km < 0 || !isFinite(km)) km = 0;
+    if (isNaN(preco) || preco < 0 || !isFinite(preco)) preco = 0;
+    return { km: km, preco: preco };
+  },
+  
+  calcular: function() {
+    var entrada = this.ler();
+    var km = entrada.km;
+    var preco = entrada.preco;
+    
+    var litros = km / CONFIG.frete.consumoKmPorLitro;
+    var custoCombustivel = litros * preco;
+    var manutencao = custoCombustivel * CONFIG.frete.percentualManutencao;
+    var freteTotal = custoCombustivel + manutencao;
+    
+    if (!isFinite(litros)) litros = 0;
+    if (!isFinite(custoCombustivel)) custoCombustivel = 0;
+    if (!isFinite(manutencao)) manutencao = 0;
+    if (!isFinite(freteTotal)) freteTotal = 0;
+    
+    // Salva no State para uso posterior no agendamento/orçamento
+    State.frete = {
+      km: km,
+      precoCombustivel: preco,
+      litros: litros,
+      custoCombustivel: custoCombustivel,
+      manutencao: manutencao,
+      freteTotal: freteTotal
+    };
+    
+    return State.frete;
+  },
+  
+  renderizar: function() {
+    var f = this.calcular();
+    
+    var txtCombustivel = document.getElementById('calc-total-combustivel');
+    var txtManutencao = document.getElementById('calc-manutencao');
+    var txtTotal = document.getElementById('calc-cobrar-cliente');
+    var txtLitros = document.getElementById('res-frete-litros');
+    
+    if (txtCombustivel) txtCombustivel.textContent = "R$ " + f.custoCombustivel.toFixed(2);
+    if (txtManutencao) txtManutencao.textContent = "R$ " + f.manutencao.toFixed(2);
+    if (txtTotal) txtTotal.textContent = f.freteTotal.toFixed(2);
+    if (txtLitros) txtLitros.textContent = f.litros.toFixed(2);
+    
+    // Atualiza campos readonly de frete e total
+    var inputFrete = document.getElementById('valor-frete');
+    if (inputFrete) inputFrete.value = f.freteTotal.toFixed(2);
+    
+    var inputValorFesta = document.getElementById('valor-festa');
+    var valorFesta = inputValorFesta ? (parseFloat(inputValorFesta.value) || 0) : 0;
+    if (isNaN(valorFesta)) valorFesta = 0;
+    
+    var inputTotal = document.getElementById('valor-total');
+    if (inputTotal) inputTotal.value = (valorFesta + f.freteTotal).toFixed(2);
+    
+    // Recalcula resta pagar
+    var inputSinal = document.getElementById('valor-sinal');
+    var sinal = inputSinal ? (parseFloat(inputSinal.value) || 0) : 0;
+    if (isNaN(sinal)) sinal = 0;
+    var inputRestante = document.getElementById('valor-restante');
+    if (inputRestante) {
+      var restante = (valorFesta + f.freteTotal) - sinal;
+      if (restante < 0) restante = 0;
+      inputRestante.value = restante.toFixed(2);
+    }
+    
+    return f;
+  },
+  
+  limpar: function() {
+    State.frete = { km: 0, precoCombustivel: 0, litros: 0, custoCombustivel: 0, manutencao: 0, freteTotal: 0 };
+    var kmEl = document.getElementById('calc-km') || document.getElementById('frete-km');
+    var inputFrete = document.getElementById('valor-frete');
+    if (kmEl) kmEl.value = "";
+    if (inputFrete) inputFrete.value = "0.00";
+    this.renderizar();
+  }
+};
+
+// ============================================================
+// DATABASE
+// ============================================================
 var Database = {
   init: function() {
     State.estoque = {};
@@ -246,18 +327,16 @@ var Database = {
       }
     }
     if (typeof firebase !== 'undefined') {
-      if (!firebase.apps.length) {
-        firebase.initializeApp(CONFIG.firebase);
-      }
+      if (!firebase.apps.length) firebase.initializeApp(CONFIG.firebase);
       State.db = firebase.database();
       CatalogoLoader.mostrar('⏳ Carregando catálogo...', 'Buscando dados do servidor');
       this.listen();
       this.listenCategorias();
     } else {
       Utils.showToast("🚨 Erro de conexão: Biblioteca do Firebase não carregou.", "error");
-      CatalogoLoader.mostrarErro('⚠️ Biblioteca do Firebase não carregou.');
     }
   },
+  
   listen: function() {
     var timeoutRender = null;
     var primeiraVez = true;
@@ -288,7 +367,6 @@ var Database = {
       
       clearTimeout(timeoutRender);
       timeoutRender = setTimeout(function() {
-        console.log("🔄 Renderizando catálogo com " + Object.keys(State.estoque).length + " temas");
         UI.renderReservas();
         UI.renderCatalogo();
         UI.renderTabelaTemasGerenciados();
@@ -299,7 +377,7 @@ var Database = {
           CatalogoLoader.mostrarSucesso('✅ Catálogo carregado com sucesso!');
         }
         
-        var inputBuscaTemaFicha = document.getElementById("filtro-tema-input") || document.getElementById("busca-tema-input") || document.getElementById("busca-tema");
+        var inputBuscaTemaFicha = document.getElementById("filtro-tema-input") || document.getElementById("busca-tema-input");
         if (inputBuscaTemaFicha && inputBuscaTemaFicha.value.trim()) {
           UI.renderSuggestions(inputBuscaTemaFicha.value);
         }
@@ -318,21 +396,11 @@ var Database = {
       var val = snap.val();
       var arr = [];
       if (val) {
-        if (Array.isArray(val)) {
-          val.forEach(function(data, id) {
-            if (data) {
-              var copy = { id: String(id) };
-              for (var k in data) { if (data.hasOwnProperty(k)) copy[k] = data[k]; }
-              arr.push(copy);
-            }
-          });
-        } else {
-          for (var id in val) {
-            if (val.hasOwnProperty(id) && val[id]) {
-              var copy = { id: id };
-              for (var k in val[id]) { if (val[id].hasOwnProperty(k)) copy[k] = val[id][k]; }
-              arr.push(copy);
-            }
+        for (var id in val) {
+          if (val.hasOwnProperty(id) && val[id]) {
+            var copy = { id: id };
+            for (var k in val[id]) { if (val[id].hasOwnProperty(k)) copy[k] = val[id][k]; }
+            arr.push(copy);
           }
         }
       }
@@ -361,44 +429,25 @@ var Database = {
   
   listenCategorias: function() {
     if (!State.db) return;
-    console.log("🔌 Listener de categorias iniciado...");
-    var timeoutCategorias = null;
-    
     State.db.ref('categorias').on('value', function(snapshot) {
       var data = snapshot.val();
       var categorias = [];
-      
       if (data && typeof data === 'object') {
         Object.keys(data).forEach(function(key) {
-          if (data[key] && data[key].nome) {
-            categorias.push(data[key].nome);
-          }
+          if (data[key] && data[key].nome) categorias.push(data[key].nome);
         });
       }
-      
       State.categorias = categorias;
-      
-      clearTimeout(timeoutCategorias);
-      timeoutCategorias = setTimeout(function() {
-        console.log("🔄 Categorias atualizadas:", categorias);
-        UI.atualizarSeletoresCategoria(categorias);
-      }, 50);
+      UI.atualizarSeletoresCategoria(categorias);
     }, function(error) {
       console.error("❌ Erro no listener de categorias:", error);
     });
   },
   
   salvarPecaNuvem: function(dadosPeca) {
-    if (!State.db) {
-      Utils.showToast("🚨 Sem conexão com Firebase", "error");
-      return Promise.reject("Sem conexão");
-    }
-    if (State.salvandoPeca) {
-      Utils.showToast("⏳ Salvando, aguarde...", "info");
-      return Promise.reject("Já está salvando");
-    }
+    if (!State.db) return Promise.reject("Sem conexão");
+    if (State.salvandoPeca) return Promise.reject("Já está salvando");
     State.salvandoPeca = true;
-    console.log("📤 Salvando peça no Firebase:", dadosPeca.nome);
     var novoRef = State.db.ref('estoque').push();
     return novoRef.set(dadosPeca)
       .then(function() {
@@ -408,7 +457,6 @@ var Database = {
       })
       .catch(function(error) {
         State.salvandoPeca = false;
-        console.error("❌ Erro ao salvar peça:", error);
         LoadingOverlay.esconder();
         Utils.showToast("❌ Erro ao salvar peça: " + error.message, "error");
         return false;
@@ -416,48 +464,20 @@ var Database = {
   },
   
   excluirPecaNuvem: function(idPeca) {
-    if (!State.db) {
-      Utils.showToast("🚨 Sem conexão com Firebase", "error");
-      return Promise.reject("Sem conexão");
-    }
-    if (State.removendoPeca) {
-      Utils.showToast("⏳ Removendo, aguarde...", "info");
-      return Promise.reject("Já está removendo");
-    }
-    State.removendoPeca = true;
-    return State.db.ref("estoque/" + idPeca).remove()
-      .then(function() {
-        State.removendoPeca = false;
-        LoadingOverlay.mostrarSucesso('✅ Peça removida com sucesso!', '');
-        return true;
-      })
-      .catch(function(error) {
-        State.removendoPeca = false;
-        console.error("❌ Erro ao remover peça:", error);
-        LoadingOverlay.esconder();
-        Utils.showToast("❌ Erro ao remover peça: " + error.message, "error");
-        return false;
-      });
+    if (!State.db) return Promise.reject("Sem conexão");
+    return State.db.ref("estoque/" + idPeca).remove();
   },
   
   salvarCategoriaNuvem: function(nome) {
-    if (!State.db) {
-      Utils.showToast("🚨 Sem conexão com Firebase", "error");
-      return Promise.reject("Sem conexão");
-    }
+    if (!State.db) return Promise.reject("Sem conexão");
     nome = nome.trim();
-    if (!nome) {
-      Utils.showToast("Digite um nome para a categoria!", "warning");
-      return Promise.reject("Nome vazio");
-    }
+    if (!nome) return Promise.reject("Nome vazio");
     return State.db.ref('categorias').once('value').then(function(snapshot) {
       var data = snapshot.val();
       var existe = false;
       if (data && typeof data === 'object') {
         Object.keys(data).forEach(function(key) {
-          if (data[key] && data[key].nome && data[key].nome.toLowerCase() === nome.toLowerCase()) {
-            existe = true;
-          }
+          if (data[key] && data[key].nome && data[key].nome.toLowerCase() === nome.toLowerCase()) existe = true;
         });
       }
       if (existe) {
@@ -465,61 +485,29 @@ var Database = {
         return Promise.reject("Categoria já existe");
       }
       var novaRef = State.db.ref('categorias').push();
-      return novaRef.set({ nome: nome, criadoEm: Date.now() })
-        .then(function() {
-          LoadingOverlay.mostrarSucesso('✅ Categoria adicionada com sucesso!', '');
-          return true;
-        });
+      return novaRef.set({ nome: nome, criadoEm: Date.now() }).then(function() {
+        LoadingOverlay.mostrarSucesso('✅ Categoria adicionada!', '');
+        return true;
+      });
     });
   },
   
   removerCategoriaNuvem: function(nome) {
-    if (!State.db) {
-      Utils.showToast("🚨 Sem conexão com Firebase", "error");
-      return Promise.reject("Sem conexão");
-    }
-    if (!nome) {
-      Utils.showToast("Selecione uma categoria para remover!", "warning");
-      return Promise.reject("Nome vazio");
-    }
-    return State.db.ref('estoque').once('value').then(function(snapshot) {
+    if (!State.db) return Promise.reject("Sem conexão");
+    if (!nome) return Promise.reject("Nome vazio");
+    return State.db.ref('categorias').once('value').then(function(snapshot) {
       var data = snapshot.val();
-      var temasVinculados = [];
+      var chaveRemover = null;
       if (data && typeof data === 'object') {
         Object.keys(data).forEach(function(key) {
-          var item = data[key];
-          if (item && item.categoria === nome) {
-            temasVinculados.push(item.nome || "Sem Nome");
-          }
+          if (data[key] && data[key].nome === nome) chaveRemover = key;
         });
       }
-      if (temasVinculados.length > 0) {
-        Utils.showToast("⚠️ Categoria possui " + temasVinculados.length + " tema(s) vinculado(s). Remova-os primeiro.", "error");
-        return Promise.reject("Categoria possui temas vinculados");
-      }
-      if (!confirm("Deseja realmente remover a categoria \"" + nome + "\"?")) {
-        return Promise.reject("Cancelado pelo usuário");
-      }
-      return State.db.ref('categorias').once('value').then(function(snapshot) {
-        var data = snapshot.val();
-        var chaveRemover = null;
-        if (data && typeof data === 'object') {
-          Object.keys(data).forEach(function(key) {
-            if (data[key] && data[key].nome === nome) {
-              chaveRemover = key;
-            }
-          });
-        }
-        if (chaveRemover) {
-          return State.db.ref('categorias/' + chaveRemover).remove()
-            .then(function() {
-              LoadingOverlay.mostrarSucesso('✅ Categoria removida com sucesso!', '');
-              return true;
-            });
-        } else {
-          Utils.showToast("Categoria não encontrada.", "error");
-          return Promise.reject("Categoria não encontrada");
-        }
+      if (!chaveRemover) return Promise.reject("Categoria não encontrada");
+      if (!confirm("Deseja realmente remover a categoria \"" + nome + "\"?")) return Promise.reject("Cancelado");
+      return State.db.ref('categorias/' + chaveRemover).remove().then(function() {
+        LoadingOverlay.mostrarSucesso('✅ Categoria removida!', '');
+        return true;
       });
     });
   },
@@ -533,7 +521,6 @@ var Database = {
       var dadosPonto = snap.val() || {};
       var entrada = dadosPonto.entrada || "--:--:--";
       var saida = dadosPonto.saida || "--:--:--";
-
       var statusEl = document.getElementById("ponto-status-hoje");
       if(statusEl) {
         statusEl.innerHTML = "📅 <b>Hoje (" + Utils.formatDateBR(hoje) + "):</b>" +
@@ -550,28 +537,28 @@ var Database = {
       });
     }
   },
+  
   registrarPonto: function(tipo) {
-    if (!State.db || !State.usuarioLogadoEmail) return Utils.showToast("🚨 Erro de identificação do usuário.", "error");
+    if (!State.db || !State.usuarioLogadoEmail) return Utils.showToast("🚨 Erro de identificação.", "error");
     var chaveUsuario = State.usuarioLogadoEmail.replace(/[.#$[\]]/g, "_");
     var hoje = Utils.getHojeDataString();
     var hora = Utils.getHoraString();
-    
     var updateData = { usuario: State.usuarioLogadoEmail, data: hoje };
     updateData[tipo] = hora;
-
     State.db.ref("pontos/" + chaveUsuario + "/" + hoje).update(updateData)
     .then(function() { 
       Utils.showToast("Ponto de " + (tipo === 'entrada' ? 'Entrada' : 'Saída') + " marcado às " + hora + "!", "success"); 
     })
     .catch(function() { 
-      Utils.showToast("🚨 Erro ao salvar ponto na nuvem.", "error"); 
+      Utils.showToast("🚨 Erro ao salvar ponto.", "error"); 
     });
   },
+  
   salvarTemaNuvem: function(nomeTema, dadosTema) {
     if(!State.db) return Utils.showToast("🚨 Sem conexão com Firebase", "error");
     return State.db.ref("estoque/" + nomeTema).set(dadosTema)
     .then(function() {
-      Utils.showToast("Tema e configurações atualizados na nuvem!", "success");
+      Utils.showToast("Tema atualizado!", "success");
       return true;
     })
     .catch(function() {
@@ -579,29 +566,37 @@ var Database = {
       return false;
     });
   },
+  
   excluirTemaNuvem: function(chave) {
-    if(!State.db) return;
+    if(!State.db) return Promise.reject("Sem conexão");
     return State.db.ref("estoque/" + chave).remove()
     .then(function() { 
-      LoadingOverlay.mostrarSucesso('✅ Tema removido com sucesso!', '');
+      LoadingOverlay.mostrarSucesso('✅ Tema removido!', '');
       return true;
     })
     .catch(function(error) { 
-      console.error("❌ Erro ao deletar tema:", error);
       LoadingOverlay.esconder();
       Utils.showToast("❌ Erro ao deletar tema.", "error");
       return false;
     });
   },
+  
   salvarOrcamentoNuvem: function(dadosOrcamento) {
-    if(!State.db) return Utils.showToast("🚨 Sem conexão com Firebase", "error");
+    if(!State.db) return Promise.reject("Sem conexão");
     var novoRef = State.db.ref('orcamentos').push();
-    novoRef.set(dadosOrcamento)
-    .then(function() { Utils.showToast("Orçamento gravado com sucesso!", "success"); })
-    .catch(function() { Utils.showToast("Erro ao salvar orçamento.", "error"); });
+    return novoRef.set(dadosOrcamento)
+    .then(function() { 
+      Utils.showToast("Orçamento gravado com sucesso!", "success"); 
+      return true;
+    })
+    .catch(function() { 
+      Utils.showToast("Erro ao salvar orçamento.", "error"); 
+      return false;
+    });
   },
+  
   salvarReservaNuvem: function(dadosReserva) {
-    if(!State.db) return Utils.showToast("🚨 Sem conexão com Firebase", "error");
+    if(!State.db) return Promise.reject("Sem conexão");
     var novoRef = State.db.ref('reservas').push();
     return novoRef.set(dadosReserva)
     .then(function() {
@@ -613,19 +608,23 @@ var Database = {
       return false;
     });
   },
+  
   excluirReservaNuvem: function(idReserva) {
     if(!State.db) return Promise.reject("Sem conexão");
     return State.db.ref("reservas/" + idReserva).remove();
   },
+  
   salvarReuniaoNuvem: function(dadosReuniao) {
     if(!State.db) return Promise.reject("Sem conexão");
     var novoRef = State.db.ref('reunioes').push();
     return novoRef.set(dadosReuniao);
   },
+  
   excluirReuniaoNuvem: function(idReuniao) {
     if(!State.db) return Promise.reject("Sem conexão");
     return State.db.ref("reunioes/" + idReuniao).remove();
   },
+  
   listenReunioes: function(callback) {
     if(!State.db) return;
     State.db.ref('reunioes').on('value', function(snap) {
@@ -643,12 +642,21 @@ var Database = {
       arr.sort(function(a, b) { return new Date(a.dataHora) - new Date(b.dataHora); });
       if (callback) callback(arr);
     });
+  },
+
+  salvarContratoNuvem: function(dadosContrato) {
+    if(!State.db) return Promise.reject("Sem conexão");
+    var novoRef = State.db.ref('contratos').push();
+    return novoRef.set(dadosContrato);
   }
 };
 
 window.adicionarCategoria = function(nome) { return Database.salvarCategoriaNuvem(nome); };
 window.removerCategoria = function(nome) { return Database.removerCategoriaNuvem(nome); };
 
+// ============================================================
+// UI
+// ============================================================
 var UI = {
   init: function() {
     this.bindEvents();
@@ -666,25 +674,16 @@ var UI = {
   bindEvents: function() {
     var self = this;
     
-    // ============================================================
-    // LOGIN / LOGOUT — REGISTRADOS PRIMEIRO, SEMPRE FUNCIONAM
-    // ============================================================
+    // LOGIN/LOGOUT — registrados primeiro
     var btnLogin = document.getElementById("btn-login-direto");
     if (btnLogin) {
-      btnLogin.onclick = function(e) {
-        if (e) e.preventDefault();
-        self.handleLogin();
-      };
+      btnLogin.onclick = function(e) { if (e) e.preventDefault(); self.handleLogin(); };
     }
     var btnLogout = document.getElementById("btn-logout-direto");
     if (btnLogout) {
-      btnLogout.onclick = function(e) {
-        if (e) e.preventDefault();
-        self.handleLogout();
-      };
+      btnLogout.onclick = function(e) { if (e) e.preventDefault(); self.handleLogout(); };
     }
     
-    // Suporte a Enter no campo de senha
     var senhaEl = document.getElementById("senha");
     if (senhaEl) {
       senhaEl.onkeypress = function(e) {
@@ -692,23 +691,19 @@ var UI = {
       };
     }
 
+    // Botões diretos
     var mapeamentoBotoes = {
       "btn-ponto-entrada": function() { Database.registrarPonto('entrada'); },
       "btn-ponto-saida": function() { Database.registrarPonto('saida'); },
       "btn-abrir-relatorio-pontos": function() { self.toggleRelatorioPontos(); },
       "btn-abrir-orcamentos": function() { self.toggleOrcamentos(); },
-      "btn-salvar-tema": function() { self.acaoSalvarTemaCorrente(); },
-      "btn-salvar-orcamento": function() { self.acaoSalvarOrcamentoCorrente(); },
       "btn-confirmar-agendamento": function() { self.handleSalvarFesta(); }
     };
-
     for (var id in mapeamentoBotoes) {
       if (mapeamentoBotoes.hasOwnProperty(id)) {
         (function(idAtual) {
           var elemento = document.getElementById(idAtual);
-          if (elemento) {
-            elemento.onclick = function(e) { e.preventDefault(); mapeamentoBotoes[idAtual](); };
-          }
+          if (elemento) elemento.onclick = function(e) { e.preventDefault(); mapeamentoBotoes[idAtual](); };
         })(id);
       }
     }
@@ -720,10 +715,7 @@ var UI = {
     if (btnAdicionarPeca) {
       btnAdicionarPeca.onclick = function(e) {
         e.preventDefault();
-        if (State.salvandoPeca) {
-          Utils.showToast("⏳ Salvando, aguarde...", "info");
-          return;
-        }
+        if (State.salvandoPeca) { Utils.showToast("⏳ Salvando, aguarde...", "info"); return; }
         var nomeEl = document.getElementById("catalogo-peca-nome");
         var qtdEl = document.getElementById("catalogo-peca-qtd");
         var catEl = document.getElementById("catalogo-peca-categoria");
@@ -735,10 +727,7 @@ var UI = {
         var categoria = catEl ? catEl.value : "Outros";
         var modelo = modEl ? modEl.value.trim() : "";
         
-        if(!nome) {
-          Utils.showToast("Preencha o nome do Item/Tema!", "warning");
-          return;
-        }
+        if(!nome) { Utils.showToast("Preencha o nome do Item/Tema!", "warning"); return; }
 
         LoadingOverlay.mostrar('⏳ Salvando Peça...', 'Tema: ' + nome);
         State.salvandoPeca = true;
@@ -771,12 +760,12 @@ var UI = {
           var reader = new FileReader();
           reader.onload = function(e) { processarSalvar(e.target.result); };
           reader.onerror = function() {
-            Utils.showToast("Erro ao ler imagem. Salvando sem foto.", "warning");
-            processarSalvar("https://placehold.co/100x100?text=Sem+Foto");
+            Utils.showToast("Erro ao ler imagem.", "warning");
+            processarSalvar("");
           };
           reader.readAsDataURL(fileInput.files[0]);
         } else {
-          processarSalvar("https://placehold.co/100x100?text=Sem+Foto");
+          processarSalvar("");
         }
       };
     }
@@ -835,10 +824,7 @@ var UI = {
         var valorSelecionado = select.value;
         var infoDiv = document.getElementById("info-tema-remover");
         
-        if (!valorSelecionado) {
-          Utils.showToast("Selecione um tema válido para remover!", "warning");
-          return;
-        }
+        if (!valorSelecionado) { Utils.showToast("Selecione um tema válido!", "warning"); return; }
         
         var temaNome = null;
         var chaveParaRemover = null;
@@ -863,16 +849,13 @@ var UI = {
           }
         }
         
-        if (!temaNome) {
-          Utils.showToast("Tema não localizado. Recarregue a página.", "error");
-          return;
-        }
+        if (!temaNome) { Utils.showToast("Tema não localizado.", "error"); return; }
         
-        if (confirm("Deseja realmente remover o tema \"" + temaNome + "\"?")) {
+        if (confirm("Deseja realmente remover \"" + temaNome + "\"?")) {
           LoadingOverlay.mostrar('⏳ Removendo Tema...', 'Tema: ' + temaNome);
           Database.excluirTemaNuvem(chaveParaRemover).then(function() {
             if (infoDiv) {
-              infoDiv.innerHTML = '<span style="color:var(--success);">✅ Tema removido com sucesso!</span>';
+              infoDiv.innerHTML = '<span style="color:var(--success);">✅ Tema removido!</span>';
               setTimeout(function() { infoDiv.innerHTML = ''; }, 3000);
             }
           }).catch(function() { LoadingOverlay.esconder(); });
@@ -881,7 +864,7 @@ var UI = {
     }
 
     // ============================================================
-    // BOTÕES DE KIT
+    // BOTÕES DE KIT — seleção real e persistida
     // ============================================================
     var botoesKit = document.querySelectorAll('.btn-kit-opcao');
     botoesKit.forEach(function(btn) {
@@ -893,125 +876,53 @@ var UI = {
         var nomeKit = btn.getAttribute('data-kit');
         State.kitAtual = nomeKit;
         Utils.showToast("Kit \"" + nomeKit + "\" selecionado!", "success");
-
-        var painelMontagem = document.getElementById("painel-montagem-local") || document.getElementById("painel-perguntas-montar-local");
-        var chkMontar = document.getElementById("chk-montar-local");
-        if (painelMontagem) {
-          if (nomeKit === "Montar no Local" || (chkMontar && chkMontar.checked)) {
-            painelMontagem.style.display = "block";
-          } else {
-            painelMontagem.style.display = "none";
-          }
-        }
       };
     });
 
+    // ============================================================
+    // CHECKBOX "MONTAR NO LOCAL"
+    // ============================================================
     var chkMontar = document.getElementById("chk-montar-local");
     if (chkMontar) {
       chkMontar.onchange = function() {
+        State.montarNoLocal = !!chkMontar.checked;
         var painel = document.getElementById("painel-montagem-local") || document.getElementById("painel-perguntas-montar-local");
         if (painel) painel.style.display = chkMontar.checked ? "block" : "none";
+        Utils.showToast(chkMontar.checked ? "Montagem no local ativada." : "Montagem no local desativada.", "info");
       };
     }
 
     // ============================================================
-    // CALCULADORA DE FRETE
+    // CALCULADORA DE FRETE — liga aos inputs
     // ============================================================
-    var calcularFrete = function() {
-      var inputKm = self.el(['calc-km', 'frete-km']);
-      var inputLitro = self.el(['calc-valor-litro', 'frete-valor-litro']);
-      
-      var km = inputKm ? (parseFloat(inputKm.value) || 0) : 0;
-      var valorLitro = inputLitro ? (parseFloat(inputLitro.value) || 0) : 0;
-      
-      var txtLitros = self.el(['res-frete-litros', 'calc-litros']);
-      var txtTotal = self.el(['res-frete-total', 'calc-total', 'calc-cobrar-cliente']);
-      var txtCombustivel = self.el(['calc-total-combustivel']);
-      var txtManutencao = self.el(['calc-manutencao']);
-      var inputFrete = document.getElementById('valor-frete');
-      var inputTotal = document.getElementById('valor-total');
-      var boxResultado = self.el(['painel-frete-resultado']);
-      
-      if (km > 0 && valorLitro > 0) {
-        var litros = km / 9;
-        var totalFrete = litros * valorLitro;
-        var manutencao = totalFrete * 0.20;
-        var totalComManutencao = totalFrete + manutencao;
-        
-        if (txtLitros) txtLitros.innerText = litros.toFixed(2);
-        if (txtTotal) txtTotal.innerText = totalFrete.toFixed(2);
-        if (txtCombustivel) txtCombustivel.innerText = "R$ " + totalFrete.toFixed(2);
-        if (txtManutencao) txtManutencao.innerText = "R$ " + manutencao.toFixed(2);
-        if (boxResultado) boxResultado.style.display = 'block';
-        
-        if (inputFrete) inputFrete.value = totalComManutencao.toFixed(2);
-        if (inputTotal) {
-          var vf = document.getElementById('valor-festa');
-          var valorFesta = vf ? (parseFloat(vf.value) || 0) : 0;
-          inputTotal.value = (valorFesta + totalComManutencao).toFixed(2);
-        }
-      } else {
-        if (txtLitros) txtLitros.innerText = "0.00";
-        if (txtTotal) txtTotal.innerText = "0.00";
-        if (txtCombustivel) txtCombustivel.innerText = "R$ 0.00";
-        if (txtManutencao) txtManutencao.innerText = "R$ 0.00";
-        if (boxResultado) boxResultado.style.display = 'none';
-        if (inputFrete) inputFrete.value = "0.00";
-      }
-    };
-
-    var inputKm = self.el(['calc-km', 'frete-km']);
-    var inputLitro = self.el(['calc-valor-litro', 'frete-valor-litro']);
-    if (inputKm) { inputKm.oninput = calcularFrete; inputKm.onchange = calcularFrete; }
-    if (inputLitro) { inputLitro.oninput = calcularFrete; inputLitro.onchange = calcularFrete; }
-
+    var kmEl = document.getElementById('calc-km') || document.getElementById('frete-km');
+    var precoEl = document.getElementById('calc-valor-litro') || document.getElementById('frete-valor-litro');
+    if (kmEl) { kmEl.oninput = function() { FreteCalc.renderizar(); }; kmEl.onchange = function() { FreteCalc.renderizar(); }; }
+    if (precoEl) { precoEl.oninput = function() { FreteCalc.renderizar(); }; precoEl.onchange = function() { FreteCalc.renderizar(); }; }
+    
+    // Recalcula o total quando alterar valor da festa ou sinal
     var inputValorFesta = document.getElementById('valor-festa');
     if (inputValorFesta) {
-      inputValorFesta.oninput = function() {
-        var frete = parseFloat((document.getElementById('valor-frete') || {}).value) || 0;
-        var total = parseFloat(inputValorFesta.value) || 0;
-        var inputTotal = document.getElementById('valor-total');
-        if (inputTotal) inputTotal.value = (total + frete).toFixed(2);
-      };
+      inputValorFesta.oninput = function() { FreteCalc.renderizar(); };
     }
     var inputSinal = document.getElementById('valor-sinal');
     if (inputSinal) {
-      inputSinal.oninput = function() {
-        var total = parseFloat((document.getElementById('valor-total') || {}).value) || 0;
-        var sinal = parseFloat(inputSinal.value) || 0;
-        var inputRestante = document.getElementById('valor-restante');
-        if (inputRestante) inputRestante.value = Math.max(0, total - sinal).toFixed(2);
-      };
+      inputSinal.oninput = function() { FreteCalc.renderizar(); };
     }
 
     // ============================================================
     // BUSCAS
     // ============================================================
     var inputBuscaReserva = document.getElementById("busca-reserva");
-    if (inputBuscaReserva) {
-      inputBuscaReserva.oninput = function(e) { self.renderReservas(e.target.value); };
-    }
+    if (inputBuscaReserva) inputBuscaReserva.oninput = function(e) { self.renderReservas(e.target.value); };
 
-    var btnPreview = document.getElementById("btn-preview-png") || document.getElementById("btn-preview");
-    if(btnPreview) {
-      btnPreview.onclick = function(e) {
-        if(e) e.preventDefault();
-        var elPng = document.getElementById("editor-png-tema") || document.getElementById("png-tema") || document.getElementById("tema-png");
-        var url = elPng ? elPng.value : "";
-        var container = document.getElementById("container-preview-tema") || document.getElementById("preview-tema-box");
-        var img = document.getElementById("img-tema-preview") || document.getElementById("preview-imagem");
-        if(url.trim() && container && img) { img.src = url.trim(); container.style.display = "block"; }
-        else if(container) { container.style.display = "none"; }
-      };
-    }
-
-    var btnAbrirCatalogo = document.getElementById("btn-abrir-catalogo") || document.getElementById("btn-ver-catalogo") || document.getElementById("btn-abrir-catalogo-temas");
+    var btnAbrirCatalogo = document.getElementById("btn-abrir-catalogo-temas") || document.getElementById("btn-abrir-catalogo") || document.getElementById("btn-ver-catalogo");
     if(btnAbrirCatalogo) {
       btnAbrirCatalogo.onclick = function(e) {
         if(e) e.preventDefault();
-        var setorCatalogo = document.getElementById("painel-catalogo-temas") || document.getElementById("secao-catalogo") || document.getElementById("painel-catalogo");
-        if(setorCatalogo) {
-          setorCatalogo.style.display = (setorCatalogo.style.display === "none" || setorCatalogo.style.display === "") ? "block" : "none";
+        var setor = document.getElementById("painel-catalogo-temas");
+        if(setor) {
+          setor.style.display = (setor.style.display === "none" || setor.style.display === "") ? "block" : "none";
           self.renderCatalogo();
           self.renderTabelaTemasGerenciados();
         }
@@ -1019,33 +930,9 @@ var UI = {
     }
 
     var inputBuscaCatalogo = document.getElementById("busca-catalogo");
-    if (inputBuscaCatalogo) {
-      inputBuscaCatalogo.oninput = function(e) { self.renderCatalogo(e.target.value); };
-    }
+    if (inputBuscaCatalogo) inputBuscaCatalogo.oninput = function(e) { self.renderCatalogo(e.target.value); };
 
-    var inputBuscaTemaEditor = document.getElementById("editor-busca-tema") || document.getElementById("busca-tema-editor");
-    if(inputBuscaTemaEditor) {
-      inputBuscaTemaEditor.oninput = function(e) { self.handleEditorBusca(e.target.value); };
-    }
-
-    var btnDeletarTema = document.getElementById("btn-deletar-tema") || document.getElementById("btn-excluir-tema");
-    if(btnDeletarTema) {
-      btnDeletarTema.onclick = function(e) {
-        if(e) e.preventDefault();
-        var elNome = document.getElementById("editor-nome-tema") || document.getElementById("nome-tema") || document.getElementById("tema-nome");
-        var nome = elNome ? elNome.value : "";
-        if(!nome.trim() || !State.estoque[nome.trim()]) return Utils.showToast("Selecione um tema válido para excluir.", "warning");
-        if(confirm("Tem certeza que deseja apagar o tema \"" + nome + "\"?")) {
-          Database.excluirTemaNuvem(nome.trim());
-          self.resetEditor();
-        }
-      };
-    }
-
-    // ============================================================
-    // BUSCA DE TEMA NA FICHA DE RESERVA
-    // ============================================================
-    var inputBuscaTemaFicha = document.getElementById("filtro-tema-input") || document.getElementById("busca-tema-input") || document.getElementById("busca-tema");
+    var inputBuscaTemaFicha = document.getElementById("filtro-tema-input") || document.getElementById("busca-tema-input");
     if(inputBuscaTemaFicha) {
       inputBuscaTemaFicha.oninput = function(e) {
         State.temaAtual = e.target.value.trim();
@@ -1057,7 +944,7 @@ var UI = {
     }
 
     // ============================================================
-    // "VENDA MENSAL" — btn-abrir-central-relatorios
+    // VENDA MENSAL & ANUAL
     // ============================================================
     var btnCentral = document.getElementById("btn-abrir-central-relatorios");
     if (btnCentral) {
@@ -1065,19 +952,17 @@ var UI = {
         e.preventDefault();
         var p = document.getElementById("secao-central-relatorios");
         if (p) {
-          p.style.display = (p.style.display === "none" || p.style.display === "") ? "block" : "none";
-          if (p.style.display === "block") self.renderPlanilhaVendas();
+          var abrindo = (p.style.display === "none" || p.style.display === "");
+          p.style.display = abrindo ? "block" : "none";
+          if (abrindo) {
+            self.renderPlanilhaVendas();
+            self.renderGraficoAnual();
+          }
         }
       };
     }
     var btnFecharCentral = document.getElementById("btn-fechar-central-relatorios");
-    if (btnFecharCentral) {
-      btnFecharCentral.onclick = function(e) {
-        e.preventDefault();
-        var p = document.getElementById("secao-central-relatorios");
-        if (p) p.style.display = "none";
-      };
-    }
+    if (btnFecharCentral) btnFecharCentral.onclick = function(e) { e.preventDefault(); var p = document.getElementById("secao-central-relatorios"); if (p) p.style.display = "none"; };
 
     // ============================================================
     // REUNIÕES
@@ -1088,19 +973,15 @@ var UI = {
         e.preventDefault();
         var p = document.getElementById("painel-reunioes-exclusivo");
         if (p) {
-          p.style.display = (p.style.display === "none" || p.style.display === "") ? "block" : "none";
-          if (p.style.display === "block") self.iniciarPainelReunioes();
+          var abrindo = (p.style.display === "none" || p.style.display === "");
+          p.style.display = abrindo ? "block" : "none";
+          if (abrindo) self.iniciarPainelReunioes();
         }
       };
     }
     var btnFecharReunioes = document.getElementById("btn-fechar-reunioes");
-    if (btnFecharReunioes) {
-      btnFecharReunioes.onclick = function(e) {
-        e.preventDefault();
-        var p = document.getElementById("painel-reunioes-exclusivo");
-        if (p) p.style.display = "none";
-      };
-    }
+    if (btnFecharReunioes) btnFecharReunioes.onclick = function(e) { e.preventDefault(); var p = document.getElementById("painel-reunioes-exclusivo"); if (p) p.style.display = "none"; };
+    
     var btnSalvarReuniao = document.getElementById("btn-salvar-reuniao-avulsa");
     if (btnSalvarReuniao) {
       btnSalvarReuniao.onclick = function(e) {
@@ -1128,7 +1009,7 @@ var UI = {
           if (pautaEl) pautaEl.value = "";
         }).catch(function(err) {
           LoadingOverlay.esconder();
-          Utils.showToast("Erro ao agendar reunião: " + err, "error");
+          Utils.showToast("Erro ao agendar reunião.", "error");
         });
       };
     }
@@ -1148,26 +1029,38 @@ var UI = {
       };
     }
     if (btnFecharGerador && modalContrato) {
-      btnFecharGerador.onclick = function(e) {
-        e.preventDefault();
-        modalContrato.classList.remove("ativo");
-      };
+      btnFecharGerador.onclick = function(e) { e.preventDefault(); modalContrato.classList.remove("ativo"); };
     }
     if (modalContrato) {
       modalContrato.addEventListener('click', function(e) {
         if (e.target === modalContrato) modalContrato.classList.remove("ativo");
       });
     }
+    
+    // Botões de gerar contrato
+    var btnSalvarContrato = document.getElementById("btn-gerar-salvar-contrato");
+    if (btnSalvarContrato) btnSalvarContrato.onclick = function(e) { e.preventDefault(); self.gerarContrato(false); };
+    var btnPdfContrato = document.getElementById("btn-gerar-pdf-contrato");
+    if (btnPdfContrato) btnPdfContrato.onclick = function(e) { e.preventDefault(); self.gerarContrato(true); };
+
+    // Modais de visualização
     var modalVis = document.getElementById("modal-visualizar-contrato");
     if (modalVis) {
+      var btnFecharVis = document.getElementById("btn-fechar-visualizacao");
+      if (btnFecharVis) btnFecharVis.onclick = function() { modalVis.classList.remove("ativo"); };
       modalVis.addEventListener('click', function(e) {
         if (e.target === modalVis) modalVis.classList.remove("ativo");
       });
-      var btnFecharVis = document.getElementById("btn-fechar-visualizacao");
-      if (btnFecharVis) btnFecharVis.onclick = function() { modalVis.classList.remove("ativo"); };
+      var btnBaixarPdf = document.getElementById("btn-baixar-pdf-contrato");
+      if (btnBaixarPdf) btnBaixarPdf.onclick = function() { self.gerarContratoPDF(); };
+      var btnImprimir = document.getElementById("btn-imprimir-contrato");
+      if (btnImprimir) btnImprimir.onclick = function() { window.print(); };
     }
   },
   
+  // ============================================================
+  // PAINEL DE REUNIÕES
+  // ============================================================
   iniciarPainelReunioes: function() {
     Database.listenReunioes(function(lista) {
       var container = document.getElementById("lista-reunioes-container");
@@ -1193,11 +1086,13 @@ var UI = {
     });
   },
   
+  // ============================================================
+  // PLANILHA DE VENDAS
+  // ============================================================
   renderPlanilhaVendas: function() {
     var tbody = document.querySelector("#tabela-planilha-corpo tbody");
     if (!tbody) return;
     var mesSelecionado = (document.getElementById("seletor-mes-planilha") || {}).value || "";
-    
     var nomesMeses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
     
     var reservasDoMes = State.reservas.filter(function(r) {
@@ -1227,11 +1122,46 @@ var UI = {
     tbody.innerHTML = html;
   },
   
+  // ============================================================
+  // GRÁFICO ANUAL
+  // ============================================================
+  renderGraficoAnual: function() {
+    if (typeof Chart === 'undefined') return;
+    var painel = document.getElementById('painel-grafico-faturamento');
+    if (painel) painel.style.display = 'block';
+    var ctx = document.getElementById('graficoAnual');
+    if (!ctx) return;
+    if (window.chartInstance) window.chartInstance.destroy();
+    
+    var meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    var valores = new Array(12).fill(0);
+    State.reservas.forEach(function(r) {
+      if (!r.data) return;
+      var p = r.data.split("-");
+      if (p.length !== 3) return;
+      var idx = parseInt(p[1]) - 1;
+      if (idx >= 0 && idx < 12) {
+        valores[idx] += (parseFloat(r.total) || 0) + (parseFloat(r.frete) || 0);
+      }
+    });
+    
+    window.chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: meses,
+        datasets: [{ label: 'Faturamento (R$)', data: valores, backgroundColor: '#a3536a' }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  },
+  
+  // ============================================================
+  // CONTRATO — busca de tema
+  // ============================================================
   bindBuscaTemaContrato: function() {
     var self = this;
     var campoLocal = document.getElementById("c-local");
     if (!campoLocal) return;
-    
     if (document.getElementById("contrato-tema-busca-wrapper")) return;
     
     var wrapper = document.createElement("div");
@@ -1247,7 +1177,7 @@ var UI = {
       '</div>' +
       '<input type="hidden" id="contrato-tema-selecionado" value="">';
     
-    if (campoLocal.parentNode) {
+    if (campoLocal.parentNode && campoLocal.parentNode.parentNode) {
       campoLocal.parentNode.parentNode.insertBefore(wrapper, campoLocal.parentNode.nextSibling);
     }
     
@@ -1257,14 +1187,10 @@ var UI = {
     
     if (inputBusca) {
       inputBusca.oninput = function(e) {
-        var termo = e.target.value.toLowerCase().trim();
-        if (!termo) {
-          if (caixaSug) caixaSug.style.display = "none";
-          return;
-        }
+        var termo = e.target.value.trim();
+        if (!termo) { if (caixaSug) caixaSug.style.display = "none"; return; }
         var normalizar = function(s) {
-          return (s || "").toString().toLowerCase()
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          return (s || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         };
         var termoNorm = normalizar(termo);
         var temas = Object.keys(State.estoque).filter(function(t) {
@@ -1293,7 +1219,6 @@ var UI = {
   popularSelectPecasContrato: function(temaSelecionado) {
     var selectPecas = document.getElementById("c-pecas");
     if (!selectPecas) return;
-    
     var tema = temaSelecionado || (document.getElementById("contrato-tema-selecionado") || {}).value || "";
     selectPecas.innerHTML = "";
     
@@ -1311,8 +1236,8 @@ var UI = {
     
     var infoTema = State.estoque[tema];
     var categoriaTema = infoTema && infoTema.categoria ? infoTema.categoria : "";
-    
     var pecasDoTema = [];
+    
     Object.keys(State.estoque).forEach(function(chave) {
       var item = State.estoque[chave];
       if (!item) return;
@@ -1344,6 +1269,9 @@ var UI = {
     });
   },
 
+  // ============================================================
+  // CATEGORIAS — renderização correta
+  // ============================================================
   atualizarSeletoresCategoria: function(categorias) {
     if (!categorias) categorias = [];
     
@@ -1353,8 +1281,7 @@ var UI = {
       selectCat.innerHTML = '';
       categorias.forEach(function(cat) {
         var opt = document.createElement("option");
-        opt.value = cat;
-        opt.textContent = cat;
+        opt.value = cat; opt.textContent = cat;
         selectCat.appendChild(opt);
       });
       if (categorias.indexOf(valorAtual) !== -1) selectCat.value = valorAtual;
@@ -1366,8 +1293,7 @@ var UI = {
       selectRemover.innerHTML = '<option value="">Selecione...</option>';
       categorias.forEach(function(cat) {
         var opt = document.createElement("option");
-        opt.value = cat;
-        opt.textContent = cat;
+        opt.value = cat; opt.textContent = cat;
         selectRemover.appendChild(opt);
       });
       if (categorias.indexOf(valorAtual2) !== -1) selectRemover.value = valorAtual2;
@@ -1389,13 +1315,15 @@ var UI = {
     if (contador) contador.textContent = categorias.length;
   },
 
+  // ============================================================
+  // SALVAR FESTA — inclui kit, montagem e frete
+  // ============================================================
   handleSalvarFesta: function() {
     var elCliente = document.getElementById("nome-cliente");
     var elData = document.getElementById("data");
     var elTotal = document.getElementById("valor-total");
     var elSinal = document.getElementById("valor-sinal");
     var elObs = document.getElementById("adicionais-festa");
-    var elFrete = document.getElementById("valor-frete");
     var elValorFesta = document.getElementById("valor-festa");
 
     var cliente = elCliente ? elCliente.value.trim() : "";
@@ -1403,16 +1331,12 @@ var UI = {
     var total = elTotal ? elTotal.value || "0" : "0";
     var sinal = elSinal ? elSinal.value || "0" : "0";
     var obs = elObs ? elObs.value.trim() : "";
-    var frete = elFrete ? (parseFloat(elFrete.value) || 0) : 0;
     var valorFesta = elValorFesta ? (parseFloat(elValorFesta.value) || 0) : 0;
     
     var inputTemaHidden = document.getElementById("busca-tema-input");
     var inputTemaFiltro = document.getElementById("filtro-tema-input");
-    if (inputTemaHidden && inputTemaHidden.value.trim()) {
-      State.temaAtual = inputTemaHidden.value.trim();
-    } else if (inputTemaFiltro && inputTemaFiltro.value.trim()) {
-      State.temaAtual = inputTemaFiltro.value.trim();
-    }
+    if (inputTemaHidden && inputTemaHidden.value.trim()) State.temaAtual = inputTemaHidden.value.trim();
+    else if (inputTemaFiltro && inputTemaFiltro.value.trim()) State.temaAtual = inputTemaFiltro.value.trim();
 
     if(!cliente || !data || !State.temaAtual || !State.kitAtual) {
       return Utils.showToast("Preencha cliente, data, tema e selecione o modelo do kit!", "warning");
@@ -1435,21 +1359,31 @@ var UI = {
     });
 
     var livres = kitsCadastrados - reservasAtivas;
-
     if (livres <= 0 && kitsCadastrados > 0) {
-      Utils.showToast("🚨 Indisponível! O tema \"" + State.temaAtual + "\" não possui kits livres em estoque no momento.", "error");
+      Utils.showToast("🚨 Indisponível! \"" + State.temaAtual + "\" sem kits livres.", "error");
       return;
     }
+    
+    // Coleta dados do frete atual
+    var f = FreteCalc.calcular();
     
     Database.salvarReservaNuvem({
       cliente: cliente,
       data: data,
       tema: nomeRealChave || State.temaAtual,
       kit: State.kitAtual,
+      montarNoLocal: !!State.montarNoLocal,
       total: total,
       sinal: sinal,
-      frete: frete,
       valorFesta: valorFesta,
+      // Campos de frete completos
+      frete: f.freteTotal,
+      freteKm: f.km,
+      fretePrecoCombustivel: f.precoCombustivel,
+      freteLitros: f.litros,
+      freteCustoCombustivel: f.custoCombustivel,
+      freteManutencao: f.manutencao,
+      freteTotal: f.freteTotal,
       obs: obs,
       dataCriacao: Utils.getHojeDataString()
     }).then(function(sucesso) {
@@ -1459,37 +1393,23 @@ var UI = {
         if(elTotal) elTotal.value = "";
         if(elSinal) elSinal.value = "";
         if(elObs) elObs.value = "";
-        var inputKm = document.getElementById('calc-km') || document.getElementById('frete-km');
-        if(inputKm) inputKm.value = "";
-        var boxResultado = document.getElementById('painel-frete-resultado');
-        if(boxResultado) boxResultado.style.display = 'none';
-        if(elFrete) elFrete.value = "0.00";
-        if(elValorFesta) elValorFesta.value = "";
+        if(elValorFesta) elValorFesta.value = "0.00";
         
         State.temaAtual = "";
         State.kitAtual = "";
+        State.montarNoLocal = false;
+        
         if(inputTemaHidden) inputTemaHidden.value = "";
         if(inputTemaFiltro) inputTemaFiltro.value = "";
         document.querySelectorAll('.btn-kit-opcao').forEach(function(b) { b.classList.remove('ativo'); });
         var painelMontagem = document.getElementById("painel-montagem-local") || document.getElementById("painel-perguntas-montar-local");
         if (painelMontagem) painelMontagem.style.display = "none";
+        var chk = document.getElementById("chk-montar-local");
+        if (chk) chk.checked = false;
+        
+        FreteCalc.limpar();
       }
     });
-  },
-
-  acaoSalvarTemaCorrente: function() {
-    var elNome = document.getElementById("editor-nome-tema") || document.getElementById("nome-tema") || document.getElementById("tema-nome");
-    var elKits = document.getElementById("editor-qtd-kits") || document.getElementById("qtd-kits");
-    var elPng = document.getElementById("editor-png-tema") || document.getElementById("png-tema") || document.getElementById("tema-png");
-    
-    var nome = elNome ? elNome.value.trim() : "";
-    var kits = elKits ? parseInt(elKits.value) || 0 : 0;
-    var png = elPng ? elPng.value.trim() : "";
-
-    if(!nome) return Utils.showToast("Insira o nome do tema no gerenciador.", "warning");
-
-    Database.salvarTemaNuvem(nome, { kits: kits, png: png });
-    this.resetEditor();
   },
 
   acaoSalvarOrcamentoCorrente: function() {
@@ -1497,19 +1417,32 @@ var UI = {
     var totalEl = document.getElementById("valor-total");
     var dataEl = document.getElementById("data");
     var obsEl = document.getElementById("adicionais-festa");
+    var valorFestaEl = document.getElementById("valor-festa");
 
     var nomeCliente = clienteEl ? clienteEl.value.trim() : "";
     var valorTotal = totalEl ? totalEl.value.trim() : "0";
     var dataReserva = dataEl ? dataEl.value : "";
     var obs = obsEl ? obsEl.value.trim() : "";
+    var valorFesta = valorFestaEl ? (parseFloat(valorFestaEl.value) || 0) : 0;
     
-    if(!nomeCliente) return Utils.showToast("Preencha o campo do nome do cliente para salvar o orçamento.", "warning");
+    if(!nomeCliente) return Utils.showToast("Preencha o nome do cliente para salvar o orçamento.", "warning");
+    
+    var f = FreteCalc.calcular();
     
     Database.salvarOrcamentoNuvem({
       cliente: nomeCliente,
       tema: State.temaAtual || "Não selecionado",
       kit: State.kitAtual || "",
+      montarNoLocal: !!State.montarNoLocal,
       total: valorTotal,
+      valorFesta: valorFesta,
+      frete: f.freteTotal,
+      freteKm: f.km,
+      fretePrecoCombustivel: f.precoCombustivel,
+      freteLitros: f.litros,
+      freteCustoCombustivel: f.custoCombustivel,
+      freteManutencao: f.manutencao,
+      freteTotal: f.freteTotal,
       dataFesta: dataReserva,
       obs: obs,
       dataCriacao: Utils.getHojeDataString(),
@@ -1522,28 +1455,17 @@ var UI = {
     var senhaEl = document.getElementById("senha");
     var email = emailEl ? emailEl.value.trim() : "";
     var senha = senhaEl ? senhaEl.value : "";
-
-    if (!email || !senha) {
-      Utils.showToast("Preencha e-mail e senha.", "warning");
-      return;
-    }
-
+    if (!email || !senha) { Utils.showToast("Preencha e-mail e senha.", "warning"); return; }
     if (CONFIG.usuarios[email] === senha) {
       State.usuarioLogadoEmail = email;
-
       var secLogin = document.getElementById("secao-login");
       var secVerif = document.getElementById("secao-verificador");
       if (secLogin) secLogin.style.display = "none";
       if (secVerif) secVerif.style.display = "block";
-
       var nomeUsuario = document.getElementById("nome-usuario");
       if (nomeUsuario) nomeUsuario.innerHTML = "👤 <b>" + email.split('@')[0] + "</b>";
-
-      var abaEditar = document.getElementById("aba-editar");
-      if (abaEditar) abaEditar.style.display = "block";
-
       Utils.showToast("Login realizado!", "success");
-      try { Database.listenPontoUsuario(); } catch (e) { console.warn("Aviso ponto:", e); }
+      try { Database.listenPontoUsuario(); } catch (e) { console.warn(e); }
     } else {
       Utils.showToast("E-mail ou senha incorretos.", "error");
     }
@@ -1560,81 +1482,53 @@ var UI = {
     var p = document.getElementById("painel-orcamentos-salvos") || document.getElementById("card-orcamentos-integrado");
     if (p) {
       var displayAtual = window.getComputedStyle(p).display;
-      p.style.display = (displayAtual === "none") ? "block" : "none";
-      if (p.style.display === "block") this.renderOrcamentos();
+      var abrindo = (displayAtual === "none");
+      p.style.display = abrindo ? "block" : "none";
+      if (abrindo) this.renderOrcamentos();
     }
   },
 
   handleEditorBusca: function(termo) {
-    var caixa = document.getElementById("editor-sugestoes") || document.getElementById("lista-sugestoes-editor");
-    if(!caixa) return;
-    termo = termo.toLowerCase().trim();
-    if(!termo) { caixa.style.display = "none"; return; }
-
-    var filtrados = Object.keys(State.estoque).filter(function(t) { return t.toLowerCase().indexOf(termo) !== -1; });
-    caixa.innerHTML = "";
-    filtrados.forEach(function(tema) {
-      var item = document.createElement("div");
-      item.className = "item-sugestao";
-      item.innerText = tema;
-      item.onclick = function() {
-        var elNome = document.getElementById("editor-nome-tema") || document.getElementById("nome-tema") || document.getElementById("tema-nome");
-        var elKits = document.getElementById("editor-qtd-kits") || document.getElementById("qtd-kits");
-        var elPng = document.getElementById("editor-png-tema") || document.getElementById("png-tema") || document.getElementById("tema-png");
-        var elBusca = document.getElementById("editor-busca-tema") || document.getElementById("busca-tema-editor");
-        
-        if(elNome) elNome.value = tema;
-        if(elKits) elKits.value = State.estoque[tema].kits || State.estoque[tema].quantidade || 0;
-        if(elPng) elPng.value = State.estoque[tema].png || State.estoque[tema].imagem || "";
-        if(elBusca) elBusca.value = "";
-        
-        caixa.style.display = "none";
-      };
-      caixa.appendChild(item);
-    });
-    caixa.style.display = filtrados.length ? "block" : "none";
+    // reservado para editor (não usado atualmente no HTML)
   },
 
+  // ============================================================
+  // SUGESTÕES DE TEMA (busca tolerante)
+  // ============================================================
   renderSuggestions: function(termo) {
-    var caixa = document.getElementById("wrapper-lista-sugestoes") || document.getElementById("lista-sugestoes-temas") || document.getElementById("lista-sugestoes");
+    var caixa = document.getElementById("wrapper-lista-sugestoes");
     if(!caixa) return;
     termo = (termo || "").toString();
     if(!termo.trim()) { caixa.style.display = "none"; caixa.innerHTML = ""; return; }
 
     var normalizar = function(s) {
-      return (s || "").toString().toLowerCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return (s || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     };
     var termoNorm = normalizar(termo.trim());
-
     var filtrados = Object.keys(State.estoque).filter(function(t) {
       return normalizar(t).indexOf(termoNorm) !== -1;
     });
     caixa.innerHTML = "";
-
     if (filtrados.length === 0) { caixa.style.display = "none"; return; }
 
     filtrados.forEach(function(tema) {
       var objTema = State.estoque[tema] || {};
       var item = document.createElement("div");
       item.className = "sugestao-item";
-
       var kitsCadastrados = objTema.kits ? (parseInt(objTema.kits) || 0) : (parseInt(objTema.quantidade) || 0);
       var reservasAtivas = 0;
       State.reservas.forEach(function(res) {
         if (res && res.tema && res.tema.toLowerCase().trim() === tema.toLowerCase().trim()) reservasAtivas++;
       });
       var livres = kitsCadastrados - reservasAtivas;
-
       if (livres <= 0 && kitsCadastrados > 0) {
-        item.innerHTML = "⚙️ " + tema + " <span style='color:var(--error); font-weight:bold;'>(INDISPONÍVEL)</span>";
+        item.innerHTML = "⚙️ " + tema + " <span style='color:var(--error);font-weight:bold;'>(INDISPONÍVEL)</span>";
       } else {
         item.innerHTML = "⚙️ " + tema + (kitsCadastrados > 0 ? " (Livre: " + livres + "/" + kitsCadastrados + ")" : "");
       }
-
       item.onclick = function() {
         if (livres <= 0 && kitsCadastrados > 0) {
-          Utils.showToast("O tema \"" + tema + "\" está completamente indisponível no estoque físico!", "error");
+          Utils.showToast("Tema indisponível no estoque!", "error");
           return;
         }
         var inputTemaHidden = document.getElementById("busca-tema-input");
@@ -1655,27 +1549,22 @@ var UI = {
     var container = document.getElementById("lista-catalogo-render") || document.getElementById("catalogo-render");
     if (!container) return;
     container.innerHTML = "";
-
     var temasCadastrados = Object.keys(State.estoque);
     if (temasCadastrados.length === 0) {
-      container.innerHTML = "<div style='text-align:center; padding:20px; color:#777;'>Nenhum tema disponível no catálogo no momento.</div>";
+      container.innerHTML = "<div style='text-align:center; padding:20px; color:#777;'>Nenhum tema disponível.</div>";
       return;
     }
-
     var filtrados = temasCadastrados;
     if (filtro.trim() !== "") {
       var f = filtro.toLowerCase().trim();
       filtrados = temasCadastrados.filter(function(t) { return t.toLowerCase().indexOf(f) !== -1; });
     }
-
     filtrados.forEach(function(nomeTema) {
       var objTema = State.estoque[nomeTema];
       var card = document.createElement("div");
       card.className = "card-catalogo card-tema";
-      
       var kitsCadastrados = objTema.kits ? (parseInt(objTema.kits) || 0) : (parseInt(objTema.quantidade) || 0);
       var fotoUrl = objTema.png || objTema.imagem || "https://placehold.co/200x150?text=Sem+Foto";
-
       var reservasAtivas = 0;
       State.reservas.forEach(function(res) {
         if (res && res.tema && res.tema.toLowerCase().trim() === nomeTema.toLowerCase().trim()) reservasAtivas++;
@@ -1684,14 +1573,12 @@ var UI = {
       var statusEstoque = livres > 0 
         ? "<span style='color:var(--success); font-size:0.85em;'>🟢 " + livres + " livres</span>" 
         : "<span style='color:var(--error); font-size:0.85em;'>🔴 Indisponível</span>";
-
-      card.innerHTML = '<img src="' + fotoUrl + '" style="width:100%; height:140px; object-fit:cover; border-radius:6px 6px 0 0;" onerror="this.src=\'https://placehold.co/200x150?text=Erro+Foto\'">' +
+      card.innerHTML = '<img src="' + fotoUrl + '" style="width:100%;height:140px;object-fit:cover;border-radius:6px 6px 0 0;" onerror="this.src=\'https://placehold.co/200x150?text=Erro+Foto\'">' +
       '<div style="padding: 10px;">' +
         '<h4 style="margin:0 0 5px 0; color:var(--primary); font-size:1.1em;">' + nomeTema + '</h4>' +
         '<p style="margin:0; font-size:0.9em; color:#555;">Kits totais: <b>' + kitsCadastrados + '</b></p>' +
         '<div style="margin-top:5px;">' + statusEstoque + '</div>' +
       '</div>';
-      
       container.appendChild(card);
     });
   },
@@ -1699,10 +1586,9 @@ var UI = {
   renderTabelaTemasGerenciados: function() {
     var corpo = document.getElementById("lista-temas-gerenciados-corpo");
     if (!corpo) return;
-    
     var chaves = Object.keys(State.estoque);
     if (chaves.length === 0) {
-      corpo.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999; padding:15px;">Nenhum tema ou peça cadastrada.</td></tr>';
+      corpo.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999; padding:15px;">Nenhum tema cadastrado.</td></tr>';
     } else {
       var html = "";
       chaves.forEach(function(chave) {
@@ -1725,7 +1611,6 @@ var UI = {
       });
       corpo.innerHTML = html;
     }
-    
     var selectRemover = document.getElementById("select-remover-tema");
     if (selectRemover) {
       var valorAtual = selectRemover.value;
@@ -1740,23 +1625,15 @@ var UI = {
       });
       if (valorAtual && State.estoque[valorAtual]) selectRemover.value = valorAtual;
     }
-    
     var contador = document.getElementById("contador-catalogo-total");
     if (contador) contador.textContent = chaves.length + " itens";
   },
 
-  resetEditor: function() {
-    var elNome = document.getElementById("editor-nome-tema") || document.getElementById("nome-tema") || document.getElementById("tema-nome");
-    var elKits = document.getElementById("editor-qtd-kits") || document.getElementById("qtd-kits");
-    var elPng = document.getElementById("editor-png-tema") || document.getElementById("png-tema") || document.getElementById("tema-png");
-    var elCont = document.getElementById("container-preview-tema") || document.getElementById("preview-tema-box");
+  resetEditor: function() {},
 
-    if(elNome) elNome.value = "";
-    if(elKits) elKits.value = "1";
-    if(elPng) elPng.value = "";
-    if(elCont) elCont.style.display = "none";
-  },
-
+  // ============================================================
+  // RENDER RESERVAS
+  // ============================================================
   renderReservas: function(filtro) {
     if (!filtro) filtro = "";
     var container = document.getElementById("lista-reservas-render");
@@ -1767,14 +1644,12 @@ var UI = {
       container.innerHTML = "<div style='text-align:center; padding:20px;'>⌛ Carregando agendamentos...</div>";
       return;
     }
-
     if (State.reservas.length === 0) {
       container.innerHTML = "<div style='text-align:center; padding:20px; color:#777;'>Nenhum agendamento encontrado.</div>";
       return;
     }
 
     var reservasFiltradas = State.reservas.slice().sort(function(a, b) { return new Date(a.data) - new Date(b.data); });
-        
     if (filtro.trim() !== "") {
       var f = filtro.toLowerCase().trim();
       reservasFiltradas = reservasFiltradas.filter(function(res) {
@@ -1800,6 +1675,16 @@ var UI = {
         imgTemaHTML = "<div style='text-align:center; margin:8px 0;'><img src='" + (infoTema.png || infoTema.imagem) + "' style='max-height:60px; object-fit:contain;'></div>";
       }
 
+      // Detalhes do frete (se existirem)
+      var freteDetalhes = "";
+      if (res.freteKm) {
+        freteDetalhes = '<p style="font-size:11px;color:#666;">🚗 ' + res.freteKm + 'km × R$' + 
+          (parseFloat(res.fretePrecoCombustivel) || 0).toFixed(2) + 
+          ' → ' + (parseFloat(res.freteLitros) || 0).toFixed(2) + 'L → R$ ' + 
+          (parseFloat(res.freteCustoCombustivel) || 0).toFixed(2) + 
+          ' + manut. R$ ' + (parseFloat(res.freteManutencao) || 0).toFixed(2) + '</p>';
+      }
+
       card.innerHTML = '<div class="reserva-header">' +
         '<strong>👶 ' + res.cliente + '</strong>' +
         '<span class="reserva-badge" style="background:' + (quitado ? '#27ae60' : '#e67e22') + ';">' + (quitado ? 'PAGO 100%' : 'PENDENTE') + '</span>' +
@@ -1808,8 +1693,10 @@ var UI = {
         '<p>📅 Data: <b>' + Utils.formatDateBR(res.data) + '</b></p>' +
         '<p>🎨 Tema: <b style="color:var(--primary);">' + res.tema + '</b></p>' +
         '<p>🛍️ Modelo: <b>' + (res.kit || 'Não informado') + '</b></p>' + 
+        (res.montarNoLocal ? '<p>🛠️ Montagem no local: <b style="color:#27ae60;">SIM</b></p>' : '') +
         imgTemaHTML +
         '<p>🚚 Frete: <b>' + Utils.formatCurrency(frete) + '</b></p>' +
+        freteDetalhes +
         '<p>💰 Total Geral: <b>' + Utils.formatCurrency(totGeral) + '</b></p>' +
         '<p>💵 Sinal Pago: <b>' + Utils.formatCurrency(sinal) + '</b></p>' +
         '<p style="color:' + (quitado ? 'green' : 'red') + '">⚠️ Falta Receber: <b>' + Utils.formatCurrency(devedor) + '</b></p>' +
@@ -1821,60 +1708,64 @@ var UI = {
     });
   },
 
+  // ============================================================
+  // RENDER ORÇAMENTOS — sempre que listener atualiza
+  // ============================================================
   renderOrcamentos: function() {
-    var container = document.getElementById("lista-orcamentos-render") 
-                  || document.getElementById("orcamentos-render")
-                  || document.getElementById("lista-orcamentos-interno-corpo");
-    if (!container) return;
-    container.innerHTML = "";
+    var containers = [
+      document.getElementById("lista-orcamentos-render"),
+      document.getElementById("orcamentos-render"),
+      document.getElementById("lista-orcamentos-interno-corpo")
+    ].filter(Boolean);
+    
+    if (containers.length === 0) return;
 
-    if (State.orcamentos.length === 0) {
-      if (container.tagName === "TBODY") {
-        container.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#777;">Nenhum orçamento salvo.</td></tr>';
-      } else {
-        container.innerHTML = "<div style='text-align:center; padding:20px; color:#777;'>Nenhum orçamento salvo.</div>";
+    containers.forEach(function(container) {
+      container.innerHTML = "";
+      if (State.orcamentos.length === 0) {
+        if (container.tagName === "TBODY") {
+          container.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#777;">Nenhum orçamento salvo.</td></tr>';
+        } else {
+          container.innerHTML = "<div style='text-align:center; padding:20px; color:#777;'>Nenhum orçamento salvo.</div>";
+        }
+        return;
       }
-      return;
-    }
-
-    var isTbody = container.tagName === "TBODY";
-    var html = "";
-    State.orcamentos.forEach(function(orc) {
-      var totalFmt = Utils.formatCurrency(orc.total);
-      if (isTbody) {
-        html += '<tr>' +
-          '<td>' + (orc.cliente || '') + '</td>' +
-          '<td>' + (orc.tema || '') + (orc.kit ? ' / ' + orc.kit : '') + '</td>' +
-          '<td>' + totalFmt + '</td>' +
-          '<td style="text-align:center;">' +
-            '<button type="button" onclick="window.PromoverOrcamento(\'' + orc.id + '\')" class="btn-acao-tabela btn-promover" title="Promover para Reserva">✅</button>' +
-            '<button type="button" onclick="window.ExcluirOrcamento(\'' + orc.id + '\')" class="btn-acao-tabela btn-remover-orc" title="Excluir">🗑️</button>' +
-          '</td>' +
-        '</tr>';
-      } else {
-        html += '<div class="card-reserva"><div class="reserva-header"><strong>👤 ' + (orc.cliente || '') + '</strong></div>' +
-          '<div class="reserva-body">' +
-          '<p>📅 Data da Festa: <b>' + Utils.formatDateBR(orc.dataFesta) + '</b></p>' +
-          '<p>🎨 Tema: <b>' + (orc.tema || '') + '</b></p>' +
-          '<p>💰 Total Estimado: <b>' + totalFmt + '</b></p>' +
-          (orc.obs ? '<p>📝 Obs: ' + orc.obs + '</p>' : '') +
-          '</div></div>';
-      }
+      var isTbody = container.tagName === "TBODY";
+      var html = "";
+      State.orcamentos.forEach(function(orc) {
+        var totalFmt = Utils.formatCurrency(orc.total);
+        if (isTbody) {
+          html += '<tr>' +
+            '<td>' + (orc.cliente || '') + '</td>' +
+            '<td>' + (orc.tema || '') + (orc.kit ? ' / ' + orc.kit : '') + '</td>' +
+            '<td>' + totalFmt + '</td>' +
+            '<td style="text-align:center;">' +
+              '<button type="button" onclick="window.PromoverOrcamento(\'' + orc.id + '\')" class="btn-acao-tabela btn-promover" title="Promover para Reserva">✅</button>' +
+              '<button type="button" onclick="window.ExcluirOrcamento(\'' + orc.id + '\')" class="btn-acao-tabela btn-remover-orc" title="Excluir">🗑️</button>' +
+            '</td></tr>';
+        } else {
+          html += '<div class="card-reserva"><div class="reserva-header"><strong>👤 ' + (orc.cliente || '') + '</strong></div>' +
+            '<div class="reserva-body">' +
+            '<p>📅 Data da Festa: <b>' + Utils.formatDateBR(orc.dataFesta) + '</b></p>' +
+            '<p>🎨 Tema: <b>' + (orc.tema || '') + '</b></p>' +
+            (orc.kit ? '<p>🛍️ Kit: <b>' + orc.kit + '</b></p>' : '') +
+            (orc.montarNoLocal ? '<p>🛠️ Montagem no local: <b>SIM</b></p>' : '') +
+            '<p>💰 Total Estimado: <b>' + totalFmt + '</b></p>' +
+            (orc.freteTotal ? '<p>🚚 Frete: <b>' + Utils.formatCurrency(orc.freteTotal) + '</b></p>' : '') +
+            (orc.obs ? '<p>📝 Obs: ' + orc.obs + '</p>' : '') +
+            '</div></div>';
+        }
+      });
+      container.innerHTML = html;
     });
-    container.innerHTML = html;
   },
 
   renderRelatorioGeralPontos: function(dadosPontos) {
-    var container = document.getElementById("lista-relatorio-pontos-render") 
-                  || document.getElementById("relatorio-pontos-render") 
-                  || document.querySelector("#lista-pontos-geral-corpo");
+    var container = document.querySelector("#lista-pontos-geral-corpo");
     if (!container) return;
-    container.innerHTML = "";
-    
     var isTbody = container.tagName === "TBODY";
     var html = "";
     var temAlgo = false;
-    
     for (var usuario in dadosPontos) {
       if (dadosPontos.hasOwnProperty(usuario)) {
         var dias = dadosPontos[usuario];
@@ -1882,40 +1773,164 @@ var UI = {
           if (dias.hasOwnProperty(dia)) {
             temAlgo = true;
             var p = dias[dia];
-            if (isTbody) {
-              html += '<tr><td>' + usuario.replace(/_/g, ".") + '</td>' +
-                '<td>' + Utils.formatDateBR(dia) + '</td>' +
-                '<td style="color:var(--success);">' + (p.entrada || "--:--") + '</td>' +
-                '<td style="color:var(--error);">' + (p.saida || "--:--") + '</td></tr>';
-            } else {
-              html += '<li style="margin-bottom:5px; padding:8px; background:#f5f6fa; border-radius:4px; font-size:0.9em;">' +
-                '<b>' + usuario.replace(/_/g, ".") + '</b> — <b>' + Utils.formatDateBR(dia) + '</b> | ' +
-                '<span style="color:var(--success);">Entrada: ' + (p.entrada || "--:--") + '</span> | ' +
-                '<span style="color:var(--error);">Saída: ' + (p.saida || "--:--") + '</span></li>';
-            }
+            html += '<tr><td>' + usuario.replace(/_/g, ".") + '</td>' +
+              '<td>' + Utils.formatDateBR(dia) + '</td>' +
+              '<td style="color:var(--success);">' + (p.entrada || "--:--") + '</td>' +
+              '<td style="color:var(--error);">' + (p.saida || "--:--") + '</td></tr>';
           }
         }
       }
     }
-    
     if (!temAlgo) {
-      if (isTbody) {
-        container.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">Nenhum ponto registrado.</td></tr>';
-      } else {
-        container.innerHTML = "<p style='text-align:center;'>Nenhum registro de ponto encontrado.</p>";
-      }
+      container.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">Nenhum ponto registrado.</td></tr>';
     } else {
-      if (isTbody) {
-        container.innerHTML = html;
-      } else {
-        container.innerHTML = "<ul style='list-style:none; padding-left:0;'>" + html + "</ul>";
+      container.innerHTML = html;
+    }
+  },
+  
+  // ============================================================
+  // GERADOR DE CONTRATO — gera HTML e envia para o modal
+  // ============================================================
+  gerarContrato: function(gerarPdf) {
+    var nome = (document.getElementById("c-nome") || {}).value || "";
+    var cpf = (document.getElementById("c-cpf") || {}).value || "";
+    var data = (document.getElementById("c-data") || {}).value || "";
+    var horario = (document.getElementById("c-horario") || {}).value || "";
+    var valor = parseFloat((document.getElementById("c-valor") || {}).value) || 0;
+    var endereco = (document.getElementById("c-endereco") || {}).value || "";
+    var telefone = (document.getElementById("c-telefone") || {}).value || "";
+    var local = (document.getElementById("c-local") || {}).value || "";
+    var modelo = (document.getElementById("c-modelo") || {}).value || "com-frete";
+    var obs = (document.getElementById("c-obs") || {}).value || "";
+    
+    // Tema selecionado (se houver)
+    var tema = (document.getElementById("contrato-tema-selecionado") || {}).value || "";
+    
+    // Peças selecionadas
+    var selectPecas = document.getElementById("c-pecas");
+    var pecasSelecionadas = [];
+    if (selectPecas) {
+      for (var i = 0; i < selectPecas.options.length; i++) {
+        if (selectPecas.options[i].selected) pecasSelecionadas.push(selectPecas.options[i].value);
       }
     }
+    
+    // Itens adicionais
+    var extras = [];
+    ['c-porcelanas','c-bolos','c-decoracao','c-outros'].forEach(function(id) {
+      var sel = document.getElementById(id);
+      if (!sel) return;
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].selected) extras.push(sel.options[i].value);
+      }
+    });
+    
+    var dadosContrato = {
+      nome: nome,
+      cpf: cpf,
+      data: data,
+      horario: horario,
+      valor: valor,
+      endereco: endereco,
+      telefone: telefone,
+      local: local,
+      modelo: modelo,
+      tema: tema,
+      pecas: pecasSelecionadas,
+      extras: extras,
+      obs: obs,
+      criadoEm: Date.now()
+    };
+    
+    // Validação mínima
+    if (!nome.trim()) {
+      Utils.showToast("Preencha o nome do contratante!", "warning");
+      return;
+    }
+    
+    // Gera o HTML do contrato
+    var dataFmt = data ? data.split("-").reverse().join("/") : "____/____/______";
+    var valorFmt = valor ? valor.toFixed(2).replace('.', ',') : "______,____";
+    var pecasTexto = pecasSelecionadas.length > 0 ? pecasSelecionadas.join(", ") : "__________________________________";
+    var extrasTexto = extras.length > 0 ? extras.join(", ") : "";
+    var dataAtual = new Date().toLocaleDateString('pt-BR');
+    
+    var html = '<div class="pagina-contrato">' +
+      '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
+      '<div class="titulo-contrato">CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO</div>' +
+      '<div class="dados-contratada"><span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS</div>' +
+      '<div class="dados-contratante"><span class="negrito">CONTRATANTE:</span> ' + (nome || "_________________________") + '</div>' +
+      '<div class="dados-contratante"><span class="negrito">CPF:</span> ' + (cpf || "_________________________") + '</div>' +
+      '<div class="dados-contratante"><span class="negrito">TELEFONE:</span> ' + (telefone || "_________________________") + '</div>' +
+      '<div class="dados-contratante"><span class="negrito">ENDEREÇO:</span> ' + (endereco || "_________________________") + '</div>' +
+      '<div class="dados-contratante"><span class="negrito">LOCAL DO EVENTO:</span> ' + (local || "_________________________") + '</div>' +
+      '<div class="dados-contratante"><span class="negrito">DATA DO EVENTO:</span> ' + dataFmt + (horario ? ' às ' + horario : '') + '</div>' +
+      '<br>' +
+      '<div class="clausula-titulo">DO OBJETO DO CONTRATO</div>' +
+      '<div class="clausula-texto"><span class="negrito">Cláusula 1ª.</span> A CONTRATADA locará para o CONTRATANTE os seguintes itens' +
+      (tema ? ' do tema <b>' + tema + '</b>' : '') + ': ' + pecasTexto + '.</div>' +
+      (extrasTexto ? '<div class="clausula-texto"><span class="negrito">Itens adicionais:</span> ' + extrasTexto + '</div>' : '') +
+      '<div class="clausula-titulo">VALORES E PAGAMENTO</div>' +
+      '<div class="clausula-texto">O valor total da locação é de R$ ' + valorFmt + '.</div>' +
+      (obs ? '<div class="clausula-texto"><span class="negrito">Observações:</span> ' + obs + '</div>' : '') +
+      '<br>' +
+      '<div style="text-align: center;">Brasília-DF, ' + dataAtual + '.</div>' +
+      '<div class="assinatura">' +
+        '<div class="linha-assinatura"></div>' +
+        '<div class="assinatura-nome">' + (nome || "CONTRATANTE") + '</div>' +
+      '</div>' +
+      '<div class="assinatura">' +
+        '<div class="linha-assinatura"></div>' +
+        '<div class="assinatura-nome">TRALALÁ DECORAÇÕES DE FESTAS</div>' +
+      '</div>' +
+    '</div>';
+    
+    // Salva no Firebase
+    Database.salvarContratoNuvem(dadosContrato).catch(function(err) {
+      console.warn("Contrato não salvo:", err);
+    });
+    
+    // Joga no modal de visualização
+    var preview = document.getElementById("contrato-preview-content");
+    if (preview) preview.innerHTML = html;
+    var modalVis = document.getElementById("modal-visualizar-contrato");
+    if (modalVis) modalVis.classList.add("ativo");
+    
+    if (gerarPdf) {
+      setTimeout(function() { UI.gerarContratoPDF(); }, 300);
+    } else {
+      Utils.showToast("Contrato gerado com sucesso!", "success");
+    }
+  },
+  
+  gerarContratoPDF: function() {
+    var elemento = document.getElementById("contrato-preview-content");
+    if (!elemento) return;
+    if (typeof html2pdf === 'undefined') {
+      alert("Biblioteca de PDF não carregada. Use o botão Imprimir.");
+      return;
+    }
+    var nome = (document.getElementById("c-nome") || {}).value || "contrato";
+    html2pdf().from(elemento).set({
+      margin: 0,
+      filename: 'contrato-' + nome.replace(/\s+/g, '-').toLowerCase() + '.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).save().then(function() {
+      Utils.showToast("PDF baixado!", "success");
+    }).catch(function(err) {
+      console.error("Erro PDF:", err);
+      Utils.showToast("Erro ao gerar PDF. Use Imprimir.", "error");
+    });
   }
 };
 
+// ============================================================
+// FUNÇÕES GLOBAIS DE EXCLUSÃO
+// ============================================================
 window.DeletarReserva = function(idReserva) {
-  if (confirm("Tem certeza que deseja excluir este agendamento definitivamente?")) {
+  if (confirm("Tem certeza que deseja excluir este agendamento?")) {
     Database.excluirReservaNuvem(idReserva).then(function() {
       Utils.showToast("Agendamento removido!", "success");
     }).catch(function() {
@@ -1951,6 +1966,7 @@ window.PromoverOrcamento = function(idOrcamento) {
   var elCliente = document.getElementById("nome-cliente");
   var elData = document.getElementById("data");
   var elTotal = document.getElementById("valor-total");
+  var elValorFesta = document.getElementById("valor-festa");
   var elObs = document.getElementById("adicionais-festa");
   var inputTemaHidden = document.getElementById("busca-tema-input");
   var inputTemaFiltro = document.getElementById("filtro-tema-input");
@@ -1958,7 +1974,9 @@ window.PromoverOrcamento = function(idOrcamento) {
   if (elCliente) elCliente.value = orc.cliente || "";
   if (elData && orc.dataFesta) elData.value = orc.dataFesta;
   if (elTotal) elTotal.value = orc.total || "";
+  if (elValorFesta) elValorFesta.value = orc.valorFesta || "";
   if (elObs) elObs.value = orc.obs || "";
+  
   if (orc.tema) {
     if (inputTemaHidden) inputTemaHidden.value = orc.tema;
     if (inputTemaFiltro) inputTemaFiltro.value = orc.tema;
@@ -1970,7 +1988,28 @@ window.PromoverOrcamento = function(idOrcamento) {
       b.classList.toggle('ativo', b.getAttribute('data-kit') === orc.kit);
     });
   }
-  Utils.showToast("Orçamento carregado no formulário. Revise e confirme a reserva.", "success");
+  if (orc.montarNoLocal !== undefined) {
+    State.montarNoLocal = !!orc.montarNoLocal;
+    var chk = document.getElementById("chk-montar-local");
+    if (chk) {
+      chk.checked = State.montarNoLocal;
+      var painel = document.getElementById("painel-montagem-local");
+      if (painel) painel.style.display = State.montarNoLocal ? "block" : "none";
+    }
+  }
+  
+  // Preenche frete se tiver
+  if (orc.freteKm) {
+    var kmEl = document.getElementById("calc-km");
+    var precoEl = document.getElementById("calc-valor-litro");
+    if (kmEl) kmEl.value = orc.freteKm;
+    if (precoEl && orc.fretePrecoCombustivel) precoEl.value = orc.fretePrecoCombustivel;
+    FreteCalc.renderizar();
+  }
+  
+  Utils.showToast("Orçamento carregado no formulário.", "success");
+  var painelOrc = document.getElementById("painel-orcamentos-salvos");
+  if (painelOrc) painelOrc.style.display = "none";
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
@@ -1987,18 +2026,15 @@ window.removerTemaPorChave = function(chave) {
 };
 
 // ============================================================
-// INICIALIZAÇÃO — dispara assim que o DOM estiver pronto
+// INICIALIZAÇÃO
 // ============================================================
 function __tralala_inicializar() {
   if (window.__tralala_ui_iniciada) return;
   window.__tralala_ui_iniciada = true;
 
-  // Inicializa Firebase se ainda não foi
   if (!State.db && typeof firebase !== 'undefined') {
     try {
-      if (!firebase.apps.length) {
-        firebase.initializeApp(CONFIG.firebase);
-      }
+      if (!firebase.apps.length) firebase.initializeApp(CONFIG.firebase);
       State.db = firebase.database();
       CatalogoLoader.mostrar('⏳ Carregando catálogo...', 'Buscando dados do servidor');
       Database.listen();
@@ -2008,7 +2044,6 @@ function __tralala_inicializar() {
     }
   }
 
-  // Inicializa a UI (registra TODOS os cliques, incluindo login)
   try {
     UI.init();
     console.log("✅ UI inicializada com sucesso");
