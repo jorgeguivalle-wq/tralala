@@ -278,11 +278,11 @@
       <p class="instrucao">Faça login para gerenciar reservas e estoque.</p>
       <div class="input-group">
         <label for="email">E-mail de Acesso:</label>
-        <input type="email" id="email" value="tralaladecoracoes@gmail.com" autocomplete="off">
+        <input type="email" id="email" value="contato@tralala.com.br" autocomplete="off">
       </div>
       <div class="input-group">
         <label for="senha">Senha Segura:</label>
-        <input type="password" id="senha" value="tralala123" placeholder="••••••••">
+        <input type="password" id="senha" value="123456" placeholder="••••••••">
       </div>
       <button type="button" id="btn-login-direto" class="btn btn-primary">Entrar no Painel</button>
     </section>
@@ -334,7 +334,6 @@
         <button type="button" id="btn-abrir-gerador-contrato" class="btn btn-outline" style="flex: 1; min-width: 130px; border-color: #e67e22; color: #e67e22;"> ✍️ Gerar Contrato </button>
       </div>
 
-      <!-- PAINEL DE REUNIÕES -->
       <div id="painel-reunioes-exclusivo" class="painel-central-relatorios" style="display: none; border-color: #27ae60;">
         <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center; color: #27ae60;">
           <span>📅 Painel de Reuniões com Clientes</span>
@@ -366,7 +365,6 @@
         </div>
       </div>
 
-      <!-- PAINEL CATÁLOGO DE TEMAS -->
       <div id="painel-catalogo-temas" class="painel-relatorio-pontos" style="border-color: var(--primary); background: #ffffff; display: none;">
         <h3 style="margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 5px; color: var(--primary); display: flex; justify-content: space-between; align-items: center;">
           <span>🎨 Catálogo de Temas & Peças</span>
@@ -461,7 +459,6 @@
         </div>
       </div>
 
-      <!-- PAINEL VENDA MENSAL / RELATÓRIOS -->
       <div id="secao-central-relatorios" class="painel-central-relatorios" style="display: none;">
         <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center;">
           <span>📊 Relatório de Vendas & Faturamento Mensal</span>
@@ -520,17 +517,6 @@
             <button type="button" id="btn-adicionar-linha-planilha" class="btn btn-outline" style="font-size: 12px; padding: 8px; flex: 1;">➕ Adicionar Avulso</button>
             <button type="button" id="btn-salvar-dados-planilha" class="btn btn-outline" style="font-size: 12px; padding: 8px; border-color: #3498db; color: #3498db; flex: 1;">☁️ Salvar Alterações na Nuvem</button>
           </div>
-        </div>
-      </div>
-
-      <!-- PAINEL ORÇAMENTOS SALVOS -->
-      <div id="painel-orcamentos-salvos" class="painel-central-relatorios" style="display: none;">
-        <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center;">
-          <span>📋 Orçamentos Salvos</span>
-          <button type="button" id="btn-fechar-orcamentos-painel" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;">✕ Fechar</button>
-        </h3>
-        <div id="lista-orcamentos-render" style="max-height: 400px; overflow-y: auto;">
-          <p style="text-align: center; color:#999;">Carregando orçamentos...</p>
         </div>
       </div>
 
@@ -790,6 +776,17 @@
           <label>Local do Evento:</label>
           <input type="text" id="c-local" placeholder="Endereço Completo do Evento">
         </div>
+
+        <div class="input-group">
+          <label>🔍 Tema do Contrato (busque pelo nome):</label>
+          <div class="sugestoes-wrapper">
+            <div class="busca-container">
+              <input type="text" id="contrato-tema-busca" placeholder="Digite o nome do tema..." autocomplete="off">
+            </div>
+            <div id="contrato-tema-sugestoes" class="lista-sugestoes"></div>
+          </div>
+          <input type="hidden" id="contrato-tema-selecionado" value="">
+        </div>
         
         <div class="input-group">
           <label>Selecione as Peças (Retiradas do Catálogo):</label>
@@ -897,183 +894,1470 @@
   </div>
 
   <!-- ============================================================
-       CARREGA O SCRIPT PRINCIPAL (script (1).js)
+       O arquivo "script (1).js" NÃO é mais carregado.
+       Toda a lógica do sistema está no <script> inline abaixo.
+       Se quiser, pode apagar o arquivo "script (1).js" do seu servidor.
        ============================================================ -->
-  <script src="script (1).js"></script>
 
   <script>
-    // ============================================================
-    // INICIALIZAÇÃO DO FIREBASE (compat) — necessário ANTES do script principal
-    // ============================================================
-    (function() {
-      try {
-        if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-          firebase.initializeApp({
-            apiKey: "AIzaSyCS6ofyis160STTrjhFJZDcsqAiyh_Gnmc",
-            authDomain: "tralala-d8ce2.firebaseapp.com",
-            databaseURL: "https://tralala-d8ce2-default-rtdb.firebaseio.com/",
-            projectId: "tralala-d8ce2",
-            storageBucket: "tralala-d8ce2.appspot.com",
-            messagingSenderId: "704078064009",
-            appId: "1:704078064009:web:4d6ffc34c21b14322f9958"
+    // ============================================================================
+    // SISTEMA PRINCIPAL — Tralalá Festas
+    // Autoridade única: este bloco. Nada mais roda em paralelo.
+    // ============================================================================
+
+    const CONFIG = {
+      usuarios: {
+        "jorgeguivalle@gmail.com": "Viperrt11",
+        "leonardodovalle@gmail.com": "Viperrt11@",
+        "tralaladecoracoes@gmail.com": "tralala123"
+      },
+      frete: {
+        consumoKmPorLitro: 9,
+        percentualManutencao: 0.20
+      }
+    };
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCS6ofyis160STTrjhFJZDcsqAiyh_Gnmc",
+      authDomain: "tralala-d8ce2.firebaseapp.com",
+      databaseURL: "https://tralala-d8ce2-default-rtdb.firebaseio.com/",
+      projectId: "tralala-d8ce2",
+      storageBucket: "tralala-d8ce2.appspot.com",
+      messagingSenderId: "704078064009",
+      appId: "1:704078064009:web:4d6ffc34c21b14322f9958"
+    };
+
+    const State = {
+      db: null,
+      salvandoPeca: false,
+      usuarioLogadoEmail: "",
+      estoqueArray: [],
+      reservas: [],
+      orcamentos: [],
+      categorias: [],
+      temaAtual: "",
+      kitAtual: "",
+      montarNoLocal: false,
+      frete: { km: 0, precoCombustivel: 0, litros: 0, custoCombustivel: 0, manutencao: 0, freteTotal: 0 },
+      carregando: true
+    };
+
+    let db = null;
+    let chartInstance = null;
+    const mesesAno = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      State.db = db;
+    } catch (err) {
+      console.error("Erro no Firebase:", err);
+    }
+
+    const ModalStatus = {
+      exibir: (titulo, subtitulo) => {
+        const modal = document.getElementById("modal-status-operacao");
+        const spinner = document.getElementById("spinner-status");
+        const t = document.getElementById("titulo-status-operacao");
+        const sub = document.getElementById("subtitulo-status-operacao");
+        if (!modal) return;
+        if (spinner) { spinner.style.display = "block"; spinner.style.borderColor = "#f3f3f3"; spinner.style.borderTopColor = "var(--primary)"; }
+        if (t) { t.style.color = "var(--primary)"; t.innerText = titulo || "PROCESSANDO..."; }
+        if (sub) sub.innerText = subtitulo || "Aguarde a confirmação.";
+        modal.classList.add("ativo");
+      },
+      sucesso: (mensagem, callback) => {
+        const spinner = document.getElementById("spinner-status");
+        const t = document.getElementById("titulo-status-operacao");
+        const sub = document.getElementById("subtitulo-status-operacao");
+        if (spinner) spinner.style.display = "none";
+        if (t) { t.style.color = "var(--success)"; t.innerText = "✓ SUCESSO"; }
+        if (sub) sub.innerText = mensagem || "Operação realizada com êxito.";
+        setTimeout(() => { ModalStatus.fechar(); if (callback) callback(); }, 650);
+      },
+      erro: (mensagem) => {
+        const spinner = document.getElementById("spinner-status");
+        const t = document.getElementById("titulo-status-operacao");
+        const sub = document.getElementById("subtitulo-status-operacao");
+        if (spinner) spinner.style.display = "none";
+        if (t) { t.style.color = "var(--error)"; t.innerText = "ERRO NA OPERAÇÃO"; }
+        if (sub) sub.innerText = mensagem || "Não foi possível concluir.";
+        setTimeout(() => { ModalStatus.fechar(); }, 2200);
+      },
+      fechar: () => {
+        const modal = document.getElementById("modal-status-operacao");
+        if (modal) modal.classList.remove("ativo");
+      }
+    };
+
+    const Utils = {
+      showToast: function(message, type) {
+        if (!type) type = 'info';
+        var icone = type === 'success' ? '✅' : (type === 'error' ? '🚨' : '⚠️');
+        console.log(icone + " " + message);
+        var container = document.getElementById('toast-container');
+        if (container) {
+          var toast = document.createElement('div');
+          toast.className = "toast toast-" + type;
+          toast.innerHTML = "<span>" + icone + "</span> <span>" + message + "</span>";
+          container.appendChild(toast);
+          setTimeout(function() { toast.remove(); }, 3500);
+        } else if (type === 'error') {
+          alert('❌ ' + message);
+        }
+      },
+      formatCurrency: function(value) {
+        var v = parseFloat(value);
+        if (isNaN(v) || !isFinite(v)) v = 0;
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+      },
+      formatDateBR: function(dateString) {
+        if (!dateString) return "Não informada";
+        var p = String(dateString).split("-");
+        return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : dateString;
+      },
+      getHojeDataString: function() {
+        var d = new Date();
+        var mes = String(d.getMonth() + 1);
+        var dia = String(d.getDate());
+        if (mes.length < 2) mes = '0' + mes;
+        if (dia.length < 2) dia = '0' + dia;
+        return d.getFullYear() + "-" + mes + "-" + dia;
+      },
+      getHoraString: function() { return new Date().toTimeString().split(' ')[0]; }
+    };
+
+    const CloudDB = {
+      salvar: (caminho, dados, callback) => {
+        if (db) {
+          db.ref(caminho).set(dados).then(() => { if(callback) callback(true); }).catch(e => { if(callback) callback(false, e); });
+        } else {
+          localStorage.setItem(caminho, JSON.stringify(dados));
+          if(callback) callback(true);
+        }
+      },
+      buscar: (caminho, defaultVal, callback) => {
+        if (db) {
+          db.ref(caminho).once('value').then((snapshot) => {
+            let data = snapshot.val();
+            if (data !== null) {
+              if (typeof data === 'object' && !Array.isArray(data)) {
+                const converted = Object.keys(data).map(k => {
+                  if (data[k] && typeof data[k] === 'object') return { idFirebase: k, ...data[k] };
+                  return { idFirebase: k, valor: data[k] };
+                });
+                callback(converted);
+              } else {
+                callback(data);
+              }
+            } else {
+              callback(defaultVal);
+            }
+          }).catch(() => callback(defaultVal));
+        } else {
+          const val = localStorage.getItem(caminho);
+          callback(val ? JSON.parse(val) : defaultVal);
+        }
+      }
+    };
+
+    const Database = {
+      salvarPecaNuvem: async function(peca) {
+        if (State.salvandoPeca) return;
+        State.salvandoPeca = true;
+        const btnSalvar = document.getElementById("btn-adicionar-peca");
+        if (btnSalvar) btnSalvar.disabled = true;
+        ModalStatus.exibir("LANÇANDO TEMA...", "Salvando no acervo, aguarde.");
+        try {
+          if (db) {
+            const refEstoque = db.ref("estoque");
+            const newRef = peca.idFirebase ? db.ref("estoque/" + peca.idFirebase) : refEstoque.push();
+            const pecaId = peca.idFirebase || newRef.key;
+            const payload = {
+              idFirebase: pecaId,
+              nome: peca.nome || "",
+              quantidade: parseInt(peca.quantidade) || 1,
+              categoria: peca.categoria || "Outros",
+              modelo: peca.modelo || "",
+              imagem: peca.imagem || "",
+              atualizadoEm: Date.now()
+            };
+            await newRef.set(payload);
+          } else {
+            const localData = JSON.parse(localStorage.getItem("estoque") || "[]");
+            localData.push(peca);
+            localStorage.setItem("estoque", JSON.stringify(localData));
+          }
+          ModalStatus.sucesso("✓ TEMA LANÇADO COM SUCESSO", () => {
+            const n = document.getElementById("catalogo-peca-nome"); if (n) n.value = "";
+            const q = document.getElementById("catalogo-peca-qtd"); if (q) q.value = "1";
+            const m = document.getElementById("catalogo-peca-modelo"); if (m) m.value = "";
+            const i = document.getElementById("catalogo-peca-imagem"); if (i) i.value = "";
+          });
+        } catch (error) {
+          console.error("Erro ao salvar peça:", error);
+          ModalStatus.erro("Não foi possível salvar a peça.");
+        } finally {
+          State.salvandoPeca = false;
+          if (btnSalvar) btnSalvar.disabled = false;
+        }
+      },
+      removerPecaNuvem: async function(indexOuId) {
+        if (State.salvandoPeca) return;
+        State.salvandoPeca = true;
+        const btnRemover = document.getElementById("btn-remover-tema-admin");
+        if (btnRemover) btnRemover.disabled = true;
+        ModalStatus.exibir("REMOVENDO TEMA...", "Atualizando o acervo, aguarde.");
+        try {
+          const item = State.estoqueArray[indexOuId];
+          if (!item) throw new Error("Item não localizado.");
+          if (db) {
+            if (item.idFirebase) {
+              await db.ref("estoque/" + item.idFirebase).remove();
+            } else {
+              await db.ref("estoque").set(State.estoqueArray.filter((_, idx) => idx !== parseInt(indexOuId)));
+            }
+          }
+          ModalStatus.sucesso("✓ TEMA REMOVIDO COM SUCESSO");
+        } catch (error) {
+          console.error("Erro ao remover peça:", error);
+          ModalStatus.erro("Não foi possível remover o tema.");
+        } finally {
+          State.salvandoPeca = false;
+          if (btnRemover) btnRemover.disabled = false;
+        }
+      },
+      salvarCategoriaNuvem: function(nome) {
+        if (!db) return Promise.reject("Sem conexão");
+        nome = (nome || "").trim();
+        if (!nome) return Promise.reject("Nome vazio");
+        return db.ref('categorias').once('value').then(function(snapshot) {
+          var data = snapshot.val();
+          var existe = false;
+          if (data && typeof data === 'object') {
+            Object.keys(data).forEach(function(key) {
+              var val = data[key];
+              var n = (val && val.nome) ? val.nome : (typeof val === 'string' ? val : null);
+              if (n && n.toLowerCase() === nome.toLowerCase()) existe = true;
+            });
+          }
+          if (existe) return Promise.reject("Categoria já existe");
+          var novaRef = db.ref('categorias').push();
+          return novaRef.set({ nome: nome, criadoEm: Date.now() });
+        });
+      },
+      removerCategoriaNuvem: function(nome) {
+        if (!db) return Promise.reject("Sem conexão");
+        if (!nome) return Promise.reject("Nome vazio");
+        return db.ref('categorias').once('value').then(function(snapshot) {
+          var data = snapshot.val();
+          var chaveRemover = null;
+          if (data && typeof data === 'object') {
+            Object.keys(data).forEach(function(key) {
+              var val = data[key];
+              var n = (val && val.nome) ? val.nome : (typeof val === 'string' ? val : null);
+              if (n === nome) chaveRemover = key;
+            });
+          }
+          if (!chaveRemover) return Promise.reject("Categoria não encontrada");
+          if (!confirm('Remover a categoria "' + nome + '"?')) return Promise.reject("Cancelado");
+          return db.ref('categorias/' + chaveRemover).remove();
+        });
+      },
+      salvarReservaNuvem: function(dadosReserva) {
+        if (!db) return Promise.reject("Sem conexão");
+        return db.ref('reservas').push().set(dadosReserva);
+      },
+      excluirReservaNuvem: function(idReserva) {
+        if (!db) return Promise.reject("Sem conexão");
+        return db.ref("reservas/" + idReserva).remove();
+      },
+      salvarOrcamentoNuvem: function(dadosOrcamento) {
+        if (!db) return Promise.reject("Sem conexão");
+        return db.ref('orcamentos').push().set(dadosOrcamento);
+      },
+      excluirOrcamentoNuvem: function(idOrcamento) {
+        if (!db) return Promise.reject("Sem conexão");
+        return db.ref("orcamentos/" + idOrcamento).remove();
+      },
+      salvarReuniaoNuvem: function(dadosReuniao) {
+        if (!db) return Promise.reject("Sem conexão");
+        return db.ref('reunioes').push().set(dadosReuniao);
+      },
+      excluirReuniaoNuvem: function(idReuniao) {
+        if (!db) return Promise.reject("Sem conexão");
+        return db.ref("reunioes/" + idReuniao).remove();
+      },
+      salvarContratoNuvem: function(dadosContrato) {
+        if (!db) return Promise.reject("Sem conexão");
+        return db.ref('contratos').push().set(dadosContrato);
+      },
+      registrarPonto: function(tipo) {
+        if (!db || !State.usuarioLogadoEmail) return Utils.showToast("Erro de identificação.", "error");
+        var chaveUsuario = State.usuarioLogadoEmail.replace(/[.#$[\]]/g, "_");
+        var hoje = Utils.getHojeDataString();
+        var hora = Utils.getHoraString();
+        var updateData = { usuario: State.usuarioLogadoEmail, data: hoje };
+        updateData[tipo] = hora;
+        db.ref("pontos/" + chaveUsuario + "/" + hoje).update(updateData)
+          .then(function() { Utils.showToast("Ponto de " + (tipo === 'entrada' ? 'Entrada' : 'Saída') + " marcado!", "success"); })
+          .catch(function() { Utils.showToast("Erro ao salvar ponto.", "error"); });
+      },
+      listenPontoUsuario: function() {
+        if (!db || !State.usuarioLogadoEmail) return;
+        var chaveUsuario = State.usuarioLogadoEmail.replace(/[.#$[\]]/g, "_");
+        var hoje = Utils.getHojeDataString();
+        db.ref("pontos/" + chaveUsuario + "/" + hoje).on('value', function(snap) {
+          var dadosPonto = snap.val() || {};
+          var entrada = dadosPonto.entrada || "--:--:--";
+          var saida = dadosPonto.saida || "--:--:--";
+          var statusEl = document.getElementById("ponto-status-hoje");
+          if (statusEl) {
+            statusEl.innerHTML = "📅 <b>Hoje (" + Utils.formatDateBR(hoje) + "):</b>" +
+              "<span style='color:var(--success); margin-left:10px;'>🟢 Entrada: <b>" + entrada + "</b></span>" +
+              "<span style='color:var(--error); margin-left:15px;'>🔴 Saída: <b>" + saida + "</b></span>";
+          }
+        });
+      }
+    };
+
+    window.adicionarCategoria = function(nome) { return Database.salvarCategoriaNuvem(nome); };
+    window.removerCategoria = function(nome) { return Database.removerCategoriaNuvem(nome); };
+
+    const FreteCalc = {
+      ler: function() {
+        var kmEl = document.getElementById('calc-km');
+        var precoEl = document.getElementById('calc-valor-litro');
+        var km = kmEl ? parseFloat(kmEl.value) : 0;
+        var preco = precoEl ? parseFloat(precoEl.value) : 0;
+        if (isNaN(km) || km < 0 || !isFinite(km)) km = 0;
+        if (isNaN(preco) || preco < 0 || !isFinite(preco)) preco = 0;
+        return { km: km, preco: preco };
+      },
+      calcular: function() {
+        var e = this.ler();
+        var litros = e.km / CONFIG.frete.consumoKmPorLitro;
+        var custoCombustivel = litros * e.preco;
+        var manutencao = custoCombustivel * CONFIG.frete.percentualManutencao;
+        var freteTotal = custoCombustivel + manutencao;
+        if (!isFinite(litros)) litros = 0;
+        if (!isFinite(custoCombustivel)) custoCombustivel = 0;
+        if (!isFinite(manutencao)) manutencao = 0;
+        if (!isFinite(freteTotal)) freteTotal = 0;
+        State.frete = { km: e.km, precoCombustivel: e.preco, litros: litros, custoCombustivel: custoCombustivel, manutencao: manutencao, freteTotal: freteTotal };
+        return State.frete;
+      },
+      renderizar: function() {
+        var f = this.calcular();
+        var txtCombustivel = document.getElementById('calc-total-combustivel');
+        var txtManutencao = document.getElementById('calc-manutencao');
+        var txtTotal = document.getElementById('calc-cobrar-cliente');
+        if (txtCombustivel) txtCombustivel.textContent = "R$ " + f.custoCombustivel.toFixed(2);
+        if (txtManutencao) txtManutencao.textContent = "R$ " + f.manutencao.toFixed(2);
+        if (txtTotal) txtTotal.textContent = f.freteTotal.toFixed(2);
+
+        var inputFrete = document.getElementById('valor-frete');
+        if (inputFrete) inputFrete.value = f.freteTotal.toFixed(2);
+
+        var inputValorFesta = document.getElementById('valor-festa');
+        var valorFesta = inputValorFesta ? (parseFloat(inputValorFesta.value) || 0) : 0;
+        if (isNaN(valorFesta)) valorFesta = 0;
+
+        var inputTotal = document.getElementById('valor-total');
+        if (inputTotal) inputTotal.value = (valorFesta + f.freteTotal).toFixed(2);
+
+        var inputSinal = document.getElementById('valor-sinal');
+        var sinal = inputSinal ? (parseFloat(inputSinal.value) || 0) : 0;
+        if (isNaN(sinal)) sinal = 0;
+        var inputRestante = document.getElementById('valor-restante');
+        if (inputRestante) {
+          var restante = (valorFesta + f.freteTotal) - sinal;
+          if (restante < 0) restante = 0;
+          inputRestante.value = restante.toFixed(2);
+        }
+      },
+      limpar: function() {
+        State.frete = { km: 0, precoCombustivel: 0, litros: 0, custoCombustivel: 0, manutencao: 0, freteTotal: 0 };
+        var kmEl = document.getElementById('calc-km');
+        var inputFrete = document.getElementById('valor-frete');
+        if (kmEl) kmEl.value = "";
+        if (inputFrete) inputFrete.value = "0.00";
+        this.renderizar();
+      }
+    };
+
+    function carregarEstoqueIncremental() {
+      if (!db) return;
+      const refEstoque = db.ref("estoque");
+
+      refEstoque.once("value").then((snapshot) => {
+        const val = snapshot.val();
+        State.estoqueArray = [];
+        if (val) {
+          if (Array.isArray(val)) {
+            State.estoqueArray = val.filter(i => i !== null);
+          } else if (typeof val === 'object') {
+            Object.keys(val).forEach(k => {
+              if (val[k]) State.estoqueArray.push({ idFirebase: k, ...val[k] });
+            });
+          }
+        }
+        renderizarTemas();
+        carregarTemasNoContrato();
+
+        refEstoque.on("child_added", (childSnap) => {
+          const item = { idFirebase: childSnap.key, ...childSnap.val() };
+          const existe = State.estoqueArray.some(t => t.idFirebase === item.idFirebase);
+          if (!existe) {
+            State.estoqueArray.push(item);
+            renderizarTemas();
+            carregarTemasNoContrato();
+          }
+        });
+        refEstoque.on("child_changed", (childSnap) => {
+          const item = { idFirebase: childSnap.key, ...childSnap.val() };
+          const idx = State.estoqueArray.findIndex(t => t.idFirebase === item.idFirebase);
+          if (idx !== -1) {
+            State.estoqueArray[idx] = item;
+            renderizarTemas();
+            carregarTemasNoContrato();
+          }
+        });
+        refEstoque.on("child_removed", (childSnap) => {
+          State.estoqueArray = State.estoqueArray.filter(t => t.idFirebase !== childSnap.key);
+          renderizarTemas();
+          carregarTemasNoContrato();
+        });
+      }).catch(() => {
+        CloudDB.buscar("estoque", [], (dados) => {
+          State.estoqueArray = dados || [];
+          renderizarTemas();
+          carregarTemasNoContrato();
+        });
+      });
+    }
+
+    function renderizarTemas() {
+      const corpo = document.getElementById("lista-temas-gerenciados-corpo");
+      const contador = document.getElementById("contador-catalogo-total");
+      if (contador) contador.textContent = State.estoqueArray.length + " itens";
+      if (!corpo) return;
+      if (State.estoqueArray.length === 0) {
+        corpo.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999; padding:15px;">Nenhum tema ou peça cadastrada.</td></tr>';
+      } else {
+        let html = "";
+        State.estoqueArray.forEach((tema, idx) => {
+          const img = tema.imagem
+            ? '<img src="' + tema.imagem + '" class="catalogo-foto" alt="Foto">'
+            : '<div style="width:50px;height:50px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#888;">Sem Foto</div>';
+          html += '<tr>' +
+            '<td style="text-align:center;">' + img + '</td>' +
+            '<td><strong>' + (tema.nome || "Sem Nome") + '</strong><br>' +
+            '<span style="font-size:11px; color:var(--text-muted);">' +
+            'Categoria: ' + (tema.categoria || "Geral") + ' | Modelo: ' + (tema.modelo || "Padrão") + '<br>' +
+            'Qtd: <strong>' + (tema.quantidade || 1) + '</strong>' +
+            '</span></td>' +
+            '<td style="text-align:center;">' +
+            '<button type="button" onclick="window.removerTema(' + idx + ')" class="btn-acao-tabela btn-remover-orc" title="Remover Peça">🗑️</button>' +
+            '</td></tr>';
+        });
+        corpo.innerHTML = html;
+      }
+      const selectRemover = document.getElementById("select-remover-tema");
+      if (selectRemover) {
+        const valorAtual = selectRemover.value;
+        selectRemover.innerHTML = '<option value="">Selecione um tema para remover...</option>';
+        State.estoqueArray.forEach((item, idx) => {
+          const opt = document.createElement("option");
+          opt.value = idx;
+          const disponivel = item.quantidade > 0 ? (item.quantidade + ' disponíveis') : 'ESGOTADO';
+          opt.textContent = (item.nome || 'Sem nome') + ' (' + (item.categoria || 'Geral') + ') - ' + disponivel;
+          selectRemover.appendChild(opt);
+        });
+        if (valorAtual !== "" && State.estoqueArray[parseInt(valorAtual)]) selectRemover.value = valorAtual;
+      }
+    }
+
+    window.removerTema = function(index) {
+      const tema = State.estoqueArray[index];
+      if (!tema) return;
+      if (confirm('Deseja realmente remover o item "' + tema.nome + '"?')) {
+        Database.removerPecaNuvem(index);
+      }
+    };
+
+    function carregarCategorias() {
+      if (!db) return;
+      db.ref('categorias').on('value', function(snapshot) {
+        var data = snapshot.val();
+        var nomes = [];
+        if (data && typeof data === 'object') {
+          Object.keys(data).forEach(function(key) {
+            var val = data[key];
+            if (val && typeof val === 'object' && val.nome) nomes.push(val.nome);
+            else if (typeof val === 'string') nomes.push(val);
           });
         }
-        if (typeof window.State !== 'undefined' && typeof firebase !== 'undefined') {
-          window.State.db = firebase.database();
+        State.categorias = nomes;
+        atualizarInterfaceCategorias();
+      });
+    }
+
+    function atualizarInterfaceCategorias() {
+      var cats = State.categorias || [];
+      const contador = document.getElementById("contador-categorias");
+      if (contador) contador.textContent = cats.length;
+
+      const container = document.getElementById("lista-categorias-admin");
+      if (container) {
+        container.innerHTML = '';
+        cats.forEach(cat => {
+          const div = document.createElement("div");
+          div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:#f8f0f2; border-radius:6px; border:1px solid #e1cbd4;";
+          div.innerHTML = '<span style="font-size:13px;">📁 ' + cat + '</span>' +
+            '<button type="button" onclick="window.removerCategoria(\'' + String(cat).replace(/'/g, "\\'") + '\')" class="btn btn-danger" style="padding:2px 8px; font-size:10px; width:auto; margin-left:6px;">✕</button>';
+          container.appendChild(div);
+        });
+      }
+
+      const selectCat = document.getElementById("catalogo-peca-categoria");
+      if (selectCat) {
+        const valorAtual = selectCat.value;
+        selectCat.innerHTML = '';
+        cats.forEach(cat => {
+          const opt = document.createElement("option");
+          opt.value = cat; opt.textContent = cat;
+          selectCat.appendChild(opt);
+        });
+        if (cats.indexOf(valorAtual) !== -1) selectCat.value = valorAtual;
+      }
+
+      const selectRemover = document.getElementById("select-remover-categoria");
+      if (selectRemover) {
+        const valorAtual2 = selectRemover.value;
+        selectRemover.innerHTML = '<option value="">Selecione...</option>';
+        cats.forEach(cat => {
+          const opt = document.createElement("option");
+          opt.value = cat; opt.textContent = cat;
+          selectRemover.appendChild(opt);
+        });
+        if (cats.indexOf(valorAtual2) !== -1) selectRemover.value = valorAtual2;
+      }
+    }
+
+    function normalizar(s) {
+      return (s || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function carregarSugestoesTemaFicha() {
+      var input = document.getElementById("filtro-tema-input");
+      if (!input) return;
+      if (input.__tralalaBound) return;
+      input.__tralalaBound = true;
+      input.oninput = function(e) {
+        var termo = e.target.value;
+        State.temaAtual = termo.trim();
+        renderSugestoesTemaFicha(termo);
+      };
+      input.onfocus = function(e) {
+        if (e.target.value.trim()) renderSugestoesTemaFicha(e.target.value);
+      };
+    }
+
+    function renderSugestoesTemaFicha(termo) {
+      var caixa = document.getElementById("wrapper-lista-sugestoes");
+      if (!caixa) return;
+      termo = (termo || "").toString().trim();
+      if (!termo) { caixa.style.display = "none"; caixa.innerHTML = ""; return; }
+      var tNorm = normalizar(termo);
+      var filtrados = State.estoqueArray.filter(function(item) {
+        return normalizar(item.nome || "").indexOf(tNorm) !== -1;
+      });
+      caixa.innerHTML = "";
+      if (filtrados.length === 0) { caixa.style.display = "none"; return; }
+      filtrados.forEach(function(item) {
+        var div = document.createElement("div");
+        div.className = "sugestao-item";
+        var reservasAtivas = 0;
+        State.reservas.forEach(function(res) {
+          if (res && res.tema && normalizar(res.tema) === normalizar(item.nome)) reservasAtivas++;
+        });
+        var qtd = parseInt(item.quantidade) || 0;
+        var livres = qtd - reservasAtivas;
+        div.innerHTML = "⚙️ " + item.nome + " (Livre: " + Math.max(0, livres) + "/" + qtd + ")";
+        div.onclick = function() {
+          var input = document.getElementById("filtro-tema-input");
+          var hidden = document.getElementById("busca-tema-input");
+          if (input) input.value = item.nome;
+          if (hidden) hidden.value = item.nome;
+          State.temaAtual = item.nome;
+          caixa.style.display = "none";
+          Utils.showToast("Tema " + item.nome + " selecionado.", "info");
+        };
+        caixa.appendChild(div);
+      });
+      caixa.style.display = "block";
+    }
+
+    function listenReservas() {
+      if (!db) return;
+      db.ref('reservas').on('value', function(snap) {
+        State.carregando = false;
+        var val = snap.val();
+        var arr = [];
+        if (val && typeof val === 'object') {
+          Object.keys(val).forEach(function(id) {
+            if (val[id]) {
+              var copy = { id: id };
+              for (var k in val[id]) { if (val[id].hasOwnProperty(k)) copy[k] = val[id][k]; }
+              arr.push(copy);
+            }
+          });
         }
-      } catch (err) {
-        console.error("Erro ao inicializar Firebase no HTML:", err);
-      }
-    })();
+        State.reservas = arr;
+        renderReservas();
+      });
+    }
 
-    // ============================================================
-    // FALLBACK DE LOGIN — garante que SEMPRE funcione,
-    // mesmo se o script (1).js falhar por qualquer motivo.
-    // ============================================================
-    document.addEventListener('DOMContentLoaded', function() {
-      var btnLogin = document.getElementById('btn-login-direto');
-      if (btnLogin) {
-        // Mantém o handler do script principal, mas adiciona fallback
-        var originalOnClick = btnLogin.onclick;
-        btnLogin.onclick = function(e) {
-          if (e) e.preventDefault();
-          // Tenta o handler oficial primeiro
-          if (typeof originalOnClick === 'function') {
-            try {
-              originalOnClick.call(this, e);
-              // Se o login foi bem-sucedido, a seção verificador ficará visível
-              var secVerif = document.getElementById('secao-verificador');
-              if (secVerif && secVerif.style.display === 'block') return;
-            } catch (err) {
-              console.warn("Handler oficial falhou, usando fallback:", err);
+    function renderReservas(filtro) {
+      if (!filtro) filtro = "";
+      var container = document.getElementById("lista-reservas-render");
+      if (!container) return;
+      container.innerHTML = "";
+      if (State.carregando) {
+        container.innerHTML = "<div style='text-align:center; padding:20px;'>⌛ Carregando agendamentos...</div>";
+        return;
+      }
+      if (State.reservas.length === 0) {
+        container.innerHTML = "<div style='text-align:center; padding:20px; color:#777;'>Nenhum agendamento encontrado.</div>";
+        return;
+      }
+      var arr = State.reservas.slice().sort(function(a, b) { return new Date(a.data || 0) - new Date(b.data || 0); });
+      if (filtro.trim() !== "") {
+        var f = normalizar(filtro);
+        arr = arr.filter(function(r) {
+          return normalizar(r.cliente).indexOf(f) !== -1 || normalizar(r.tema).indexOf(f) !== -1;
+        });
+      }
+      arr.forEach(function(res) {
+        var card = document.createElement("div");
+        card.className = "card-reserva";
+        var total = parseFloat(res.total) || 0;
+        var sinal = parseFloat(res.sinal) || 0;
+        var frete = parseFloat(res.frete) || 0;
+        var totGeral = total + frete;
+        var devedor = totGeral - sinal;
+        var quitado = devedor <= 0;
+        var freteDetalhes = "";
+        if (res.freteKm) {
+          freteDetalhes = '<p style="font-size:11px;color:#666;">🚗 ' + res.freteKm + 'km × R$' + (parseFloat(res.fretePrecoCombustivel) || 0).toFixed(2) +
+            ' → ' + (parseFloat(res.freteLitros) || 0).toFixed(2) + 'L → R$ ' + (parseFloat(res.freteCustoCombustivel) || 0).toFixed(2) +
+            ' + manut. R$ ' + (parseFloat(res.freteManutencao) || 0).toFixed(2) + '</p>';
+        }
+        card.innerHTML = '<div class="reserva-header">' +
+          '<strong>👶 ' + (res.cliente || '') + '</strong>' +
+          '<span class="reserva-badge" style="background:' + (quitado ? '#27ae60' : '#e67e22') + ';">' + (quitado ? 'PAGO 100%' : 'PENDENTE') + '</span>' +
+        '</div>' +
+        '<div class="reserva-body">' +
+          '<p>📅 Data: <b>' + Utils.formatDateBR(res.data) + '</b></p>' +
+          '<p>🎨 Tema: <b style="color:var(--primary);">' + (res.tema || '') + '</b></p>' +
+          '<p>🛍️ Modelo: <b>' + (res.kit || 'Não informado') + '</b></p>' +
+          (res.montarNoLocal ? '<p>🛠️ Montagem no local: <b style="color:#27ae60;">SIM</b></p>' : '') +
+          '<p>🚚 Frete: <b>' + Utils.formatCurrency(frete) + '</b></p>' +
+          freteDetalhes +
+          '<p>💰 Total Geral: <b>' + Utils.formatCurrency(totGeral) + '</b></p>' +
+          '<p>💵 Sinal Pago: <b>' + Utils.formatCurrency(sinal) + '</b></p>' +
+          '<p style="color:' + (quitado ? 'green' : 'red') + '">⚠️ Falta Receber: <b>' + Utils.formatCurrency(devedor) + '</b></p>' +
+          (res.obs ? '<p>📝 Obs: ' + res.obs + '</p>' : '') +
+        '</div>' +
+        '<button type="button" style="width:100%; padding:8px; margin-top:10px; background:var(--error,#e74c3c); color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="window.DeletarReserva(\'' + res.id + '\')">🗑️ Excluir Agendamento</button>';
+        container.appendChild(card);
+      });
+    }
+
+    window.DeletarReserva = function(idReserva) {
+      if (confirm("Tem certeza que deseja excluir este agendamento?")) {
+        Database.excluirReservaNuvem(idReserva).then(function() {
+          Utils.showToast("Agendamento removido!", "success");
+        }).catch(function() {
+          Utils.showToast("Falha ao remover o agendamento.", "error");
+        });
+      }
+    };
+
+    function listenOrcamentos() {
+      if (!db) return;
+      db.ref('orcamentos').on('value', function(snap) {
+        var val = snap.val();
+        var arr = [];
+        if (val && typeof val === 'object') {
+          Object.keys(val).forEach(function(id) {
+            if (val[id]) {
+              var copy = { id: id };
+              for (var k in val[id]) { if (val[id].hasOwnProperty(k)) copy[k] = val[id][k]; }
+              arr.push(copy);
             }
-          }
-          // Fallback manual
-          var email = (document.getElementById('email') || {}).value || '';
-          var senha = (document.getElementById('senha') || {}).value || '';
-          email = email.trim();
-          var usuarios = (window.CONFIG && CONFIG.usuarios) ? CONFIG.usuarios : {
-            "jorgeguivalle@gmail.com": "Viperrt11",
-            "leonardodovalle@gmail.com": "Viperrt11@",
-            "tralaladecoracoes@gmail.com": "tralala123"
-          };
-          if (usuarios[email] === senha) {
-            var sLogin = document.getElementById('secao-login');
-            var sVerif = document.getElementById('secao-verificador');
-            if (sLogin) sLogin.style.display = 'none';
-            if (sVerif) sVerif.style.display = 'block';
-            var nome = document.getElementById('nome-usuario');
-            if (nome) nome.innerHTML = '👤 <b>' + email.split('@')[0] + '</b>';
-            if (window.State) window.State.usuarioLogadoEmail = email;
+          });
+        }
+        State.orcamentos = arr;
+        renderOrcamentos();
+      });
+    }
+
+    function renderOrcamentos() {
+      var containers = [
+        document.getElementById("lista-orcamentos-render"),
+        document.getElementById("lista-orcamentos-interno-corpo")
+      ].filter(Boolean);
+      if (containers.length === 0) return;
+      containers.forEach(function(container) {
+        container.innerHTML = "";
+        if (State.orcamentos.length === 0) {
+          if (container.tagName === "TBODY") {
+            container.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#777;">Nenhum orçamento salvo.</td></tr>';
           } else {
-            alert('❌ E-mail ou senha incorretos.');
+            container.innerHTML = "<div style='text-align:center; padding:20px; color:#777;'>Nenhum orçamento salvo.</div>";
           }
-        };
-      }
-
-      // Fallback logout
-      var btnLogout = document.getElementById('btn-logout-direto');
-      if (btnLogout) {
-        var origLogout = btnLogout.onclick;
-        btnLogout.onclick = function(e) {
-          if (e) e.preventDefault();
-          if (typeof origLogout === 'function') {
-            try { origLogout.call(this, e); return; } catch (err) {}
+          return;
+        }
+        var isTbody = container.tagName === "TBODY";
+        var html = "";
+        State.orcamentos.forEach(function(orc) {
+          var totalFmt = Utils.formatCurrency(orc.total);
+          if (isTbody) {
+            html += '<tr>' +
+              '<td>' + (orc.cliente || '') + '</td>' +
+              '<td>' + (orc.tema || '') + (orc.kit ? ' / ' + orc.kit : '') + '</td>' +
+              '<td>' + totalFmt + '</td>' +
+              '<td style="text-align:center;">' +
+                '<button type="button" onclick="window.PromoverOrcamento(\'' + orc.id + '\')" class="btn-acao-tabela btn-promover" title="Promover para Reserva">✅</button>' +
+                '<button type="button" onclick="window.ExcluirOrcamento(\'' + orc.id + '\')" class="btn-acao-tabela btn-remover-orc" title="Excluir">🗑️</button>' +
+              '</td></tr>';
+          } else {
+            html += '<div class="card-reserva"><div class="reserva-header"><strong>👤 ' + (orc.cliente || '') + '</strong></div>' +
+              '<div class="reserva-body">' +
+              '<p>📅 Data da Festa: <b>' + Utils.formatDateBR(orc.dataFesta) + '</b></p>' +
+              '<p>🎨 Tema: <b>' + (orc.tema || '') + '</b></p>' +
+              (orc.kit ? '<p>🛍️ Kit: <b>' + orc.kit + '</b></p>' : '') +
+              (orc.montarNoLocal ? '<p>🛠️ Montagem no local: <b>SIM</b></p>' : '') +
+              '<p>💰 Total Estimado: <b>' + totalFmt + '</b></p>' +
+              (orc.freteTotal ? '<p>🚚 Frete: <b>' + Utils.formatCurrency(orc.freteTotal) + '</b></p>' : '') +
+              (orc.obs ? '<p>📝 Obs: ' + orc.obs + '</p>' : '') +
+              '</div></div>';
           }
-          window.location.reload();
-        };
-      }
-    });
+        });
+        container.innerHTML = html;
+      });
+    }
 
-    // ============================================================
-    // HANDLERS EXTRAS
-    // ============================================================
-    document.addEventListener('DOMContentLoaded', function() {
-      // Fechar painel de orçamentos
-      var btnFecharOrc = document.getElementById('btn-fechar-orcamentos-painel');
-      if (btnFecharOrc) {
-        btnFecharOrc.addEventListener('click', function() {
-          var p = document.getElementById('painel-orcamentos-salvos');
-          if (p) p.style.display = 'none';
+    window.ExcluirOrcamento = function(idOrcamento) {
+      if (confirm("Excluir este orçamento?")) {
+        Database.excluirOrcamentoNuvem(idOrcamento).then(function() {
+          Utils.showToast("Orçamento removido!", "success");
+        }).catch(function() {
+          Utils.showToast("Falha ao remover orçamento.", "error");
         });
       }
+    };
 
-      // Transformar Planilha em Gráfico
-      var btnTransformarGrafico = document.getElementById('btn-transformar-grafico');
-      if (btnTransformarGrafico) {
-        btnTransformarGrafico.addEventListener('click', function() {
-          var painelGrafico = document.getElementById('painel-grafico-faturamento');
-          if (painelGrafico) painelGrafico.style.display = 'block';
-          try {
-            var ctx = document.getElementById('graficoAnual');
-            if (!ctx || typeof Chart === 'undefined') return;
-            if (window.chartInstance) window.chartInstance.destroy();
-            var meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-            var valores = new Array(12).fill(0);
-            if (window.State && window.State.reservas) {
-              window.State.reservas.forEach(function(r) {
-                if (!r.data) return;
-                var p = r.data.split("-");
-                if (p.length !== 3) return;
-                var idx = parseInt(p[1]) - 1;
-                if (idx >= 0 && idx < 12) {
-                  valores[idx] += (parseFloat(r.total) || 0) + (parseFloat(r.frete) || 0);
-                }
-              });
+    window.PromoverOrcamento = function(idOrcamento) {
+      var orc = State.orcamentos.filter(function(o) { return o.id === idOrcamento; })[0];
+      if (!orc) return;
+      var elCliente = document.getElementById("nome-cliente");
+      var elData = document.getElementById("data");
+      var elTotal = document.getElementById("valor-total");
+      var elValorFesta = document.getElementById("valor-festa");
+      var elObs = document.getElementById("adicionais-festa");
+      var hidden = document.getElementById("busca-tema-input");
+      var filtro = document.getElementById("filtro-tema-input");
+      if (elCliente) elCliente.value = orc.cliente || "";
+      if (elData && orc.dataFesta) elData.value = orc.dataFesta;
+      if (elTotal) elTotal.value = orc.total || "";
+      if (elValorFesta) elValorFesta.value = orc.valorFesta || "";
+      if (elObs) elObs.value = orc.obs || "";
+      if (orc.tema) {
+        if (hidden) hidden.value = orc.tema;
+        if (filtro) filtro.value = orc.tema;
+        State.temaAtual = orc.tema;
+      }
+      if (orc.kit) {
+        State.kitAtual = orc.kit;
+        document.querySelectorAll('.btn-kit-opcao').forEach(function(b) {
+          b.classList.toggle('ativo', b.getAttribute('data-kit') === orc.kit);
+        });
+      }
+      if (orc.montarNoLocal !== undefined) {
+        State.montarNoLocal = !!orc.montarNoLocal;
+        var chk = document.getElementById("chk-montar-local");
+        if (chk) {
+          chk.checked = State.montarNoLocal;
+          var painel = document.getElementById("painel-montagem-local");
+          if (painel) painel.style.display = State.montarNoLocal ? "block" : "none";
+        }
+      }
+      if (orc.freteKm) {
+        var kmEl = document.getElementById("calc-km");
+        var precoEl = document.getElementById("calc-valor-litro");
+        if (kmEl) kmEl.value = orc.freteKm;
+        if (precoEl && orc.fretePrecoCombustivel) precoEl.value = orc.fretePrecoCombustivel;
+        FreteCalc.renderizar();
+      }
+      Utils.showToast("Orçamento carregado no formulário.", "success");
+      var painelOrc = document.getElementById("painel-orcamentos-salvos");
+      if (painelOrc) painelOrc.style.display = "none";
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    function iniciarPainelReunioes() {
+      if (!db) return;
+      db.ref('reunioes').on('value', function(snap) {
+        var val = snap.val();
+        var arr = [];
+        if (val && typeof val === 'object') {
+          Object.keys(val).forEach(function(id) {
+            if (val[id]) {
+              var copy = { id: id };
+              for (var k in val[id]) { if (val[id].hasOwnProperty(k)) copy[k] = val[id][k]; }
+              arr.push(copy);
             }
-            window.chartInstance = new Chart(ctx, {
-              type: 'bar',
-              data: {
-                labels: meses,
-                datasets: [{ label: 'Faturamento (R$)', data: valores, backgroundColor: '#a3536a' }]
-              },
-              options: { responsive: true, maintainAspectRatio: false }
-            });
-          } catch (e) { console.error("Erro gráfico:", e); }
+          });
+        }
+        arr.sort(function(a, b) { return new Date(a.dataHora || 0) - new Date(b.dataHora || 0); });
+        var container = document.getElementById("lista-reunioes-container");
+        if (!container) return;
+        if (arr.length === 0) {
+          container.innerHTML = '<p style="color:#999; text-align:center;">Nenhuma reunião agendada.</p>';
+          return;
+        }
+        var html = "";
+        arr.forEach(function(r) {
+          var dataFmt = r.dataHora ? r.dataHora.replace('T', ' às ') : 'Não informada';
+          html += '<div class="card-reuniao" style="border-left-color:#27ae60;">' +
+            '<div class="reserva-header"><strong>👤 ' + (r.cliente || 'Sem nome') + '</strong>' +
+            '<span class="reserva-badge" style="background:#27ae60;">AGENDADA</span></div>' +
+            '<div class="reserva-body">' +
+            '<p>📅 Data/Hora: <b>' + dataFmt + '</b></p>' +
+            (r.pauta ? '<p>📝 Pauta: ' + r.pauta + '</p>' : '') +
+            '</div>' +
+            '<button type="button" style="width:100%; padding:6px; margin-top:8px; background:#e74c3c; color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="window.ExcluirReuniao(\'' + r.id + '\')">🗑️ Excluir Reunião</button>' +
+            '</div>';
         });
+        container.innerHTML = html;
+      });
+    }
+
+    window.ExcluirReuniao = function(idReuniao) {
+      if (confirm("Excluir esta reunião?")) {
+        Database.excluirReuniaoNuvem(idReuniao).then(function() {
+          Utils.showToast("Reunião removida!", "success");
+        }).catch(function() {
+          Utils.showToast("Falha ao remover reunião.", "error");
+        });
+      }
+    };
+
+    function renderPlanilhaVendas() {
+      var tbody = document.querySelector("#tabela-planilha-corpo tbody");
+      if (!tbody) return;
+      var mesSelecionado = (document.getElementById("seletor-mes-planilha") || {}).value || "";
+      var reservasDoMes = State.reservas.filter(function(r) {
+        if (!r.data) return false;
+        var p = r.data.split("-");
+        if (p.length !== 3) return false;
+        var idx = parseInt(p[1]) - 1;
+        return mesesAno[idx] === mesSelecionado;
+      });
+      if (reservasDoMes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding:15px;">Nenhuma venda registrada neste mês.</td></tr>';
+        return;
+      }
+      var html = "";
+      reservasDoMes.forEach(function(r) {
+        var total = parseFloat(r.total) || 0;
+        var frete = parseFloat(r.frete) || 0;
+        html += '<tr>' +
+          '<td>' + (r.cliente || '') + '</td>' +
+          '<td>' + (r.kit || 'Não informado') + '</td>' +
+          '<td>R$ ' + (total + frete).toFixed(2) + '</td>' +
+          '<td style="text-align:center;">—</td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function renderGraficoAnual() {
+      if (typeof Chart === 'undefined') return;
+      var painel = document.getElementById('painel-grafico-faturamento');
+      if (painel) painel.style.display = 'block';
+      var ctx = document.getElementById('graficoAnual');
+      if (!ctx) return;
+      if (chartInstance) chartInstance.destroy();
+      var valores = new Array(12).fill(0);
+      State.reservas.forEach(function(r) {
+        if (!r.data) return;
+        var p = r.data.split("-");
+        if (p.length !== 3) return;
+        var idx = parseInt(p[1]) - 1;
+        if (idx >= 0 && idx < 12) valores[idx] += (parseFloat(r.total) || 0) + (parseFloat(r.frete) || 0);
+      });
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: mesesAno, datasets: [{ label: 'Faturamento (R$)', data: valores, backgroundColor: '#a3536a' }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    function carregarTemasNoContrato() {
+      var select = document.getElementById("c-pecas");
+      if (!select) return;
+      var temaSelecionado = (document.getElementById("contrato-tema-selecionado") || {}).value || "";
+      if (temaSelecionado) return;
+      select.innerHTML = "";
+      State.estoqueArray.forEach(function(item) {
+        var opt = document.createElement("option");
+        opt.value = item.nome || "";
+        opt.textContent = (item.nome || 'Sem nome') + (item.quantidade !== undefined ? ' (Qtd: ' + item.quantidade + ')' : '');
+        select.appendChild(opt);
+      });
+    }
+
+    function popularSelectPecasContrato(tema) {
+      var select = document.getElementById("c-pecas");
+      if (!select) return;
+      select.innerHTML = "";
+      if (!tema) { carregarTemasNoContrato(); return; }
+      var infoTema = State.estoqueArray.filter(function(i) { return (i.nome || "") === tema; })[0];
+      var categoriaTema = infoTema && infoTema.categoria ? infoTema.categoria : "";
+      var doTema = State.estoqueArray.filter(function(i) {
+        return (i.nome === tema) || (categoriaTema && i.categoria === categoriaTema);
+      });
+      var lista = doTema.length ? doTema : State.estoqueArray;
+      lista.forEach(function(item) {
+        var opt = document.createElement("option");
+        opt.value = item.nome || "";
+        opt.textContent = (item.nome || 'Sem nome') + (item.quantidade !== undefined ? ' (Qtd: ' + item.quantidade + ')' : '');
+        select.appendChild(opt);
+      });
+    }
+
+    function initContratoBusca() {
+      var input = document.getElementById("contrato-tema-busca");
+      var caixa = document.getElementById("contrato-tema-sugestoes");
+      var hidden = document.getElementById("contrato-tema-selecionado");
+      if (!input || !caixa) return;
+      if (input.__tralalaBound) return;
+      input.__tralalaBound = true;
+      input.oninput = function(e) {
+        var termo = e.target.value.trim();
+        if (!termo) { caixa.style.display = "none"; return; }
+        var tNorm = normalizar(termo);
+        var filtrados = State.estoqueArray.filter(function(i) {
+          return normalizar(i.nome || "").indexOf(tNorm) !== -1;
+        });
+        caixa.innerHTML = "";
+        filtrados.forEach(function(item) {
+          var div = document.createElement("div");
+          div.className = "sugestao-item";
+          div.innerText = item.nome;
+          div.onclick = function() {
+            input.value = item.nome;
+            if (hidden) hidden.value = item.nome;
+            caixa.style.display = "none";
+            popularSelectPecasContrato(item.nome);
+          };
+          caixa.appendChild(div);
+        });
+        caixa.style.display = filtrados.length ? "block" : "none";
+      };
+    }
+
+    function handleLogin() {
+      var emailEl = document.getElementById("email");
+      var senhaEl = document.getElementById("senha");
+      var email = emailEl ? emailEl.value.trim() : "";
+      var senha = senhaEl ? senhaEl.value : "";
+      if (!email || !senha) { Utils.showToast("Preencha e-mail e senha.", "warning"); return; }
+      if (CONFIG.usuarios[email] === senha) {
+        State.usuarioLogadoEmail = email;
+        var sLogin = document.getElementById("secao-login");
+        var sVerif = document.getElementById("secao-verificador");
+        if (sLogin) sLogin.style.display = "none";
+        if (sVerif) sVerif.style.display = "block";
+        var nome = document.getElementById("nome-usuario");
+        if (nome) nome.innerHTML = "👤 <b>" + email.split('@')[0] + "</b>";
+        Utils.showToast("Login realizado!", "success");
+        try { Database.listenPontoUsuario(); } catch (e) { console.warn(e); }
+      } else {
+        Utils.showToast("E-mail ou senha incorretos.", "error");
+      }
+    }
+
+    function handleLogout() { window.location.reload(); }
+
+    function handleSalvarFesta() {
+      var elCliente = document.getElementById("nome-cliente");
+      var elData = document.getElementById("data");
+      var elTotal = document.getElementById("valor-total");
+      var elSinal = document.getElementById("valor-sinal");
+      var elObs = document.getElementById("adicionais-festa");
+      var elValorFesta = document.getElementById("valor-festa");
+      var hidden = document.getElementById("busca-tema-input");
+      var filtro = document.getElementById("filtro-tema-input");
+
+      var cliente = elCliente ? elCliente.value.trim() : "";
+      var data = elData ? elData.value : "";
+      var total = elTotal ? elTotal.value || "0" : "0";
+      var sinal = elSinal ? elSinal.value || "0" : "0";
+      var obs = elObs ? elObs.value.trim() : "";
+      var valorFesta = elValorFesta ? (parseFloat(elValorFesta.value) || 0) : 0;
+
+      if (hidden && hidden.value.trim()) State.temaAtual = hidden.value.trim();
+      else if (filtro && filtro.value.trim()) State.temaAtual = filtro.value.trim();
+
+      if (!cliente || !data || !State.temaAtual || !State.kitAtual) {
+        Utils.showToast("Preencha cliente, data, tema e selecione o modelo do kit!", "warning");
+        return;
       }
 
-      var btnToggleGrafico = document.getElementById('btn-toggle-grafico');
-      if (btnToggleGrafico) {
-        btnToggleGrafico.addEventListener('click', function() {
-          var painelGrafico = document.getElementById('painel-grafico-faturamento');
-          if (painelGrafico) {
-            painelGrafico.style.display = painelGrafico.style.display === 'none' ? 'block' : 'none';
-          }
+      var f = FreteCalc.calcular();
+
+      Database.salvarReservaNuvem({
+        cliente: cliente,
+        data: data,
+        tema: State.temaAtual,
+        kit: State.kitAtual,
+        montarNoLocal: !!State.montarNoLocal,
+        total: total,
+        sinal: sinal,
+        valorFesta: valorFesta,
+        frete: f.freteTotal,
+        freteKm: f.km,
+        fretePrecoCombustivel: f.precoCombustivel,
+        freteLitros: f.litros,
+        freteCustoCombustivel: f.custoCombustivel,
+        freteManutencao: f.manutencao,
+        freteTotal: f.freteTotal,
+        obs: obs,
+        dataCriacao: Utils.getHojeDataString()
+      }).then(function() {
+        Utils.showToast("Agendamento salvo com sucesso!", "success");
+        if (elCliente) elCliente.value = "";
+        if (elData) elData.value = "";
+        if (elTotal) elTotal.value = "";
+        if (elSinal) elSinal.value = "";
+        if (elObs) elObs.value = "";
+        if (elValorFesta) elValorFesta.value = "0.00";
+        State.temaAtual = "";
+        State.kitAtual = "";
+        State.montarNoLocal = false;
+        if (hidden) hidden.value = "";
+        if (filtro) filtro.value = "";
+        document.querySelectorAll('.btn-kit-opcao').forEach(function(b) { b.classList.remove('ativo'); });
+        var painelMontagem = document.getElementById("painel-montagem-local");
+        if (painelMontagem) painelMontagem.style.display = "none";
+        var chk = document.getElementById("chk-montar-local");
+        if (chk) chk.checked = false;
+        FreteCalc.limpar();
+      }).catch(function() {
+        Utils.showToast("Erro ao salvar agendamento.", "error");
+      });
+    }
+
+    function handleSalvarOrcamento() {
+      var clienteEl = document.getElementById("nome-cliente");
+      var totalEl = document.getElementById("valor-total");
+      var dataEl = document.getElementById("data");
+      var obsEl = document.getElementById("adicionais-festa");
+      var valorFestaEl = document.getElementById("valor-festa");
+
+      var nomeCliente = clienteEl ? clienteEl.value.trim() : "";
+      var valorTotal = totalEl ? totalEl.value.trim() : "0";
+      var dataReserva = dataEl ? dataEl.value : "";
+      var obs = obsEl ? obsEl.value.trim() : "";
+      var valorFesta = valorFestaEl ? (parseFloat(valorFestaEl.value) || 0) : 0;
+
+      if (!nomeCliente) { Utils.showToast("Preencha o nome do cliente para salvar o orçamento.", "warning"); return; }
+
+      var f = FreteCalc.calcular();
+
+      Database.salvarOrcamentoNuvem({
+        cliente: nomeCliente,
+        tema: State.temaAtual || "Não selecionado",
+        kit: State.kitAtual || "",
+        montarNoLocal: !!State.montarNoLocal,
+        total: valorTotal,
+        valorFesta: valorFesta,
+        frete: f.freteTotal,
+        freteKm: f.km,
+        fretePrecoCombustivel: f.precoCombustivel,
+        freteLitros: f.litros,
+        freteCustoCombustivel: f.custoCombustivel,
+        freteManutencao: f.manutencao,
+        freteTotal: f.freteTotal,
+        dataFesta: dataReserva,
+        obs: obs,
+        dataCriacao: Utils.getHojeDataString(),
+        horaCriacao: Utils.getHoraString()
+      }).then(function() {
+        Utils.showToast("Orçamento gravado com sucesso!", "success");
+      }).catch(function() {
+        Utils.showToast("Erro ao salvar orçamento.", "error");
+      });
+    }
+
+    function gerarContrato(gerarPdf) {
+      var nome = (document.getElementById("c-nome") || {}).value || "";
+      var cpf = (document.getElementById("c-cpf") || {}).value || "";
+      var data = (document.getElementById("c-data") || {}).value || "";
+      var horario = (document.getElementById("c-horario") || {}).value || "";
+      var valor = parseFloat((document.getElementById("c-valor") || {}).value) || 0;
+      var endereco = (document.getElementById("c-endereco") || {}).value || "";
+      var telefone = (document.getElementById("c-telefone") || {}).value || "";
+      var local = (document.getElementById("c-local") || {}).value || "";
+      var modelo = (document.getElementById("c-modelo") || {}).value || "com-frete";
+      var obs = (document.getElementById("c-obs") || {}).value || "";
+      var tema = (document.getElementById("contrato-tema-selecionado") || {}).value || "";
+      var selectPecas = document.getElementById("c-pecas");
+      var pecas = [];
+      if (selectPecas) {
+        for (var i = 0; i < selectPecas.options.length; i++) {
+          if (selectPecas.options[i].selected) pecas.push(selectPecas.options[i].value);
+        }
+      }
+      var extras = [];
+      ['c-porcelanas','c-bolos','c-decoracao','c-outros'].forEach(function(id) {
+        var sel = document.getElementById(id);
+        if (!sel) return;
+        for (var j = 0; j < sel.options.length; j++) {
+          if (sel.options[j].selected) extras.push(sel.options[j].value);
+        }
+      });
+
+      if (!nome.trim()) { Utils.showToast("Preencha o nome do contratante!", "warning"); return; }
+
+      var dataFmt = data ? data.split("-").reverse().join("/") : "____/____/______";
+      var valorFmt = valor ? valor.toFixed(2).replace('.', ',') : "______,____";
+      var pecasTexto = pecas.length > 0 ? pecas.join(", ") : "__________________________________";
+      var extrasTexto = extras.length > 0 ? extras.join(", ") : "";
+      var dataAtual = new Date().toLocaleDateString('pt-BR');
+
+      var html = '<div class="pagina-contrato">' +
+        '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
+        '<div class="titulo-contrato">CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO</div>' +
+        '<div class="dados-contratada"><span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS</div>' +
+        '<div class="dados-contratante"><span class="negrito">CONTRATANTE:</span> ' + (nome || "_________________________") + '</div>' +
+        '<div class="dados-contratante"><span class="negrito">CPF:</span> ' + (cpf || "_________________________") + '</div>' +
+        '<div class="dados-contratante"><span class="negrito">TELEFONE:</span> ' + (telefone || "_________________________") + '</div>' +
+        '<div class="dados-contratante"><span class="negrito">ENDEREÇO:</span> ' + (endereco || "_________________________") + '</div>' +
+        '<div class="dados-contratante"><span class="negrito">LOCAL DO EVENTO:</span> ' + (local || "_________________________") + '</div>' +
+        '<div class="dados-contratante"><span class="negrito">DATA DO EVENTO:</span> ' + dataFmt + (horario ? ' às ' + horario : '') + '</div>' +
+        '<br>' +
+        '<div class="clausula-titulo">DO OBJETO DO CONTRATO</div>' +
+        '<div class="clausula-texto"><span class="negrito">Cláusula 1ª.</span> A CONTRATADA locará para o CONTRATANTE os seguintes itens' +
+        (tema ? ' do tema <b>' + tema + '</b>' : '') + ': ' + pecasTexto + '.</div>' +
+        (extrasTexto ? '<div class="clausula-texto"><span class="negrito">Itens adicionais:</span> ' + extrasTexto + '</div>' : '') +
+        '<div class="clausula-titulo">VALORES E PAGAMENTO</div>' +
+        '<div class="clausula-texto">O valor total da locação é de R$ ' + valorFmt + '.</div>' +
+        (obs ? '<div class="clausula-texto"><span class="negrito">Observações:</span> ' + obs + '</div>' : '') +
+        '<br>' +
+        '<div style="text-align: center;">Brasília-DF, ' + dataAtual + '.</div>' +
+        '<div class="assinatura"><div class="linha-assinatura"></div><div class="assinatura-nome">' + (nome || "CONTRATANTE") + '</div></div>' +
+        '<div class="assinatura"><div class="linha-assinatura"></div><div class="assinatura-nome">TRALALÁ DECORAÇÕES DE FESTAS</div></div>' +
+      '</div>';
+
+      Database.salvarContratoNuvem({
+        nome: nome, cpf: cpf, data: data, horario: horario, valor: valor,
+        endereco: endereco, telefone: telefone, local: local, modelo: modelo,
+        tema: tema, pecas: pecas, extras: extras, obs: obs, criadoEm: Date.now()
+      }).catch(function(err) { console.warn("Contrato não salvo:", err); });
+
+      var preview = document.getElementById("contrato-preview-content");
+      if (preview) preview.innerHTML = html;
+      var modalVis = document.getElementById("modal-visualizar-contrato");
+      if (modalVis) modalVis.classList.add("ativo");
+
+      if (gerarPdf) {
+        setTimeout(function() { gerarContratoPDF(); }, 300);
+      } else {
+        Utils.showToast("Contrato gerado com sucesso!", "success");
+      }
+    }
+
+    function gerarContratoPDF() {
+      var elemento = document.getElementById("contrato-preview-content");
+      if (!elemento) return;
+      if (typeof html2pdf === 'undefined') { alert("Biblioteca de PDF não carregada."); return; }
+      var nome = (document.getElementById("c-nome") || {}).value || "contrato";
+      html2pdf().from(elemento).set({
+        margin: 0,
+        filename: 'contrato-' + nome.replace(/\s+/g, '-').toLowerCase() + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).save().then(function() {
+        Utils.showToast("PDF baixado!", "success");
+      }).catch(function(err) {
+        console.error("Erro PDF:", err);
+        Utils.showToast("Erro ao gerar PDF.", "error");
+      });
+    }
+
+    function bindTudo() {
+      var b;
+      b = document.getElementById("btn-login-direto");
+      if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleLogin(); };
+      b = document.getElementById("btn-logout-direto");
+      if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleLogout(); };
+      var senhaEl = document.getElementById("senha");
+      if (senhaEl) senhaEl.onkeypress = function(e) {
+        if (e.key === "Enter") { var l = document.getElementById("btn-login-direto"); if (l) l.click(); }
+      };
+
+      b = document.getElementById("btn-ponto-entrada");
+      if (b) b.onclick = function(e) { if (e) e.preventDefault(); Database.registrarPonto('entrada'); };
+      b = document.getElementById("btn-ponto-saida");
+      if (b) b.onclick = function(e) { if (e) e.preventDefault(); Database.registrarPonto('saida'); };
+      b = document.getElementById("btn-abrir-relatorio-pontos");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var p = document.getElementById("painel-relatorio-pontos-geral");
+        if (p) p.style.display = (p.style.display === "none" || p.style.display === "") ? "block" : "none";
+      };
+
+      b = document.getElementById("btn-abrir-central-relatorios");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var p = document.getElementById("secao-central-relatorios");
+        if (!p) return;
+        var abrindo = (p.style.display === "none" || p.style.display === "");
+        p.style.display = abrindo ? "block" : "none";
+        if (abrindo) { renderPlanilhaVendas(); }
+      };
+      b = document.getElementById("btn-fechar-central-relatorios");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var p = document.getElementById("secao-central-relatorios");
+        if (p) p.style.display = "none";
+      };
+      b = document.getElementById("seletor-mes-planilha");
+      if (b) b.onchange = function() { renderPlanilhaVendas(); };
+      b = document.getElementById("btn-transformar-grafico");
+      if (b) b.onclick = function(e) { if (e) e.preventDefault(); renderGraficoAnual(); };
+      b = document.getElementById("btn-toggle-grafico");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var pg = document.getElementById("painel-grafico-faturamento");
+        if (pg) pg.style.display = pg.style.display === 'none' ? 'block' : 'none';
+      };
+      b = document.getElementById("btn-gerar-resumo-mensal");
+      if (b) b.onclick = function(e) { if (e) e.preventDefault(); renderPlanilhaVendas(); Utils.showToast("Relatório mensal atualizado.", "success"); };
+      b = document.getElementById("btn-adicionar-linha-planilha");
+      if (b) b.onclick = function(e) { if (e) e.preventDefault(); Utils.showToast("Crie uma Reserva para adicionar vendas.", "info"); };
+      b = document.getElementById("btn-salvar-dados-planilha");
+      if (b) b.onclick = function(e) { if (e) e.preventDefault(); Utils.showToast("A planilha é sincronizada pelas reservas.", "info"); };
+
+      b = document.getElementById("btn-abrir-orcamentos");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var p = document.getElementById("painel-orcamentos-salvos") || document.getElementById("card-orcamentos-integrado");
+        if (!p) { Utils.showToast("Painel de orçamentos não encontrado.", "error"); return; }
+        var abrindo = (p.style.display === "none" || p.style.display === "");
+        p.style.display = abrindo ? "block" : "none";
+        if (abrindo) renderOrcamentos();
+      };
+
+      b = document.getElementById("btn-abrir-reunioes-painel");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var p = document.getElementById("painel-reunioes-exclusivo");
+        if (!p) return;
+        var abrindo = (p.style.display === "none" || p.style.display === "");
+        p.style.display = abrindo ? "block" : "none";
+        if (abrindo) iniciarPainelReunioes();
+      };
+      b = document.getElementById("btn-fechar-reunioes");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var p = document.getElementById("painel-reunioes-exclusivo");
+        if (p) p.style.display = "none";
+      };
+      b = document.getElementById("btn-salvar-reuniao-avulsa");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var c = document.getElementById("reuniao-cliente");
+        var d = document.getElementById("reuniao-data-hora");
+        var pa = document.getElementById("reuniao-pauta");
+        var cliente = c ? c.value.trim() : "";
+        var dataHora = d ? d.value : "";
+        var pauta = pa ? pa.value.trim() : "";
+        if (!cliente || !dataHora) { Utils.showToast("Preencha cliente e data/hora.", "warning"); return; }
+        ModalStatus.exibir("AGENDANDO REUNIÃO...", "Cliente: " + cliente);
+        Database.salvarReuniaoNuvem({ cliente: cliente, dataHora: dataHora, pauta: pauta, criadoEm: Date.now() })
+          .then(function() {
+            ModalStatus.sucesso("✓ REUNIÃO AGENDADA");
+            if (c) c.value = "";
+            if (d) d.value = "";
+            if (pa) pa.value = "";
+          })
+          .catch(function() { ModalStatus.erro("Não foi possível agendar."); });
+      };
+
+      b = document.getElementById("btn-abrir-catalogo-temas");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var p = document.getElementById("painel-catalogo-temas");
+        if (!p) return;
+        var abrindo = (p.style.display === "none" || p.style.display === "");
+        p.style.display = abrindo ? "block" : "none";
+        if (abrindo) renderizarTemas();
+      };
+
+      b = document.getElementById("btn-abrir-gerador-contrato");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var m = document.getElementById("modal-gerador-contrato");
+        if (m) m.classList.add("ativo");
+        carregarTemasNoContrato();
+        initContratoBusca();
+      };
+      b = document.getElementById("btn-fechar-modal-contrato");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var m = document.getElementById("modal-gerador-contrato");
+        if (m) m.classList.remove("ativo");
+      };
+      var modalContrato = document.getElementById("modal-gerador-contrato");
+      if (modalContrato) {
+        modalContrato.addEventListener('click', function(e) {
+          if (e.target === modalContrato) modalContrato.classList.remove("ativo");
         });
+      }
+      b = document.getElementById("btn-gerar-salvar-contrato");
+      if (b) b.onclick = function(e) { if (e) e.preventDefault(); gerarContrato(false); };
+      b = document.getElementById("btn-gerar-pdf-contrato");
+      if (b) b.onclick = function(e) { if (e) e.preventDefault(); gerarContrato(true); };
+
+      var modalVis = document.getElementById("modal-visualizar-contrato");
+      if (modalVis) {
+        var fv = document.getElementById("btn-fechar-visualizacao");
+        if (fv) fv.onclick = function() { modalVis.classList.remove("ativo"); };
+        modalVis.addEventListener('click', function(e) {
+          if (e.target === modalVis) modalVis.classList.remove("ativo");
+        });
+      }
+      b = document.getElementById("btn-baixar-pdf-contrato");
+      if (b) b.onclick = function() { gerarContratoPDF(); };
+      b = document.getElementById("btn-imprimir-contrato");
+      if (b) b.onclick = function() { window.print(); };
+
+      var botoesKit = document.querySelectorAll('.btn-kit-opcao');
+      botoesKit.forEach(function(btn) {
+        btn.onclick = function(e) {
+          e.preventDefault();
+          botoesKit.forEach(function(x) { x.classList.remove('ativo'); });
+          btn.classList.add('ativo');
+          var nomeKit = btn.getAttribute('data-kit');
+          State.kitAtual = nomeKit;
+          Utils.showToast('Kit "' + nomeKit + '" selecionado!', "success");
+        };
+      });
+
+      var chkMontar = document.getElementById("chk-montar-local");
+      if (chkMontar) {
+        chkMontar.onchange = function() {
+          State.montarNoLocal = !!chkMontar.checked;
+          var painel = document.getElementById("painel-montagem-local");
+          if (painel) painel.style.display = chkMontar.checked ? "block" : "none";
+        };
       }
 
-      var seletorMes = document.getElementById('seletor-mes-planilha');
-      if (seletorMes) {
-        seletorMes.addEventListener('change', function() {
-          if (window.UI && typeof window.UI.renderPlanilhaVendas === 'function') {
-            window.UI.renderPlanilhaVendas();
-          }
-        });
-      }
+      var kmEl = document.getElementById("calc-km");
+      var precoEl = document.getElementById("calc-valor-litro");
+      if (kmEl) { kmEl.oninput = function() { FreteCalc.renderizar(); }; kmEl.onchange = function() { FreteCalc.renderizar(); }; }
+      if (precoEl) { precoEl.oninput = function() { FreteCalc.renderizar(); }; precoEl.onchange = function() { FreteCalc.renderizar(); }; }
 
-      var btnResumoMensal = document.getElementById('btn-gerar-resumo-mensal');
-      if (btnResumoMensal) {
-        btnResumoMensal.addEventListener('click', function() {
-          if (window.UI && typeof window.UI.renderPlanilhaVendas === 'function') {
-            window.UI.renderPlanilhaVendas();
-            if (window.Utils) window.Utils.showToast("Relatório mensal atualizado.", "success");
-          }
-        });
-      }
+      var vfEl = document.getElementById("valor-festa");
+      if (vfEl) vfEl.oninput = function() { FreteCalc.renderizar(); };
+      var sinalEl = document.getElementById("valor-sinal");
+      if (sinalEl) sinalEl.oninput = function() { FreteCalc.renderizar(); };
 
-      var btnAddAvulso = document.getElementById('btn-adicionar-linha-planilha');
-      if (btnAddAvulso) {
-        btnAddAvulso.addEventListener('click', function() {
-          if (window.Utils) window.Utils.showToast("Para adicionar venda avulsa, crie uma Reserva normalmente.", "info");
+      b = document.getElementById("busca-reserva");
+      if (b) b.oninput = function(e) { renderReservas(e.target.value); };
+
+      b = document.getElementById("btn-confirmar-agendamento");
+      if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleSalvarFesta(); };
+      b = document.getElementById("btn-salvar-como-orcamento");
+      if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleSalvarOrcamento(); };
+
+      b = document.getElementById("btn-adicionar-peca");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var nome = (document.getElementById("catalogo-peca-nome") || {}).value || "";
+        var qtd = parseInt((document.getElementById("catalogo-peca-qtd") || {}).value) || 1;
+        var categoria = (document.getElementById("catalogo-peca-categoria") || {}).value || "Outros";
+        var modelo = (document.getElementById("catalogo-peca-modelo") || {}).value || "";
+        var fileInput = document.getElementById("catalogo-peca-imagem");
+        nome = nome.trim();
+        if (!nome) { alert("Preencha o nome do tema/peça!"); return; }
+        var executar = function(img) {
+          Database.salvarPecaNuvem({ nome: nome, quantidade: qtd, categoria: categoria, modelo: modelo, imagem: img || "" });
+        };
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+          var reader = new FileReader();
+          reader.onload = function(ev) { executar(ev.target.result); };
+          reader.readAsDataURL(fileInput.files[0]);
+        } else {
+          executar("");
+        }
+      };
+
+      b = document.getElementById("btn-adicionar-categoria");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var input = document.getElementById("input-nova-categoria");
+        var nome = input ? input.value.trim() : "";
+        if (!nome) { Utils.showToast("Digite um nome para a categoria.", "warning"); return; }
+        Database.salvarCategoriaNuvem(nome).then(function() {
+          Utils.showToast("Categoria adicionada!", "success");
+          if (input) input.value = "";
+        }).catch(function(err) {
+          Utils.showToast(String(err), "warning");
         });
-      }
-      var btnSalvarPlanilha = document.getElementById('btn-salvar-dados-planilha');
-      if (btnSalvarPlanilha) {
-        btnSalvarPlanilha.addEventListener('click', function() {
-          if (window.Utils) window.Utils.showToast("A planilha é sincronizada automaticamente pelas reservas.", "info");
+      };
+      var inputCat = document.getElementById("input-nova-categoria");
+      if (inputCat) inputCat.onkeypress = function(e) {
+        if (e.key === "Enter") { var bt = document.getElementById("btn-adicionar-categoria"); if (bt) bt.click(); }
+      };
+      b = document.getElementById("btn-remover-categoria");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var s = document.getElementById("select-remover-categoria");
+        var cat = s ? s.value : "";
+        if (!cat) { Utils.showToast("Selecione uma categoria.", "warning"); return; }
+        Database.removerCategoriaNuvem(cat).then(function() {
+          Utils.showToast("Categoria removida!", "success");
+        }).catch(function(err) {
+          Utils.showToast(String(err), "warning");
         });
-      }
+      };
+
+      b = document.getElementById("btn-remover-tema-admin");
+      if (b) b.onclick = function(e) {
+        if (e) e.preventDefault();
+        var s = document.getElementById("select-remover-tema");
+        var idx = s ? parseInt(s.value) : NaN;
+        if (isNaN(idx)) { alert("Selecione um tema válido!"); return; }
+        window.removerTema(idx);
+      };
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      carregarEstoqueIncremental();
+      carregarCategorias();
+      listenReservas();
+      listenOrcamentos();
+      bindTudo();
+      console.log("✅ Sistema Tralalá inicializado.");
     });
   </script>
 </body>
