@@ -635,17 +635,24 @@
             <span style="font-size: 12px; font-weight: 600; color: var(--primary-dark);">🚗 Calculadora de Frete (Consumo: 9 km/L):</span>
             <div class="grid-2" style="margin-top: 10px;">
               <div>
-                <label style="font-size: 11px;">Quilometragem (KM ida e volta):</label>
+                <label style="font-size: 11px;">Quilometragem (KM só IDA):</label>
                 <input type="number" id="calc-km" placeholder="Ex: 45" style="padding: 8px;">
               </div>
               <div>
                 <label style="font-size: 11px;">Preço Base do Combustível (R$):</label>
-                <input type="number" id="calc-valor-litro" value="32.00" step="0.01" style="padding: 8px;">
+                <input type="number" id="calc-valor-litro" value="8.00" step="0.01" style="padding: 8px;">
               </div>
             </div>
-            <div style="font-size: 12px; color: var(--text-main); margin-top: 8px; font-weight: 500;">
+            <div style="margin-top: 10px;">
+              <label class="check-container" style="font-size: 12px; margin-bottom: 0;">
+                <input type="checkbox" id="chk-segunda-viagem" style="width: 16px; height: 16px;">
+                <span>🔄 Cliente pediu 2ª viagem (ida+volta de novo)?</span>
+              </label>
+            </div>
+            <div style="font-size: 12px; color: var(--text-main); margin-top: 12px; font-weight: 500; line-height: 1.6;">
+              🚗 KM total rodada: <span id="calc-km-total">0</span> km<br>
               Combustível Base: <span id="calc-total-combustivel">R$ 0.00</span> | 
-              Manutenção (+20%): <span id="calc-manutencao">R$ 0.00</span> | 
+              Manutenção (+20%): <span id="calc-manutencao">R$ 0.00</span><br>
               <strong>Total do Frete a Cobrar: <span id="calc-cobrar-cliente" style="color: var(--success);">R$ 0.00</span></strong>
             </div>
           </div>
@@ -777,7 +784,6 @@
           <input type="text" id="c-local" placeholder="Endereço Completo do Evento">
         </div>
 
-        <!-- CAMPO DE BUSCA DE TEMA (adicionado aqui para não depender de JS injetando) -->
         <div class="input-group">
           <label>🔍 Tema do Contrato (busque pelo nome):</label>
           <div class="sugestoes-wrapper">
@@ -895,10 +901,8 @@
   </div>
 
   <!-- ============================================================
-       script (1).js agora está VAZIO (neutralizado).
-       Todo o sistema roda no bloco inline abaixo.
+       script (1).js não é mais usado — lógica abaixo é a única.
        ============================================================ -->
-  <script src="script (1).js"></script>
 
   <script>
     // ============================================================================
@@ -906,9 +910,6 @@
     // Autoridade única: este bloco. Nada mais deve rodar em paralelo.
     // ============================================================================
 
-    // ============================================================
-    // CONFIG E ESTADO GLOBAL
-    // ============================================================
     const CONFIG = {
       usuarios: {
         "jorgeguivalle@gmail.com": "Viperrt11",
@@ -935,14 +936,14 @@
       db: null,
       salvandoPeca: false,
       usuarioLogadoEmail: "",
-      estoqueArray: [],       // formato usado pelo HTML (array de peças)
+      estoqueArray: [],
       reservas: [],
       orcamentos: [],
       categorias: [],
       temaAtual: "",
       kitAtual: "",
       montarNoLocal: false,
-      frete: { km: 0, precoCombustivel: 0, litros: 0, custoCombustivel: 0, manutencao: 0, freteTotal: 0 },
+      frete: { kmIda: 0, kmTotal: 0, precoCombustivel: 0, litros: 0, custoCombustivel: 0, manutencao: 0, freteTotal: 0, segundaViagem: false },
       carregando: true
     };
 
@@ -950,7 +951,6 @@
     let chartInstance = null;
     const mesesAno = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-    // Inicializa Firebase
     try {
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
       db = firebase.database();
@@ -959,9 +959,6 @@
       console.error("Erro no Firebase:", err);
     }
 
-    // ============================================================
-    // MODAL DE STATUS
-    // ============================================================
     const ModalStatus = {
       exibir: (titulo, subtitulo) => {
         const modal = document.getElementById("modal-status-operacao");
@@ -998,15 +995,11 @@
       }
     };
 
-    // ============================================================
-    // UTILS
-    // ============================================================
     const Utils = {
       showToast: function(message, type) {
         if (!type) type = 'info';
         var icone = type === 'success' ? '✅' : (type === 'error' ? '🚨' : '⚠️');
         console.log(icone + " " + message);
-        // Se existir um toast container, use; senão alerta apenas em erro
         var container = document.getElementById('toast-container');
         if (container) {
           var toast = document.createElement('div');
@@ -1039,9 +1032,6 @@
       getHoraString: function() { return new Date().toTimeString().split(' ')[0]; }
     };
 
-    // ============================================================
-    // CLOUDDB — mantido do HTML original (usado para categorias)
-    // ============================================================
     const CloudDB = {
       salvar: (caminho, dados, callback) => {
         if (db) {
@@ -1076,9 +1066,6 @@
       }
     };
 
-    // ============================================================
-    // DATABASE — salvar/remover peças e reservas/orçamentos
-    // ============================================================
     const Database = {
       salvarPecaNuvem: async function(peca) {
         if (State.salvandoPeca) return;
@@ -1239,27 +1226,38 @@
       }
     };
 
-    // Expor para chamadas via onclick inline
     window.adicionarCategoria = function(nome) { return Database.salvarCategoriaNuvem(nome); };
     window.removerCategoria = function(nome) { return Database.removerCategoriaNuvem(nome); };
 
     // ============================================================
-    // CALCULADORA DE FRETE — módulo dedicado
-    // Fórmula: litros = km/9 ; custo = litros*preco ; manut = custo*0.20 ; total = custo+manut
+    // CALCULADORA DE FRETE
+    // Regras:
+    //   - Usuário digita KM de IDA (ex: 45)
+    //   - Sistema multiplica por 2 (ida + volta) = 90
+    //   - Se "2ª viagem" marcado, multiplica por 2 novamente = 180
+    //   - litros = kmTotal / 9
+    //   - custoCombustivel = litros * preco
+    //   - manutencao = custoCombustivel * 0.20
+    //   - freteTotal = custoCombustivel + manutencao
     // ============================================================
     const FreteCalc = {
       ler: function() {
         var kmEl = document.getElementById('calc-km');
         var precoEl = document.getElementById('calc-valor-litro');
-        var km = kmEl ? parseFloat(kmEl.value) : 0;
+        var chkSegunda = document.getElementById('chk-segunda-viagem');
+        var kmIda = kmEl ? parseFloat(kmEl.value) : 0;
         var preco = precoEl ? parseFloat(precoEl.value) : 0;
-        if (isNaN(km) || km < 0 || !isFinite(km)) km = 0;
+        if (isNaN(kmIda) || kmIda < 0 || !isFinite(kmIda)) kmIda = 0;
         if (isNaN(preco) || preco < 0 || !isFinite(preco)) preco = 0;
-        return { km: km, preco: preco };
+        var segundaViagem = !!(chkSegunda && chkSegunda.checked);
+        return { kmIda: kmIda, preco: preco, segundaViagem: segundaViagem };
       },
       calcular: function() {
         var e = this.ler();
-        var litros = e.km / CONFIG.frete.consumoKmPorLitro;
+        // Fator: ida+volta = 2 ; se segunda viagem, dobra de novo = 4
+        var fator = e.segundaViagem ? 4 : 2;
+        var kmTotal = e.kmIda * fator;
+        var litros = kmTotal / CONFIG.frete.consumoKmPorLitro;
         var custoCombustivel = litros * e.preco;
         var manutencao = custoCombustivel * CONFIG.frete.percentualManutencao;
         var freteTotal = custoCombustivel + manutencao;
@@ -1268,8 +1266,10 @@
         if (!isFinite(manutencao)) manutencao = 0;
         if (!isFinite(freteTotal)) freteTotal = 0;
         State.frete = {
-          km: e.km,
+          kmIda: e.kmIda,
+          kmTotal: kmTotal,
           precoCombustivel: e.preco,
+          segundaViagem: e.segundaViagem,
           litros: litros,
           custoCombustivel: custoCombustivel,
           manutencao: manutencao,
@@ -1279,12 +1279,14 @@
       },
       renderizar: function() {
         var f = this.calcular();
+        var txtKmTotal = document.getElementById('calc-km-total');
         var txtCombustivel = document.getElementById('calc-total-combustivel');
         var txtManutencao = document.getElementById('calc-manutencao');
         var txtTotal = document.getElementById('calc-cobrar-cliente');
+        if (txtKmTotal) txtKmTotal.textContent = f.kmTotal;
         if (txtCombustivel) txtCombustivel.textContent = "R$ " + f.custoCombustivel.toFixed(2);
         if (txtManutencao) txtManutencao.textContent = "R$ " + f.manutencao.toFixed(2);
-        if (txtTotal) txtTotal.textContent = f.freteTotal.toFixed(2);
+        if (txtTotal) txtTotal.textContent = "R$ " + f.freteTotal.toFixed(2);
 
         var inputFrete = document.getElementById('valor-frete');
         if (inputFrete) inputFrete.value = f.freteTotal.toFixed(2);
@@ -1305,19 +1307,22 @@
           if (restante < 0) restante = 0;
           inputRestante.value = restante.toFixed(2);
         }
+        return f;
       },
       limpar: function() {
-        State.frete = { km: 0, precoCombustivel: 0, litros: 0, custoCombustivel: 0, manutencao: 0, freteTotal: 0 };
+        State.frete = { kmIda: 0, kmTotal: 0, precoCombustivel: 0, litros: 0, custoCombustivel: 0, manutencao: 0, freteTotal: 0, segundaViagem: false };
         var kmEl = document.getElementById('calc-km');
+        var chkSegunda = document.getElementById('chk-segunda-viagem');
         var inputFrete = document.getElementById('valor-frete');
         if (kmEl) kmEl.value = "";
+        if (chkSegunda) chkSegunda.checked = false;
         if (inputFrete) inputFrete.value = "0.00";
         this.renderizar();
       }
     };
 
     // ============================================================
-    // ESTOQUE INCREMENTAL — mantido do HTML original
+    // ESTOQUE
     // ============================================================
     function carregarEstoqueIncremental() {
       if (!db) return;
@@ -1421,21 +1426,70 @@
     };
 
     // ============================================================
-    // CATEGORIAS — renderização CORRIGIDA (mostra NOME, não índice)
+    // CATEGORIAS — CORRIGIDO: extrai nome de múltiplos formatos
+    // Aceita:
+    //   - {chave: {nome: "Balão"}}
+    //   - {chave: "Balão"}                  (string direta como valor)
+    //   - ["Balão", "Painel"]               (array de strings)
+    //   - [{nome: "Balão"}, ...]            (array de objetos)
+    //   - {chave: {valor: "Balão"}}         (formato alternativo)
     // ============================================================
+    function extrairNomesCategorias(data) {
+      var nomes = [];
+      if (!data) return nomes;
+
+      // Caso 1: array direto
+      if (Array.isArray(data)) {
+        data.forEach(function(item) {
+          if (!item) return;
+          if (typeof item === 'string') {
+            nomes.push(item);
+          } else if (typeof item === 'object') {
+            if (item.nome) nomes.push(item.nome);
+            else if (item.valor) nomes.push(item.valor);
+            else if (item.name) nomes.push(item.name);
+          }
+        });
+        return nomes;
+      }
+
+      // Caso 2: objeto
+      if (typeof data === 'object') {
+        Object.keys(data).forEach(function(key) {
+          var val = data[key];
+          if (val === null || val === undefined) return;
+          if (typeof val === 'string') {
+            nomes.push(val);
+          } else if (typeof val === 'object') {
+            if (val.nome) nomes.push(val.nome);
+            else if (val.valor) nomes.push(val.valor);
+            else if (val.name) nomes.push(val.name);
+            // Se for um objeto mas sem campo de nome, e a chave não for um ID do Firebase
+            // (chaves do Firebase começam com "-"), usa a própria chave como nome
+            else if (key && key.charAt(0) !== '-' && !/^\d+$/.test(key)) {
+              nomes.push(key);
+            }
+          }
+        });
+        return nomes;
+      }
+
+      return nomes;
+    }
+
     function carregarCategorias() {
       if (!db) return;
       db.ref('categorias').on('value', function(snapshot) {
         var data = snapshot.val();
-        var nomes = [];
-        if (data && typeof data === 'object') {
-          Object.keys(data).forEach(function(key) {
-            var val = data[key];
-            if (val && typeof val === 'object' && val.nome) nomes.push(val.nome);
-            else if (typeof val === 'string') nomes.push(val);
-          });
-        }
-        State.categorias = nomes;
+        var nomes = extrairNomesCategorias(data);
+        // Remove duplicatas e vazios
+        var unicos = [];
+        nomes.forEach(function(n) {
+          if (n && String(n).trim() !== "" && unicos.indexOf(String(n)) === -1) {
+            unicos.push(String(n));
+          }
+        });
+        State.categorias = unicos;
         atualizarInterfaceCategorias();
       });
     }
@@ -1483,7 +1537,7 @@
     }
 
     // ============================================================
-    // BUSCA DE TEMAS — ficha de reserva (usa State.estoqueArray)
+    // BUSCA DE TEMAS
     // ============================================================
     function normalizar(s) {
       return (s || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -1592,10 +1646,12 @@
         var devedor = totGeral - sinal;
         var quitado = devedor <= 0;
         var freteDetalhes = "";
-        if (res.freteKm) {
-          freteDetalhes = '<p style="font-size:11px;color:#666;">🚗 ' + res.freteKm + 'km × R$' + (parseFloat(res.fretePrecoCombustivel) || 0).toFixed(2) +
-            ' → ' + (parseFloat(res.freteLitros) || 0).toFixed(2) + 'L → R$ ' + (parseFloat(res.freteCustoCombustivel) || 0).toFixed(2) +
-            ' + manut. R$ ' + (parseFloat(res.freteManutencao) || 0).toFixed(2) + '</p>';
+        if (res.freteKmIda) {
+          freteDetalhes = '<p style="font-size:11px;color:#666;">🚗 ' + res.freteKmIda + 'km (ida) × ' +
+            (res.freteSegundaViagem ? '4' : '2') + ' = ' + res.freteKmTotal + 'km totais → ' +
+            (parseFloat(res.freteLitros) || 0).toFixed(2) + 'L → R$ ' +
+            (parseFloat(res.freteCustoCombustivel) || 0).toFixed(2) + ' + manut. R$ ' +
+            (parseFloat(res.freteManutencao) || 0).toFixed(2) + '</p>';
         }
         card.innerHTML = '<div class="reserva-header">' +
           '<strong>👶 ' + (res.cliente || '') + '</strong>' +
@@ -1741,11 +1797,13 @@
           if (painel) painel.style.display = State.montarNoLocal ? "block" : "none";
         }
       }
-      if (orc.freteKm) {
+      if (orc.freteKmIda) {
         var kmEl = document.getElementById("calc-km");
         var precoEl = document.getElementById("calc-valor-litro");
-        if (kmEl) kmEl.value = orc.freteKm;
+        var chkSegunda = document.getElementById("chk-segunda-viagem");
+        if (kmEl) kmEl.value = orc.freteKmIda;
         if (precoEl && orc.fretePrecoCombustivel) precoEl.value = orc.fretePrecoCombustivel;
+        if (chkSegunda) chkSegunda.checked = !!orc.freteSegundaViagem;
         FreteCalc.renderizar();
       }
       Utils.showToast("Orçamento carregado no formulário.", "success");
@@ -1806,7 +1864,7 @@
     };
 
     // ============================================================
-    // PLANILHA DE VENDAS E GRÁFICO
+    // PLANILHA E GRÁFICO
     // ============================================================
     function renderPlanilhaVendas() {
       var tbody = document.querySelector("#tabela-planilha-corpo tbody");
@@ -1860,15 +1918,13 @@
     }
 
     // ============================================================
-    // CONTRATO — popular select de peças
+    // CONTRATO
     // ============================================================
     function carregarTemasNoContrato() {
       var select = document.getElementById("c-pecas");
       if (!select) return;
-      // Não apaga se já tiver peças selecionadas pelo usuário
-      // Só repopula se estiver vazio ou ainda não inicializado
       var temaSelecionado = (document.getElementById("contrato-tema-selecionado") || {}).value || "";
-      if (temaSelecionado) return; // respeitar seleção atual
+      if (temaSelecionado) return;
       select.innerHTML = "";
       State.estoqueArray.forEach(function(item) {
         var opt = document.createElement("option");
@@ -1929,7 +1985,7 @@
     }
 
     // ============================================================
-    // LOGIN / LOGOUT (mantido — não alterar)
+    // LOGIN / LOGOUT
     // ============================================================
     function handleLogin() {
       var emailEl = document.getElementById("email");
@@ -1955,7 +2011,7 @@
     function handleLogout() { window.location.reload(); }
 
     // ============================================================
-    // AGENDAMENTO — salvar reserva com kit + montagem + frete
+    // SALVAR RESERVA / ORÇAMENTO
     // ============================================================
     function handleSalvarFesta() {
       var elCliente = document.getElementById("nome-cliente");
@@ -1994,7 +2050,9 @@
         sinal: sinal,
         valorFesta: valorFesta,
         frete: f.freteTotal,
-        freteKm: f.km,
+        freteKmIda: f.kmIda,
+        freteKmTotal: f.kmTotal,
+        freteSegundaViagem: f.segundaViagem,
         fretePrecoCombustivel: f.precoCombustivel,
         freteLitros: f.litros,
         freteCustoCombustivel: f.custoCombustivel,
@@ -2051,7 +2109,9 @@
         total: valorTotal,
         valorFesta: valorFesta,
         frete: f.freteTotal,
-        freteKm: f.km,
+        freteKmIda: f.kmIda,
+        freteKmTotal: f.kmTotal,
+        freteSegundaViagem: f.segundaViagem,
         fretePrecoCombustivel: f.precoCombustivel,
         freteLitros: f.litros,
         freteCustoCombustivel: f.custoCombustivel,
@@ -2172,7 +2232,6 @@
     // BIND DE TODOS OS BOTÕES
     // ============================================================
     function bindTudo() {
-      // Login / Logout
       var b;
       b = document.getElementById("btn-login-direto");
       if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleLogin(); };
@@ -2183,7 +2242,6 @@
         if (e.key === "Enter") { var l = document.getElementById("btn-login-direto"); if (l) l.click(); }
       };
 
-      // Ponto
       b = document.getElementById("btn-ponto-entrada");
       if (b) b.onclick = function(e) { if (e) e.preventDefault(); Database.registrarPonto('entrada'); };
       b = document.getElementById("btn-ponto-saida");
@@ -2195,7 +2253,6 @@
         if (p) p.style.display = (p.style.display === "none" || p.style.display === "") ? "block" : "none";
       };
 
-      // Venda Mensal & Anual
       b = document.getElementById("btn-abrir-central-relatorios");
       if (b) b.onclick = function(e) {
         if (e) e.preventDefault();
@@ -2228,7 +2285,6 @@
       b = document.getElementById("btn-salvar-dados-planilha");
       if (b) b.onclick = function(e) { if (e) e.preventDefault(); Utils.showToast("A planilha é sincronizada pelas reservas.", "info"); };
 
-      // Ver Orçamentos
       b = document.getElementById("btn-abrir-orcamentos");
       if (b) b.onclick = function(e) {
         if (e) e.preventDefault();
@@ -2239,7 +2295,6 @@
         if (abrindo) renderOrcamentos();
       };
 
-      // Agendar Reuniões
       b = document.getElementById("btn-abrir-reunioes-painel");
       if (b) b.onclick = function(e) {
         if (e) e.preventDefault();
@@ -2276,7 +2331,6 @@
           .catch(function() { ModalStatus.erro("Não foi possível agendar."); });
       };
 
-      // Ver Catálogo
       b = document.getElementById("btn-abrir-catalogo-temas");
       if (b) b.onclick = function(e) {
         if (e) e.preventDefault();
@@ -2287,7 +2341,6 @@
         if (abrindo) renderizarTemas();
       };
 
-      // Gerar Contrato
       b = document.getElementById("btn-abrir-gerador-contrato");
       if (b) b.onclick = function(e) {
         if (e) e.preventDefault();
@@ -2326,7 +2379,6 @@
       b = document.getElementById("btn-imprimir-contrato");
       if (b) b.onclick = function() { window.print(); };
 
-      // Kits (Só um Bolinho / Kit Básico / Prata / Ouro)
       var botoesKit = document.querySelectorAll('.btn-kit-opcao');
       botoesKit.forEach(function(btn) {
         btn.onclick = function(e) {
@@ -2339,7 +2391,6 @@
         };
       });
 
-      // Montar no Local
       var chkMontar = document.getElementById("chk-montar-local");
       if (chkMontar) {
         chkMontar.onchange = function() {
@@ -2349,29 +2400,26 @@
         };
       }
 
-      // Calculadora de Frete
       var kmEl = document.getElementById("calc-km");
       var precoEl = document.getElementById("calc-valor-litro");
+      var chkSegunda = document.getElementById("chk-segunda-viagem");
       if (kmEl) { kmEl.oninput = function() { FreteCalc.renderizar(); }; kmEl.onchange = function() { FreteCalc.renderizar(); }; }
       if (precoEl) { precoEl.oninput = function() { FreteCalc.renderizar(); }; precoEl.onchange = function() { FreteCalc.renderizar(); }; }
+      if (chkSegunda) { chkSegunda.onchange = function() { FreteCalc.renderizar(); }; }
 
-      // Valor da festa e sinal -> recalcular
       var vfEl = document.getElementById("valor-festa");
       if (vfEl) vfEl.oninput = function() { FreteCalc.renderizar(); };
       var sinalEl = document.getElementById("valor-sinal");
       if (sinalEl) sinalEl.oninput = function() { FreteCalc.renderizar(); };
 
-      // Busca de reservas
       b = document.getElementById("busca-reserva");
       if (b) b.oninput = function(e) { renderReservas(e.target.value); };
 
-      // Botões de salvar
       b = document.getElementById("btn-confirmar-agendamento");
       if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleSalvarFesta(); };
       b = document.getElementById("btn-salvar-como-orcamento");
       if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleSalvarOrcamento(); };
 
-      // Peças
       b = document.getElementById("btn-adicionar-peca");
       if (b) b.onclick = function(e) {
         if (e) e.preventDefault();
@@ -2394,7 +2442,6 @@
         }
       };
 
-      // Categorias
       b = document.getElementById("btn-adicionar-categoria");
       if (b) b.onclick = function(e) {
         if (e) e.preventDefault();
@@ -2425,7 +2472,6 @@
         });
       };
 
-      // Remover tema
       b = document.getElementById("btn-remover-tema-admin");
       if (b) b.onclick = function(e) {
         if (e) e.preventDefault();
