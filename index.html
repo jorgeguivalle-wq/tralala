@@ -160,12 +160,14 @@
     }
 
     .btn-acao-tabela {
-      padding: 5px 8px; font-size: 13px; border-radius: 6px; cursor: pointer; border: none;
+      padding: 6px 10px; font-size: 14px; border-radius: 6px; cursor: pointer; border: none;
       display: inline-flex; align-items: center; justify-content: center; transition: transform 0.2s;
+      margin: 0 2px;
     }
     .btn-acao-tabela:hover { transform: scale(1.1); }
     .btn-promover { background-color: #27ae60; color: white; margin-right: 5px; }
     .btn-remover-orc { background-color: #e74c3c; color: white; }
+    .btn-editar-tema { background-color: #3498db; color: white; }
 
     .montagem-local-container {
       background: #f4f6f9; border: 1.5px solid #dcdde1; border-radius: 10px; padding: 15px; margin-top: 15px; display: none;
@@ -253,6 +255,34 @@
 
     .btn-pdf { background-color: #e67e22; color: #fff; }
     .btn-pdf:hover { background-color: #d35400; transform: translateY(-2px); }
+
+    /* ============================================================ */
+    /* MODAL DE EDIÇÃO DE MAQUETE */
+    /* ============================================================ */
+    .modal-editar-tema {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center;
+      z-index: 15000; opacity: 0; pointer-events: none; transition: all 0.3s ease;
+    }
+    .modal-editar-tema.ativo { opacity: 1; pointer-events: auto; }
+    .modal-editar-conteudo {
+      background: #fff; padding: 30px; border-radius: var(--radius);
+      width: 92%; max-width: 600px; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .preview-foto-editar {
+      width: 100%; max-width: 200px; height: 200px; border-radius: 12px;
+      object-fit: cover; border: 2px solid var(--border-color);
+      display: block; margin: 0 auto 15px auto; background: #f5f5f5;
+    }
+    .preview-box-editar {
+      text-align: center; padding: 15px;
+      background: #fafafa; border-radius: 12px; margin-bottom: 15px;
+    }
+    .input-file-editar {
+      width: 100%; padding: 12px; border: 1.5px dashed var(--primary-light);
+      border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px;
+    }
 
     @media print {
       .pagina-contrato { box-shadow: none; margin: 0; padding: 18mm 16mm; width: 100%; min-height: 297mm; page-break-after: always; break-after: page; border-radius: 0; }
@@ -443,13 +473,13 @@
           <div id="info-tema-remover" style="margin-top:8px; font-size:12px; color:var(--text-muted);"></div>
         </div>
 
-        <div style="overflow-x: auto; max-height: 350px; margin-top: 15px;">
+        <div style="overflow-x: auto; max-height: 500px; margin-top: 15px;">
           <table class="tabela-pontos">
             <thead>
               <tr style="background: var(--primary);">
                 <th style="background: var(--primary); width: 60px;">Imagem</th>
                 <th style="background: var(--primary);">Item / Modelo / Qtd</th>
-                <th style="background: var(--primary); width: 100px; text-align: center;">Ações</th>
+                <th style="background: var(--primary); width: 130px; text-align: center;">Ações</th>
               </tr>
             </thead>
             <tbody id="lista-temas-gerenciados-corpo">
@@ -891,6 +921,59 @@
     </div>
   </div>
 
+  <!-- ============================================================ -->
+  <!-- MODAL DE EDIÇÃO DE MAQUETE (NOVO) -->
+  <!-- ============================================================ -->
+  <div id="modal-editar-tema" class="modal-editar-tema">
+    <div class="modal-editar-conteudo">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
+        <h3 style="margin:0; color:var(--primary);">✏️ Editar Maquete</h3>
+        <button type="button" id="btn-fechar-editar-tema" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
+      </div>
+
+      <input type="hidden" id="editar-tema-id" value="">
+
+      <div class="preview-box-editar">
+        <img id="editar-tema-preview" class="preview-foto-editar" src="https://placehold.co/200x200?text=Sem+Foto" alt="Preview">
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">Pré-visualização da foto</div>
+      </div>
+
+      <div class="input-group">
+        <label>📷 Trocar Foto (opcional):</label>
+        <input type="file" id="editar-tema-imagem" class="input-file-editar" accept="image/*">
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">
+          Deixe em branco pra manter a foto atual. A nova foto será reduzida automaticamente.
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>📝 Nome da Maquete:</label>
+        <input type="text" id="editar-tema-nome" placeholder="Ex: Fundo do Mar">
+      </div>
+
+      <div class="grid-2">
+        <div class="input-group">
+          <label>📦 Quantidade:</label>
+          <input type="number" id="editar-tema-qtd" value="1" min="0">
+        </div>
+        <div class="input-group">
+          <label>🏷️ Categoria:</label>
+          <input type="text" id="editar-tema-categoria" placeholder="Ex: Infantil, Outros...">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>✨ Modelo / Estilo (opcional):</label>
+        <input type="text" id="editar-tema-modelo" placeholder="Ex: Rústico, Luxo, Padrão">
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button type="button" id="btn-cancelar-editar-tema" class="btn btn-outline" style="flex: 1;">Cancelar</button>
+        <button type="button" id="btn-salvar-editar-tema" class="btn btn-success" style="flex: 2;">💾 Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+
   <!-- TELA DE LOADING E STATUS DAS OPERAÇÕES -->
   <div id="modal-status-operacao" class="modal-loading-overlay">
     <div class="modal-loading-box">
@@ -900,14 +983,9 @@
     </div>
   </div>
 
-  <!-- ============================================================
-       script (1).js não é mais usado — lógica abaixo é a única.
-       ============================================================ -->
-
   <script>
     // ============================================================================
     // SISTEMA PRINCIPAL — Tralalá Festas
-    // Autoridade única: este bloco. Nada mais deve rodar em paralelo.
     // ============================================================================
 
     const CONFIG = {
@@ -1107,6 +1185,16 @@
           if (btnSalvar) btnSalvar.disabled = false;
         }
       },
+      atualizarPecaNuvem: async function(idFirebase, dadosAtualizados) {
+        if (!db) return false;
+        try {
+          await db.ref("estoque/" + idFirebase).update(dadosAtualizados);
+          return true;
+        } catch (error) {
+          console.error("Erro ao atualizar peça:", error);
+          return false;
+        }
+      },
       removerPecaNuvem: async function(indexOuId) {
         if (State.salvandoPeca) return;
         State.salvandoPeca = true;
@@ -1230,15 +1318,39 @@
     window.removerCategoria = function(nome) { return Database.removerCategoriaNuvem(nome); };
 
     // ============================================================
+    // REDUZIR IMAGEM (para não pesar o Firebase)
+    // ============================================================
+    function reduzirImagem(file, maxWidth, quality) {
+      return new Promise(function(resolve, reject) {
+        if (!file) return reject("Sem arquivo");
+        maxWidth = maxWidth || 900;
+        quality = quality || 0.82;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var img = new Image();
+          img.onload = function() {
+            var canvas = document.createElement('canvas');
+            var w = img.width, h = img.height;
+            if (w > maxWidth) {
+              h = Math.round(h * (maxWidth / w));
+              w = maxWidth;
+            }
+            canvas.width = w;
+            canvas.height = h;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          };
+          img.onerror = function() { reject("Erro ao carregar imagem"); };
+          img.src = e.target.result;
+        };
+        reader.onerror = function() { reject("Erro ao ler arquivo"); };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // ============================================================
     // CALCULADORA DE FRETE
-    // Regras:
-    //   - Usuário digita KM de IDA (ex: 45)
-    //   - Sistema multiplica por 2 (ida + volta) = 90
-    //   - Se "2ª viagem" marcado, multiplica por 2 novamente = 180
-    //   - litros = kmTotal / 9
-    //   - custoCombustivel = litros * preco
-    //   - manutencao = custoCombustivel * 0.20
-    //   - freteTotal = custoCombustivel + manutencao
     // ============================================================
     const FreteCalc = {
       ler: function() {
@@ -1254,7 +1366,6 @@
       },
       calcular: function() {
         var e = this.ler();
-        // Fator: ida+volta = 2 ; se segunda viagem, dobra de novo = 4
         var fator = e.segundaViagem ? 4 : 2;
         var kmTotal = e.kmIda * fator;
         var litros = kmTotal / CONFIG.frete.consumoKmPorLitro;
@@ -1396,7 +1507,8 @@
             'Categoria: ' + (tema.categoria || "Geral") + ' | Modelo: ' + (tema.modelo || "Padrão") + '<br>' +
             'Qtd: <strong>' + (tema.quantidade || 1) + '</strong>' +
             '</span></td>' +
-            '<td style="text-align:center;">' +
+            '<td style="text-align:center; white-space: nowrap;">' +
+            '<button type="button" onclick="window.editarTema(' + idx + ')" class="btn-acao-tabela btn-editar-tema" title="Editar Peça">✏️</button>' +
             '<button type="button" onclick="window.removerTema(' + idx + ')" class="btn-acao-tabela btn-remover-orc" title="Remover Peça">🗑️</button>' +
             '</td></tr>';
         });
@@ -1426,25 +1538,136 @@
     };
 
     // ============================================================
-    // CATEGORIAS — CORRIGIDO: extrai nome de múltiplos formatos
-    // Aceita:
-    //   - {chave: {nome: "Balão"}}
-    //   - {chave: "Balão"}                  (string direta como valor)
-    //   - ["Balão", "Painel"]               (array de strings)
-    //   - [{nome: "Balão"}, ...]            (array de objetos)
-    //   - {chave: {valor: "Balão"}}         (formato alternativo)
+    // EDITAR TEMA (NOVO)
+    // ============================================================
+    window.editarTema = function(index) {
+      const tema = State.estoqueArray[index];
+      if (!tema) {
+        Utils.showToast("Tema não encontrado.", "error");
+        return;
+      }
+
+      const modal = document.getElementById("modal-editar-tema");
+      if (!modal) return;
+
+      document.getElementById("editar-tema-id").value = tema.idFirebase || "";
+      document.getElementById("editar-tema-nome").value = tema.nome || "";
+      document.getElementById("editar-tema-qtd").value = tema.quantidade || 1;
+      document.getElementById("editar-tema-categoria").value = tema.categoria || "Outros";
+      document.getElementById("editar-tema-modelo").value = tema.modelo || "";
+      document.getElementById("editar-tema-imagem").value = "";
+
+      const preview = document.getElementById("editar-tema-preview");
+      preview.src = tema.imagem || "https://placehold.co/200x200?text=Sem+Foto";
+
+      modal.classList.add("ativo");
+    };
+
+    function fecharModalEditar() {
+      const modal = document.getElementById("modal-editar-tema");
+      if (modal) modal.classList.remove("ativo");
+    }
+
+    function initModalEditar() {
+      const modal = document.getElementById("modal-editar-tema");
+      if (!modal) return;
+
+      const btnFechar = document.getElementById("btn-fechar-editar-tema");
+      if (btnFechar) btnFechar.onclick = fecharModalEditar;
+
+      const btnCancelar = document.getElementById("btn-cancelar-editar-tema");
+      if (btnCancelar) btnCancelar.onclick = fecharModalEditar;
+
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) fecharModalEditar();
+      });
+
+      const inputImagem = document.getElementById("editar-tema-imagem");
+      if (inputImagem) {
+        inputImagem.onchange = function(e) {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          const preview = document.getElementById("editar-tema-preview");
+          const reader = new FileReader();
+          reader.onload = function(ev) {
+            preview.src = ev.target.result;
+          };
+          reader.readAsDataURL(file);
+        };
+      }
+
+      const btnSalvar = document.getElementById("btn-salvar-editar-tema");
+      if (btnSalvar) {
+        btnSalvar.onclick = async function() {
+          const idFirebase = document.getElementById("editar-tema-id").value;
+          const nome = document.getElementById("editar-tema-nome").value.trim();
+          const qtd = parseInt(document.getElementById("editar-tema-qtd").value) || 0;
+          const categoria = document.getElementById("editar-tema-categoria").value.trim() || "Outros";
+          const modelo = document.getElementById("editar-tema-modelo").value.trim();
+          const fileInput = document.getElementById("editar-tema-imagem");
+
+          if (!idFirebase) {
+            Utils.showToast("Erro: ID do tema não encontrado.", "error");
+            return;
+          }
+          if (!nome) {
+            Utils.showToast("Preencha o nome da maquete.", "warning");
+            return;
+          }
+
+          btnSalvar.disabled = true;
+          btnSalvar.innerText = "⏳ Salvando...";
+
+          try {
+            let imagemBase64 = null;
+
+            if (fileInput && fileInput.files && fileInput.files[0]) {
+              Utils.showToast("📷 Reduzindo imagem...", "info");
+              imagemBase64 = await reduzirImagem(fileInput.files[0], 900, 0.82);
+            }
+
+            const dadosAtualizados = {
+              nome: nome,
+              quantidade: qtd,
+              categoria: categoria,
+              modelo: modelo,
+              atualizadoEm: Date.now()
+            };
+
+            if (imagemBase64) {
+              dadosAtualizados.imagem = imagemBase64;
+            }
+
+            const sucesso = await Database.atualizarPecaNuvem(idFirebase, dadosAtualizados);
+
+            if (sucesso) {
+              Utils.showToast("✅ Maquete atualizada com sucesso!", "success");
+              fecharModalEditar();
+            } else {
+              Utils.showToast("❌ Erro ao atualizar. Tente novamente.", "error");
+            }
+          } catch (err) {
+            console.error(err);
+            Utils.showToast("❌ Erro: " + (err.message || err), "error");
+          } finally {
+            btnSalvar.disabled = false;
+            btnSalvar.innerText = "💾 Salvar Alterações";
+          }
+        };
+      }
+    }
+
+    // ============================================================
+    // CATEGORIAS
     // ============================================================
     function extrairNomesCategorias(data) {
       var nomes = [];
       if (!data) return nomes;
-
-      // Caso 1: array direto
       if (Array.isArray(data)) {
         data.forEach(function(item) {
           if (!item) return;
-          if (typeof item === 'string') {
-            nomes.push(item);
-          } else if (typeof item === 'object') {
+          if (typeof item === 'string') nomes.push(item);
+          else if (typeof item === 'object') {
             if (item.nome) nomes.push(item.nome);
             else if (item.valor) nomes.push(item.valor);
             else if (item.name) nomes.push(item.name);
@@ -1452,28 +1675,20 @@
         });
         return nomes;
       }
-
-      // Caso 2: objeto
       if (typeof data === 'object') {
         Object.keys(data).forEach(function(key) {
           var val = data[key];
           if (val === null || val === undefined) return;
-          if (typeof val === 'string') {
-            nomes.push(val);
-          } else if (typeof val === 'object') {
+          if (typeof val === 'string') nomes.push(val);
+          else if (typeof val === 'object') {
             if (val.nome) nomes.push(val.nome);
             else if (val.valor) nomes.push(val.valor);
             else if (val.name) nomes.push(val.name);
-            // Se for um objeto mas sem campo de nome, e a chave não for um ID do Firebase
-            // (chaves do Firebase começam com "-"), usa a própria chave como nome
-            else if (key && key.charAt(0) !== '-' && !/^\d+$/.test(key)) {
-              nomes.push(key);
-            }
+            else if (key && key.charAt(0) !== '-' && !/^\d+$/.test(key)) nomes.push(key);
           }
         });
         return nomes;
       }
-
       return nomes;
     }
 
@@ -1482,7 +1697,6 @@
       db.ref('categorias').on('value', function(snapshot) {
         var data = snapshot.val();
         var nomes = extrairNomesCategorias(data);
-        // Remove duplicatas e vazios
         var unicos = [];
         nomes.forEach(function(n) {
           if (n && String(n).trim() !== "" && unicos.indexOf(String(n)) === -1) {
@@ -2434,9 +2648,11 @@
           Database.salvarPecaNuvem({ nome: nome, quantidade: qtd, categoria: categoria, modelo: modelo, imagem: img || "" });
         };
         if (fileInput && fileInput.files && fileInput.files[0]) {
-          var reader = new FileReader();
-          reader.onload = function(ev) { executar(ev.target.result); };
-          reader.readAsDataURL(fileInput.files[0]);
+          reduzirImagem(fileInput.files[0], 900, 0.82).then(function(base64) {
+            executar(base64);
+          }).catch(function() {
+            executar("");
+          });
         } else {
           executar("");
         }
@@ -2480,6 +2696,9 @@
         if (isNaN(idx)) { alert("Selecione um tema válido!"); return; }
         window.removerTema(idx);
       };
+
+      // Inicializa o modal de edição
+      initModalEditar();
     }
 
     // ============================================================
@@ -2491,7 +2710,7 @@
       listenReservas();
       listenOrcamentos();
       bindTudo();
-      console.log("✅ Sistema Tralalá inicializado.");
+      console.log("✅ Sistema Tralalá inicializado com botão Editar.");
     });
   </script>
 </body>
