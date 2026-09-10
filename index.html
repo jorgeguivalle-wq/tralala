@@ -117,8 +117,6 @@
     .tabela-pontos { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
     .tabela-pontos th { background: var(--primary); color: white; padding: 10px; text-align: left; }
     .tabela-pontos td { padding: 10px; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; }
-    
-    .categoria-header-linha { background-color: #fdf5f6 !important; font-weight: bold; color: var(--primary-dark) !important; }
 
     .painel-kits { background: #fafafa; border: 1px solid var(--border-color); padding: 20px; border-radius: var(--radius); margin-bottom: 25px; }
     .grid-kits { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
@@ -133,138 +131,10 @@
       background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--primary);
       padding: 22px; border-radius: 12px; margin-bottom: 15px;
     }
-    .card-reuniao { border-left-color: #3498db; }
-    .card-contrato { border-left-color: #e67e22; }
 
-    .painel-central-relatorios {
-      background: #fdfbfc; border: 1.5px solid var(--primary-light); padding: 22px;
-      border-radius: var(--radius); margin-bottom: 30px; box-shadow: var(--shadow);
-    }
-    .planilha-festa-simulada { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-    .planilha-festa-simulada th { background: #8e5868; color: white; padding: 8px; }
-    .planilha-festa-simulada td { border: 1px solid var(--border-color); padding: 8px; vertical-align: middle; }
-    .input-tabela { width: 100%; border: none; background: transparent; font-size: 12px; padding: 4px; }
-    .input-tabela:focus { outline: 1px solid var(--primary-light); background: #fff5f6; }
-    .seletor-kit-tabela { padding: 4px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 5px; width: 100%; }
-    
-    .catalogo-foto { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-color); }
-    
     .calc-frete-box {
-      background: #fff3f5; border: 1px dashed var(--primary-light);
+      background: #fff3f5; border: 1.5px dashed var(--primary-light);
       padding: 15px; border-radius: 10px; margin-top: 15px;
-    }
-    
-    .grafico-wrapper {
-      background: #ffffff; border: 1px solid var(--border-color);
-      padding: 15px; border-radius: 12px; margin-top: 15px;
-    }
-
-    .btn-acao-tabela {
-      padding: 5px 8px; font-size: 13px; border-radius: 6px; cursor: pointer; border: none;
-      display: inline-flex; align-items: center; justify-content: center; transition: transform 0.2s;
-    }
-    .btn-acao-tabela:hover { transform: scale(1.1); }
-    .btn-promover { background-color: #27ae60; color: white; margin-right: 5px; }
-    .btn-remover-orc { background-color: #e74c3c; color: white; }
-
-    .montagem-local-container {
-      background: #f4f6f9; border: 1.5px solid #dcdde1; border-radius: 10px; padding: 15px; margin-top: 15px; display: none;
-    }
-    .check-container { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--primary-dark); cursor: pointer; margin-bottom: 15px; }
-    .check-container input { width: 20px; height: 20px; cursor: pointer; }
-    .multi-select-box { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; max-height: 120px; overflow-y: auto; padding: 8px; }
-    .multi-select-item { display: flex; align-items: center; gap: 8px; padding: 4px; font-size: 13px; }
-    .multi-select-item input { width: 16px; height: 16px; }
-
-    .modal-contrato {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
-      z-index: 10000; opacity: 0; pointer-events: none; transition: all 0.3s ease;
-    }
-    .modal-contrato.ativo { opacity: 1; pointer-events: auto; }
-    .modal-conteudo {
-      background: #fff; padding: 30px; border-radius: var(--radius);
-      width: 90%; max-width: 700px; max-height: 85vh; overflow-y: auto;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    }
-
-    .modal-visualizar-contrato {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center;
-      z-index: 10001; opacity: 0; pointer-events: none; transition: all 0.3s ease;
-    }
-    .modal-visualizar-contrato.ativo { opacity: 1; pointer-events: auto; }
-    .modal-visualizar-conteudo {
-      background: #fff; padding: 30px; border-radius: var(--radius);
-      width: 95%; max-width: 1000px; max-height: 90vh; overflow-y: auto;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    }
-
-    .visualizador-contrato-scroll {
-      max-height: 75vh;
-      overflow-y: auto;
-      background: #e8e8e8;
-      padding: 20px;
-      border-radius: 8px;
-    }
-
-    /* ESTILOS DO MODAL DE STATUS/LOADING DA OPERAÇÃO */
-    .modal-loading-overlay {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center;
-      z-index: 20000; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
-    }
-    .modal-loading-overlay.ativo { opacity: 1; pointer-events: auto; }
-    .modal-loading-box {
-      background: #ffffff; padding: 35px 30px; border-radius: 20px; text-align: center;
-      max-width: 400px; width: 85%; box-shadow: 0 15px 35px rgba(0,0,0,0.25);
-      border: 2px solid var(--primary-light);
-    }
-    .spinner-loading {
-      width: 45px; height: 45px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary);
-      border-radius: 50%; animation: spin 0.9s linear infinite; margin: 0 auto 18px auto;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .modal-loading-titulo { font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
-    .modal-loading-subtitulo { font-size: 13px; color: var(--text-muted); margin: 0; }
-
-    .pagina-contrato {
-      background: white; width: 210mm; min-height: 297mm; margin: 10px auto;
-      padding: 18mm 16mm; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-radius: 2px;
-      box-sizing: border-box; page-break-after: always; break-after: page;
-      font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.4;
-      text-align: justify; position: relative;
-    }
-    .pagina-contrato .logo-container { text-align: center; margin-bottom: 6px; }
-    .pagina-contrato .logo-contrato { max-width: 120px; max-height: 50px; height: auto; }
-    .pagina-contrato .titulo-contrato {
-      text-align: center; font-size: 15pt; font-weight: bold; text-transform: uppercase;
-      margin: 0 0 5px 0; padding: 0; letter-spacing: 1px;
-    }
-    .pagina-contrato .dados-contratada { margin: 0; padding: 0; line-height: 1.3; }
-    .pagina-contrato .dados-contratante { margin: 2px 0 0 0; padding: 0; line-height: 1.3; }
-    .pagina-contrato .clausula-titulo { font-weight: bold; font-size: 11.5pt; margin: 5px 0 2px 0; padding: 0; text-transform: uppercase; }
-    .pagina-contrato .clausula-texto { margin: 0 0 2px 0; padding: 0; text-align: justify; }
-    .pagina-contrato .paragrafo { margin: 0 0 2px 18px; padding: 0; text-align: justify; }
-    .pagina-contrato .assinatura { margin-top: 14px; text-align: center; }
-    .pagina-contrato .linha-assinatura { border-top: 1px solid #000; width: 60%; margin: 3px auto; padding-top: 3px; }
-    .pagina-contrato .assinatura-nome { font-weight: bold; font-size: 10pt; }
-    .pagina-contrato .negrito { font-weight: bold; }
-    .pagina-contrato p { margin: 0 0 2px 0; padding: 0; }
-
-    .btn-pdf { background-color: #e67e22; color: #fff; }
-    .btn-pdf:hover { background-color: #d35400; transform: translateY(-2px); }
-
-    @media print {
-      .pagina-contrato { box-shadow: none; margin: 0; padding: 18mm 16mm; width: 100%; min-height: 297mm; page-break-after: always; break-after: page; border-radius: 0; }
-      .visualizador-contrato-scroll { max-height: none; overflow-y: visible; padding: 0; background: white; }
-      .no-print { display: none !important; }
-    }
-
-    @media (max-width: 600px) {
-      .site-container { padding: 25px 20px; }
-      .grid-2, .grid-3, .grid-4, .grid-kits { grid-template-columns: 1fr; }
-      .pagina-contrato { width: 100%; min-height: 297mm; padding: 15mm 12mm; margin: 5px auto; }
     }
   </style>
 </head>
@@ -327,1092 +197,737 @@
         </div>
       </div>
 
-      <div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">
-        <button type="button" id="btn-abrir-central-relatorios" class="btn btn-primary" style="flex: 1; min-width: 140px; background-color: #3498db;"> 📊 Venda Mensal & Anual</button>
-        <button type="button" id="btn-abrir-reunioes-painel" class="btn btn-primary" style="flex: 1; min-width: 140px; background-color: #27ae60;"> 📅 Agendar Reuniões</button>
-        <button type="button" id="btn-abrir-orcamentos" class="btn btn-outline" style="flex: 1; min-width: 140px; background-color: #a3536a; color: white; border: none;"> 📋 Ver Orçamentos </button>
-        <button type="button" id="btn-abrir-catalogo-temas" class="btn btn-outline" style="flex: 1; min-width: 110px;"> 🎨 Ver Catálogo </button>
-        <button type="button" id="btn-abrir-gerador-contrato" class="btn btn-outline" style="flex: 1; min-width: 130px; border-color: #e67e22; color: #e67e22;"> ✍️ Gerar Contrato </button>
+      <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+        <button type="button" id="btn-abrir-orcamentos" class="btn btn-outline">📂 Ver Orçamentos</button>
+        <button type="button" id="btn-abrir-reuniao" class="btn btn-outline">📅 Agendar Reunião</button>
+        <button type="button" id="btn-venda-mensal" class="btn btn-outline">📈 Venda Mensal</button>
       </div>
 
-      <div id="painel-reunioes-exclusivo" class="painel-central-relatorios" style="display: none; border-color: #27ae60;">
-        <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center; color: #27ae60;">
-          <span>📅 Painel de Reuniões com Clientes</span>
-          <button type="button" id="btn-fechar-reunioes" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px; border-color: #27ae60; color: #27ae60;">✕ Fechar</button>
-        </h3>
-        
-        <div style="background: #f4faf6; border: 1px solid #d4efdf; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-          <h4 style="margin: 0 0 10px 0; color: #27ae60;">➕ Marcar Nova Reunião</h4>
-          <div class="grid-2">
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 12px;">Cliente / Noiva:</label>
-              <input type="text" id="reuniao-cliente" placeholder="Nome da Contratante">
-            </div>
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 12px;">Data & Hora:</label>
-              <input type="datetime-local" id="reuniao-data-hora">
-            </div>
-          </div>
-          <div class="input-group" style="margin-bottom: 10px;">
-            <label style="font-size: 12px;">Pauta / Objetivo da Reunião:</label>
-            <input type="text" id="reuniao-pauta" placeholder="Ex: Escolha das flores, Ajuste do layout, Assinatura de contrato">
-          </div>
-          <button type="button" id="btn-salvar-reuniao-avulsa" class="btn btn-primary" style="background-color: #27ae60;">Agendar Reunião</button>
-        </div>
-
-        <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px;">📍 Reuniões Agendadas:</h4>
-        <div id="lista-reunioes-container" style="max-height: 250px; overflow-y: auto;">
-          <p style="color: #999; text-align: center;">Buscando reuniões da nuvem...</p>
-        </div>
+      <div id="painel-orcamentos-salvos" style="display:none; margin-bottom:20px; background:#fff; border:1px solid var(--border-color); padding:15px; border-radius:10px;">
+        <h3>Orçamentos Salvos</h3>
+        <div id="lista-orcamentos-render"></div>
       </div>
 
-      <div id="painel-catalogo-temas" class="painel-relatorio-pontos" style="border-color: var(--primary); background: #ffffff; display: none;">
-        <h3 style="margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 5px; color: var(--primary); display: flex; justify-content: space-between; align-items: center;">
-          <span>🎨 Catálogo de Temas & Peças</span>
-          <span id="contador-catalogo-total" style="font-size: 13px; font-weight: normal; background: var(--primary); color: white; padding: 2px 8px; border-radius: 20px;">0 itens</span>
-        </h3>
-        
-        <div style="background: #ffffff; border: 1.5px solid var(--primary-light); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-          <h4 style="margin: 0 0 10px 0; color: var(--primary); font-size: 14px;">➕ Adicionar Peça / Tema ao Catálogo</h4>
-          <div class="grid-3">
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 11px;">Nome da Peça/Tema:</label>
-              <input type="text" id="catalogo-peca-nome" placeholder="Ex: Mesa Provençal Branca">
-            </div>
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 11px;">Quantidade Disponível:</label>
-              <input type="number" id="catalogo-peca-qtd" value="1" min="0">
-            </div>
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 11px;">Categoria:</label>
-              <select id="catalogo-peca-categoria">
-                <option value="Infantil">Infantil</option>
-                <option value="Casamento">Casamento</option>
-                <option value="15 Anos">15 Anos</option>
-                <option value="Outros">Outros</option>
-              </select>
-            </div>
-          </div>
-          <div class="grid-2">
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 11px;">Modelo/Estilo:</label>
-              <input type="text" id="catalogo-peca-modelo" placeholder="Ex: Rústico, Luxo, Painel Redondo">
-            </div>
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 11px;">Tirar Foto da Peça / Upload:</label>
-              <input type="file" id="catalogo-peca-imagem" accept="image/*" capture="environment" style="padding: 10px;">
-            </div>
-          </div>
-          <button type="button" id="btn-adicionar-peca" class="btn btn-primary" style="margin-top: 5px;">Salvar Peça no Acervo</button>
-        </div>
-
-        <div style="background: #f5f0f0; border: 1.5px solid #e1cbd4; padding: 15px; border-radius: 10px; margin-bottom: 20px; margin-top: 15px;">
-          <h4 style="margin: 0 0 12px 0; color: var(--primary-dark); display: flex; justify-content: space-between; align-items: center;">
-            <span>📂 Gerenciar Categorias</span>
-            <span id="contador-categorias" style="font-size:12px; background:var(--primary); color:#fff; padding:2px 10px; border-radius:12px;">0</span>
-          </h4>
-          
-          <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 200px; display: flex; gap: 8px;">
-              <input type="text" id="input-nova-categoria" placeholder="Nome da nova categoria" style="flex:1; padding:8px 12px; border:1.5px solid var(--border-color); border-radius:8px;">
-              <button type="button" id="btn-adicionar-categoria" class="btn btn-primary" style="padding:8px 16px; width:auto; font-size:13px; white-space:nowrap;">➕ Adicionar</button>
-            </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <select id="select-remover-categoria" style="padding:8px 12px; border:1.5px solid var(--border-color); border-radius:8px; min-width:150px;">
-                <option value="">Selecione...</option>
-              </select>
-              <button type="button" id="btn-remover-categoria" class="btn btn-danger" style="padding:8px 16px; width:auto; font-size:13px; white-space:nowrap;">🗑️ Remover</button>
-            </div>
-          </div>
-          
-          <div id="lista-categorias-admin" style="display:flex; flex-wrap:wrap; gap:6px; padding:8px; background:#fff; border-radius:8px; min-height:40px; border:1px solid var(--border-color);">
-          </div>
-        </div>
-
-        <div style="background: #fff5f5; border: 1.5px solid #f5c6c6; padding: 15px; border-radius: 10px; margin-top: 15px;">
-          <h4 style="margin: 0 0 12px 0; color: var(--error); display: flex; justify-content: space-between; align-items: center;">
-            <span>🗑️ Remover Tema/Peça</span>
-          </h4>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-            <select id="select-remover-tema" style="flex:1; min-width:200px; padding:10px 14px; border:1.5px solid var(--border-color); border-radius:8px;">
-              <option value="">Selecione um tema para remover...</option>
-            </select>
-            <button type="button" id="btn-remover-tema-admin" class="btn btn-danger" style="padding:10px 20px; width:auto; font-size:14px;">
-              🗑️ Remover Tema Selecionado
-            </button>
-          </div>
-          <div id="info-tema-remover" style="margin-top:8px; font-size:12px; color:var(--text-muted);"></div>
-        </div>
-
-        <div style="overflow-x: auto; max-height: 350px; margin-top: 15px;">
-          <table class="tabela-pontos">
-            <thead>
-              <tr style="background: var(--primary);">
-                <th style="background: var(--primary); width: 60px;">Imagem</th>
-                <th style="background: var(--primary);">Item / Modelo / Qtd</th>
-                <th style="background: var(--primary); width: 100px; text-align: center;">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="lista-temas-gerenciados-corpo">
-              <tr><td colspan="3" style="text-align:center; color:#999; padding: 10px;">Buscando catálogo na nuvem...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="secao-central-relatorios" class="painel-central-relatorios" style="display: none;">
-        <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center;">
-          <span>📊 Relatório de Vendas & Faturamento Mensal</span>
-          <button type="button" id="btn-fechar-central-relatorios" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;">✕ Fechar</button>
-        </h3>
-
-        <div class="grid-2" style="margin-bottom: 15px; align-items: flex-end;">
-          <div class="input-group" style="margin-bottom: 0;">
-            <label>Selecione o Mês para Lançamento:</label>
-            <select id="seletor-mes-planilha">
-              <option value="Janeiro">Janeiro 2026</option>
-              <option value="Fevereiro">Fevereiro 2026</option>
-              <option value="Março">Março 2026</option>
-              <option value="Abril">Abril 2026</option>
-              <option value="Maio">Maio 2026</option>
-              <option value="Junho">Junho 2026</option>
-              <option value="Julho" selected>Julho 2026</option>
-              <option value="Agosto">Agosto 2026</option>
-              <option value="Setembro">Setembro 2026</option>
-              <option value="Outubro">Outubro 2026</option>
-              <option value="Novembro">Novembro 2026</option>
-              <option value="Dezembro">Dezembro 2026</option>
-            </select>
-          </div>
-          <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-            <button type="button" id="btn-transformar-grafico" class="btn btn-primary" style="background-color: #e74c3c; font-size: 11px; padding: 8px; width: auto;">📈 Transformar Planilha em Gráfico</button>
-            <button type="button" id="btn-toggle-grafico" class="btn btn-outline" style="border-color: #3498db; color: #3498db; font-size: 11px; padding: 8px;">📈 Gráfico Anual</button>
-            <button type="button" id="btn-gerar-resumo-mensal" class="btn btn-outline" style="border-color: #27ae60; color: #27ae60; font-size: 11px; padding: 8px;">📊 Relatório Mensal</button>
-          </div>
-        </div>
-
-        <div id="painel-grafico-faturamento" class="grafico-wrapper" style="display: none;">
-          <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📈 Desempenho Faturamento Anual (2026)</h4>
-          <canvas id="graficoAnual" style="max-height: 250px; width: 100%;"></canvas>
-        </div>
-
-        <div id="form-planilha-vendas" style="overflow-x: auto; margin-top: 15px;">
-          <div style="background: #e8f4fd; border-left: 5px solid #3498db; padding: 10px; font-size: 11px; border-radius: 4px; margin-bottom: 10px; color: #2c3e50;">
-            ℹ️ <strong>Sincronização Ativa:</strong> Todas as Reservas Ativas são automaticamente lançadas na planilha com base no mês do evento.
-          </div>
-          
-          <table class="planilha-festa-simulada" id="tabela-planilha-corpo">
-            <thead>
-              <tr>
-                <th style="width: 35%;">Cliente</th>
-                <th style="width: 25%;">Modelo de Kit</th>
-                <th style="width: 25%;">Valor (R$)</th>
-                <th style="width: 15%;">Ação</th>
-              </tr>
-            </thead>
-            <tbody>
-            </tbody>
-          </table>
-
-          <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-            <button type="button" id="btn-adicionar-linha-planilha" class="btn btn-outline" style="font-size: 12px; padding: 8px; flex: 1;">➕ Adicionar Avulso</button>
-            <button type="button" id="btn-salvar-dados-planilha" class="btn btn-outline" style="font-size: 12px; padding: 8px; border-color: #3498db; color: #3498db; flex: 1;">☁️ Salvar Alterações na Nuvem</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- FORMULÁRIO DE RESERVA -->
-      <h2 id="titulo-form-reserva">Agendar Nova Festa</h2>
-      <input type="hidden" id="editando-id-reserva" value="">
-      
-      <div class="grid-2">
+      <div class="painel-kits">
+        <h3>Nova Reserva / Orçamento</h3>
         <div class="input-group">
-          <label>Nome do Cliente:</label>
-          <input type="text" id="nome-cliente" placeholder="Ex: Maria Flor">
+          <label>Cliente:</label>
+          <input type="text" id="nome-cliente" placeholder="Nome completo do cliente">
         </div>
         <div class="input-group">
-          <label>Data do Evento:</label>
+          <label>Data da Festa:</label>
           <input type="date" id="data">
         </div>
-      </div>
-
-      <div class="input-group">
-        <label id="label-busca-tema">Buscar e Selecionar Tema/Peça do Catálogo:</label>
-        <div class="sugestoes-wrapper">
+        <div class="input-group">
+          <label>Tema da Festa:</label>
           <div class="busca-container">
-            <input type="text" id="filtro-tema-input" placeholder="Digite para buscar..." autocomplete="off">
+            <input type="text" id="busca-tema-input" placeholder="Digite para buscar o tema (ex: Moranguinho)..." autocomplete="off">
           </div>
-          <div id="wrapper-lista-sugestoes" class="lista-sugestoes"></div>
+          <div id="lista-sugestoes-temas" class="lista-sugestoes"></div>
         </div>
-        <input type="hidden" id="busca-tema-input" value="">
-      </div>
-   
-      <div class="painel-kits">
-        <label style="font-weight: 600; display: block; margin-bottom: 12px; color: var(--primary);"> 🛍️ Escolha o Modelo do Kit:</label>
-        <div id="grupo-kits-dinamico" class="grid-kits">
-          <button type="button" class="btn-kit-opcao" data-kit="Só um Bolinho"> 🧁 Só um Bolinho</button>
-          <button type="button" class="btn-kit-opcao" data-kit="Kit Básico"> 📦 Kit Básico</button>
-          <button type="button" class="btn-kit-opcao" data-kit="Kit Prata"> 🥈 Kit Prata</button>
-          <button type="button" class="btn-kit-opcao" data-kit="Kit Ouro"> 🥇 Kit Ouro</button>
-        </div>
-        
-        <div style="margin-top: 20px;">
-          <label class="check-container">
-            <input type="checkbox" id="chk-montar-local">
-            <span>🛠️ Montar no Local?</span>
-          </label>
-          
-          <div id="painel-montagem-local" class="montagem-local-container">
-            <h4 style="margin: 0 0 12px 0; color: var(--primary-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Perguntas de Montagem no Local:</h4>
-            
-            <div class="grid-2">
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Quantas peças vão?</label>
-                <input type="number" id="ml-qtd-pecas" value="0" min="0">
-              </div>
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Selecione quais peças vão (Estoque):</label>
-                <div id="ml-pecas-estoque" class="multi-select-box">
-                </div>
-              </div>
-            </div>
 
-            <div class="grid-3">
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Vai LED?</label>
-                <select id="ml-led">
-                  <option value="Não">Não</option>
-                  <option value="Sim">Sim</option>
-                </select>
-              </div>
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Quantos cilindros?</label>
-                <input type="number" id="ml-qtd-cilindros" value="0" min="0">
-              </div>
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Quantas mesas?</label>
-                <input type="number" id="ml-qtd-mesas" value="0" min="0">
-              </div>
-            </div>
-
-            <div class="grid-2">
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Selecione quais mesas/cilindros vão (Estoque):</label>
-                <div id="ml-mesas-estoque" class="multi-select-box">
-                </div>
-              </div>
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Vai Balão?</label>
-                <select id="ml-balao">
-                  <option value="Não">Não</option>
-                  <option value="Sim">Sim</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="grid-2">
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Vai Display Personalizado?</label>
-                <select id="ml-display">
-                  <option value="Não">Não</option>
-                  <option value="Sim">Sim</option>
-                </select>
-              </div>
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Vai Personalizados?</label>
-                <select id="ml-personalizados">
-                  <option value="Não">Não</option>
-                  <option value="Sim">Sim</option>
-                </select>
-              </div>
-            </div>
+        <div class="input-group">
+          <label>Modelo do Kit:</label>
+          <div class="grid-kits">
+            <button type="button" class="btn-kit-opcao" data-kit="Kit Básico">Kit Básico</button>
+            <button type="button" class="btn-kit-opcao" data-kit="Kit Prata">Kit Prata</button>
+            <button type="button" class="btn-kit-opcao" data-kit="Kit Ouro">Kit Ouro</button>
+            <button type="button" class="btn-kit-opcao" data-kit="Montar no Local">Montar no Local</button>
           </div>
         </div>
 
-        <div class="input-group" style="margin-top: 15px;">
-          <label style="font-weight: 600; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;"> 💰 Acerto Financeiro & Frete Inteligente</label>
-          
-          <div class="calc-frete-box">
-            <span style="font-size: 12px; font-weight: 600; color: var(--primary-dark);">🚗 Calculadora de Frete (Consumo: 9 km/L):</span>
-            <div class="grid-2" style="margin-top: 10px;">
-              <div>
-                <label style="font-size: 11px;">Quilometragem (KM ida e volta):</label>
-                <input type="number" id="calc-km" placeholder="Ex: 45" style="padding: 8px;">
-              </div>
-              <div>
-                <label style="font-size: 11px;">Preço Base do Combustível (R$):</label>
-                <input type="number" id="calc-valor-litro" value="32.00" step="0.01" style="padding: 8px;">
-              </div>
+        <div class="calc-frete-box">
+          <h4 style="margin-top:0; color:var(--primary);">Calculadora de Frete</h4>
+          <div class="grid-2">
+            <div class="input-group" style="margin-bottom:0;">
+              <label>Distância (KM):</label>
+              <input type="number" id="frete-km" placeholder="0" min="0" step="0.1">
             </div>
-            <div style="font-size: 12px; color: var(--text-main); margin-top: 8px; font-weight: 500;">
-              Combustível Base: <span id="calc-total-combustivel">R$ 0.00</span> | 
-              Manutenção (+20%): <span id="calc-manutencao">R$ 0.00</span> | 
-              <strong>Total do Frete a Cobrar: <span id="calc-cobrar-cliente" style="color: var(--success);">R$ 0.00</span></strong>
+            <div class="input-group" style="margin-bottom:0;">
+              <label>Valor do Combustível (R$):</label>
+              <input type="number" id="frete-valor-litro" placeholder="0.00" min="0" step="0.01">
             </div>
           </div>
-
-          <div id="card-orcamentos-integrado" style="background: #fdf5f6; border: 1.5px solid var(--primary-light); padding: 18px; border-radius: 12px; margin-top: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <h3 style="margin: 0; font-size: 16px; color: var(--primary);">📋 Orçamentos Salvos</h3>
-              <button type="button" id="btn-salvar-como-orcamento" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; font-weight: bold; border-color: var(--primary); color: var(--primary);">
-                💾 Salvar Orçamento
-              </button>
-            </div>
-            
-            <div style="overflow-x: auto; max-height: 250px; overflow-y: auto; margin-top: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: #ffffff;">
-              <table class="planilha-festa-simulada" style="width: 100%; border-collapse: collapse; margin-top: 0;">
-                <thead>
-                  <tr style="background: var(--primary); color: white;">
-                    <th style="padding: 8px; font-size: 11px; text-align: left;">Cliente</th>
-                    <th style="padding: 8px; font-size: 11px; text-align: left;">Tema / Kit</th>
-                    <th style="padding: 8px; font-size: 11px; text-align: left;">Valor (R$)</th>
-                    <th style="padding: 8px; font-size: 11px; text-align: center; width: 90px;">Ações</th>
-                  </tr>
-                </thead>
-                <tbody id="lista-orcamentos-interno-corpo">
-                  <tr><td colspan="4" style="text-align:center; color:#999; padding: 15px;">Buscando orçamentos da nuvem...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="grid-3" style="margin-top: 15px;">
-            <div>
-              <label style="font-size: 12px;">Valor da Festa (R$):</label>
-              <input type="number" id="valor-festa" placeholder="0.00" step="0.01" value="0.00">
-            </div>
-            <div>
-              <label style="font-size: 12px;">Frete Calculado (R$):</label>
-              <input type="number" id="valor-frete" placeholder="0.00" step="0.01" readonly style="background: #fdf5f6; font-weight: bold; color: var(--primary);">
-            </div>
-            <div>
-              <label style="font-size: 12px;">Valor Total (Festa + Frete):</label>
-              <input type="number" id="valor-total" placeholder="0.00" step="0.01" readonly style="font-weight: bold; background: #ebfbf2;">
-            </div>
-          </div>
-
-          <div class="grid-2" style="margin-top: 15px;">
-            <div>
-              <label style="font-size: 12px;">Sinal Pago (Ex: 50%):</label>
-              <input type="number" id="valor-sinal" placeholder="0.00" step="0.01" value="0.00">
-            </div>
-            <div>
-              <label style="font-size: 12px; color: var(--error); font-weight: 600;">Resta Pagar (R$):</label>
-              <input type="number" id="valor-restante" placeholder="0.00" step="0.01" readonly style="background: #fff5f6; font-weight: bold; color: var(--error);">
-            </div>
+          <div id="painel-frete-resultado" style="margin-top:10px; display:none; font-size:13px;">
+            <span>Litros consumidos: <b id="res-frete-litros">0.00</b> L</span> | 
+            <span>Frete Total: R$ <b id="res-frete-total">0.00</b></span>
           </div>
         </div>
-        
-        <div class="input-group" style="margin-bottom: 0;">
-          <label> ➕ Observações / Local da Festa:</label>
-          <input type="text" id="adicionais-festa" placeholder="Ex: Salão de Festas ou Detalhes adicionais">
+
+        <div class="grid-2" style="margin-top:20px;">
+          <div class="input-group">
+            <label>Valor Total (R$):</label>
+            <input type="text" id="valor-total" placeholder="0.00">
+          </div>
+          <div class="input-group">
+            <label>Sinal Pago (R$):</label>
+            <input type="text" id="valor-sinal" placeholder="0.00">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Observações / Adicionais:</label>
+          <textarea id="adicionais-festa" rows="2" placeholder="Detalhes adicionais..."></textarea>
+        </div>
+
+        <div class="grid-2">
+          <button type="button" id="btn-salvar-orcamento" class="btn btn-outline">Salvar Orçamento</button>
+          <button type="button" id="btn-confirmar-agendamento" class="btn btn-primary">Confirmar Agendamento</button>
         </div>
       </div>
-      
-      <button type="button" id="btn-confirmar-agendamento" class="btn btn-primary" style="padding: 18px; font-size: 16px;"> ✅ Confirmar e Salvar Reserva Ativa</button>
-      <button type="button" id="btn-cancelar-edicao" class="btn btn-danger" style="padding: 12px; font-size: 14px; margin-top: 10px; display: none;"> Cancelar Edição </button>
-      
-      <div style="margin-top: 40px; border-top: 2px solid var(--border-color); padding-top: 30px;">
-        <h3 style="margin-bottom: 20px;"> 📋 Relatório de Agendamentos Ativos (Reservas)</h3>
-        <div id="lista-reservas-render">
-          <p style="text-align: center; color: #999;">Carregando agendamentos da nuvem...</p>
+
+      <div class="painel-kits" style="margin-top:20px;">
+        <h3>📁 Gerenciar Categorias (<span id="contador-categorias">0</span>)</h3>
+        <div class="input-group">
+          <label>Nova Categoria:</label>
+          <div style="display:flex; gap:10px;">
+            <input type="text" id="input-nova-categoria" placeholder="Ex: Balão, Decoração, Painéis...">
+            <button type="button" id="btn-adicionar-categoria" class="btn btn-primary" style="width:auto;">Adicionar</button>
+          </div>
         </div>
+        <div id="lista-categorias-admin" style="display:flex; flex-direction:column; gap:6px; margin-top:10px;"></div>
+      </div>
+
+      <div class="painel-kits" style="margin-top:20px;">
+        <h3>Gerador de Contrato — Seleção de Tema e Peças</h3>
+        <div class="input-group">
+          <label>Pesquisar Tema para o Contrato:</label>
+          <input type="text" id="contrato-busca-tema" placeholder="Digite o tema da festa (ex: Moranguinho)..." autocomplete="off">
+          <div id="contrato-sugestoes-tema" class="lista-sugestoes"></div>
+        </div>
+        <div class="input-group">
+          <label>Peças Disponíveis do Tema:</label>
+          <div id="contrato-pecas-container" class="multi-select-box">
+            <span style="color:#777; font-size:13px;">Selecione um tema acima para carregar as peças reais.</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 30px;">
+        <h3>Agendamentos Realizados</h3>
+        <div class="input-group">
+          <input type="text" id="busca-reserva" placeholder="Filtrar por cliente ou tema...">
+        </div>
+        <div id="lista-reservas-render"></div>
       </div>
     </section>
   </div>
 
-  <!-- MODAL GERADOR DE CONTRATO -->
-  <div id="modal-gerador-contrato" class="modal-contrato">
-    <div class="modal-conteudo">
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
-        <h3 style="margin:0; color:var(--primary);">✍️ Gerador de Contrato Tralalá</h3>
-        <button type="button" id="btn-fechar-modal-contrato" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
-      </div>
-      
-      <form id="form-contrato-avulso">
-        <div class="grid-2">
-          <div class="input-group">
-            <label>Nome do Contratante:</label>
-            <input type="text" id="c-nome" placeholder="Ex: Lenira Ribeiro">
-          </div>
-          <div class="input-group">
-            <label>CPF:</label>
-            <input type="text" id="c-cpf" placeholder="000.000.000-00">
-          </div>
-        </div>
-        <div class="grid-2">
-          <div class="input-group">
-            <label>Data da Festa:</label>
-            <input type="date" id="c-data">
-          </div>
-          <div class="input-group">
-            <label>Horário de Início:</label>
-            <input type="time" id="c-horario">
-          </div>
-        </div>
-        <div class="grid-2">
-          <div class="input-group">
-            <label>Valor Total (R$):</label>
-            <input type="number" id="c-valor" placeholder="600.00" step="0.01">
-          </div>
-          <div class="input-group">
-            <label>Endereço do Cliente:</label>
-            <input type="text" id="c-endereco" placeholder="Endereço completo do cliente">
-          </div>
-        </div>
-        <div class="grid-2">
-          <div class="input-group">
-            <label>Telefone:</label>
-            <input type="text" id="c-telefone" placeholder="(61) 9XXXX-XXXX">
-          </div>
-          <div class="input-group">
-            <label>Modelo do Contrato:</label>
-            <select id="c-modelo">
-              <option value="com-frete">📦 Com Frete (Entrega e Retirada)</option>
-              <option value="pegue-monte">🏠 Pegue e Monte (Retirada pelo Cliente)</option>
-            </select>
-          </div>
-        </div>
-        <div class="input-group">
-          <label>Local do Evento:</label>
-          <input type="text" id="c-local" placeholder="Endereço Completo do Evento">
-        </div>
-        
-        <div class="input-group">
-          <label>Selecione as Peças (Retiradas do Catálogo):</label>
-          <select id="c-pecas" multiple style="height:70px; padding:5px;"></select>
-        </div>
-        
-        <div class="input-group" style="margin-top: 5px; border-top: 1px dashed var(--border-color); padding-top: 15px;">
-          <label style="font-weight: 600; color: var(--primary-dark);">🍽️ Itens Adicionais para Locação</label>
-          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Selecione os itens adicionais que farão parte da locação:</div>
-          
-          <div class="grid-2">
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 12px;">Porcelanas:</label>
-              <select id="c-porcelanas" multiple style="height:60px; padding:5px;">
-                <option value="Jogo de Porcelana Branca 20 peças">Jogo de Porcelana Branca 20 peças</option>
-                <option value="Jogo de Porcelana Flor 20 peças">Jogo de Porcelana Flor 20 peças</option>
-                <option value="Jogo de Porcelana Dourada 20 peças">Jogo de Porcelana Dourada 20 peças</option>
-                <option value="Conjunto de Café 12 peças">Conjunto de Café 12 peças</option>
-                <option value="Conjunto de Chá 12 peças">Conjunto de Chá 12 peças</option>
-              </select>
-            </div>
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 12px;">Bolos e Doces:</label>
-              <select id="c-bolos" multiple style="height:60px; padding:5px;">
-                <option value="Bolo de Aniversário 2kg - Personalizado">Bolo de Aniversário 2kg - Personalizado</option>
-                <option value="Bolo de Casamento 3kg">Bolo de Casamento 3kg</option>
-                <option value="Bolo de 15 Anos 3kg">Bolo de 15 Anos 3kg</option>
-                <option value="Kit 50 Doces Finos">Kit 50 Doces Finos</option>
-                <option value="Kit 100 Doces Finos">Kit 100 Doces Finos</option>
-              </select>
-            </div>
-          </div>
-          
-          <div class="grid-2">
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 12px;">Decoração Adicional:</label>
-              <select id="c-decoracao" multiple style="height:60px; padding:5px;">
-                <option value="Arranjo de Flores Natural">Arranjo de Flores Natural</option>
-                <option value="Arranjo de Flores Artificiais">Arranjo de Flores Artificiais</option>
-                <option value="Painel de Fundo 2x2m">Painel de Fundo 2x2m</option>
-                <option value="Mesa de Doces 1,5m">Mesa de Doces 1,5m</option>
-                <option value="Toalha de Mesa Personalizada">Toalha de Mesa Personalizada</option>
-              </select>
-            </div>
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 12px;">Outros Itens:</label>
-              <select id="c-outros" multiple style="height:60px; padding:5px;">
-                <option value="Cadeiras 20 unidades">Cadeiras 20 unidades</option>
-                <option value="Cadeiras 50 unidades">Cadeiras 50 unidades</option>
-                <option value="Mesas 10 unidades">Mesas 10 unidades</option>
-                <option value="Mesas 20 unidades">Mesas 20 unidades</option>
-                <option value="Iluminação LED 10m">Iluminação LED 10m</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        
-        <div class="input-group">
-          <label>Observações (opcional):</label>
-          <input type="text" id="c-obs" placeholder="Ex: Fazer entrega às 13h">
-        </div>
-        
-        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
-          <button type="button" id="btn-gerar-salvar-contrato" class="btn btn-primary" style="background-color:#e67e22; flex: 1;">💾 Salvar Contrato</button>
-          <button type="button" id="btn-gerar-pdf-contrato" class="btn btn-success" style="flex: 1;">📄 Gerar PDF</button>
-        </div>
-      </form>
-
-      <div style="border-top:1px dashed var(--border-color); padding-top:20px;">
-        <h4 style="color:var(--primary-dark); margin-bottom:10px;">📄 Histórico de Contratos</h4>
-        <div id="historico-contratos-lista" style="max-height:200px; overflow-y:auto;">
-          <p style="color:#999; font-size:12px; text-align:center;">Nenhum contrato salvo.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL DE VISUALIZAÇÃO -->
-  <div id="modal-visualizar-contrato" class="modal-visualizar-contrato">
-    <div class="modal-visualizar-conteudo">
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
-        <h3 style="margin:0; color:var(--primary);">📄 Visualização do Contrato</h3>
-        <button type="button" id="btn-fechar-visualizacao" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
-      </div>
-      
-      <div class="visualizador-contrato-scroll" id="visualizador-scroll">
-        <div id="contrato-preview-content">
-        </div>
-      </div>
-      
-      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;" class="no-print">
-        <button type="button" id="btn-baixar-pdf-contrato" class="btn btn-pdf" style="width: auto; padding: 12px 24px;">📥 Baixar PDF</button>
-        <button type="button" id="btn-imprimir-contrato" class="btn btn-outline" style="width: auto; padding: 12px 24px;">🖨️ Imprimir</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- TELA DE LOADING E STATUS DAS OPERAÇÕES -->
-  <div id="modal-status-operacao" class="modal-loading-overlay">
-    <div class="modal-loading-box">
-      <div id="spinner-status" class="spinner-loading"></div>
-      <div id="titulo-status-operacao" class="modal-loading-titulo">LANÇANDO TEMA...</div>
-      <p id="subtitulo-status-operacao" class="modal-loading-subtitulo">Salvando no acervo, aguarde.</p>
-    </div>
-  </div>
-
   <script>
-    // ============================================================
-    // ESTADO GLOBAL DO SISTEMA
-    // ============================================================
-    const State = {
-      salvandoPeca: false,
-      listenerEstoqueIniciado: false,
-      db: null
-    };
-
-    // ============================================================
-    // FIREBASE CONFIG
-    // ============================================================
-    const firebaseConfig = {
-      databaseURL: "https://tralala-d8ce2-default-rtdb.firebaseio.com/"
-    };
-    
-    let db = null;
-    let todosOsTemas = []; 
-    let chartInstance = null;
-    const mesesAno = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-
-    try {
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-      db = firebase.database();
-      State.db = db;
-    } catch(err) {
-      console.error("Erro no Firebase:", err);
-    }
-
-    // ============================================================
-    // TELA / MODAL DE STATUS "LANÇANDO TEMA..."
-    // ============================================================
-    const ModalStatus = {
-      exibir: (titulo, subtitulo) => {
-        const modal = document.getElementById("modal-status-operacao");
-        const spinner = document.getElementById("spinner-status");
-        const t = document.getElementById("titulo-status-operacao");
-        const sub = document.getElementById("subtitulo-status-operacao");
-        
-        if (!modal) return;
-        spinner.style.display = "block";
-        spinner.style.borderColor = "#f3f3f3";
-        spinner.style.borderTopColor = "var(--primary)";
-        t.style.color = "var(--primary)";
-        t.innerText = titulo || "PROCESSANDO...";
-        sub.innerText = subtitulo || "Aguarde a confirmação.";
-        modal.classList.add("ativo");
+    var CONFIG = {
+      usuarios: {
+        "jorgeguivalle@gmail.com": "Viperrt11",
+        "leonardodovalle@gmail.com": "Viperrt11@",
+        "tralaladecoracoes@gmail.com": "tralala123"
       },
-      sucesso: (mensagem, callback) => {
-        const spinner = document.getElementById("spinner-status");
-        const t = document.getElementById("titulo-status-operacao");
-        const sub = document.getElementById("subtitulo-status-operacao");
-        
-        if (spinner) spinner.style.display = "none";
-        if (t) {
-          t.style.color = "var(--success)";
-          t.innerText = "✓ SUCESSO";
-        }
-        if (sub) sub.innerText = mensagem || "Operação realizada com êxito.";
-
-        setTimeout(() => {
-          ModalStatus.fechar();
-          if (callback) callback();
-        }, 650);
+      firebase: {
+        apiKey: "AIzaSyCS6ofyis160STTrjhFJZDcsqAiyh_Gnmc",
+        authDomain: "tralala-d8ce2.firebaseapp.com",
+        databaseURL: "https://tralala-d8ce2-default-rtdb.firebaseio.com/",
+        projectId: "tralala-d8ce2",
+        storageBucket: "tralala-d8ce2.appspot.com",
+        messagingSenderId: "704078064009",
+        appId: "1:704078064009:web:4d6ffc34c21b14322f9958"
       },
-      erro: (mensagem) => {
-        const spinner = document.getElementById("spinner-status");
-        const t = document.getElementById("titulo-status-operacao");
-        const sub = document.getElementById("subtitulo-status-operacao");
-        
-        if (spinner) spinner.style.display = "none";
-        if (t) {
-          t.style.color = "var(--error)";
-          t.innerText = "ERRO NA OPERAÇÃO";
-        }
-        if (sub) sub.innerText = mensagem || "Não foi possível concluir. Tente novamente.";
-
-        setTimeout(() => {
-          ModalStatus.fechar();
-        }, 2200);
-      },
-      fechar: () => {
-        const modal = document.getElementById("modal-status-operacao");
-        if (modal) modal.classList.remove("ativo");
+      temasDefault: {
+        "Astronauta": { kits: 1, png: "" },
+        "Princesas": { kits: 1, png: "" }
       }
     };
 
-    const CloudDB = {
-      salvar: (caminho, dados, callback) => {
-        if (db) {
-          db.ref(caminho).set(dados).then(() => { if(callback) callback(true); }).catch(e => { if(callback) callback(false, e); });
+    var State = { 
+      db: null, 
+      estoque: {}, 
+      historico: {}, 
+      reservas: [], 
+      orcamentos: [], 
+      categorias: [],
+      temaAtual: "", 
+      kitAtual: "", 
+      carregando: true, 
+      usuarioLogadoEmail: ""
+    };
+
+    var Utils = {
+      showToast: function(message, type) {
+        if (!type) type = 'info';
+        console.log(type.toUpperCase() + ": " + message);
+        if (type === 'error' || type === 'warning') {
+          alert(message);
+        }
+      },
+      formatCurrency: function(value) { 
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(value) || 0); 
+      },
+      formatDateBR: function(dateString) { 
+        if (!dateString) return "Não informada"; 
+        var p = dateString.split("-"); 
+        return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : dateString; 
+      },
+      getHojeDataString: function() {
+        var d = new Date();
+        var mes = String(d.getMonth() + 1);
+        var dia = String(d.getDate());
+        if (mes.length < 2) mes = '0' + mes;
+        if (dia.length < 2) dia = '0' + dia;
+        return d.getFullYear() + "-" + mes + "-" + dia;
+      },
+      getHoraString: function() { 
+        return new Date().toTimeString().split(' ')[0]; 
+      }
+    };
+
+    var Database = {
+      init: function() {
+        State.estoque = {};
+        for (var key in CONFIG.temasDefault) {
+          if (CONFIG.temasDefault.hasOwnProperty(key)) {
+            State.estoque[key] = CONFIG.temasDefault[key];
+          }
+        }
+        if (typeof firebase !== 'undefined') {
+          if (!firebase.apps.length) {
+            firebase.initializeApp(CONFIG.firebase);
+          }
+          State.db = firebase.database();
+          this.listen();
+          this.listenCategorias();
         } else {
-          localStorage.setItem(caminho, JSON.stringify(dados));
-          if(callback) callback(true);
+          Utils.showToast("Erro de conexão: Biblioteca do Firebase não carregou.", "error");
         }
       },
-      buscar: (caminho, defaultVal, callback) => {
-        if (db) {
-          db.ref(caminho).once('value').then((snapshot) => {
-            let data = snapshot.val();
-            if (data !== null) {
-              if (typeof data === 'object' && !Array.isArray(data)) {
-                const converted = Object.keys(data).map(k => {
-                  if (data[k] && typeof data[k] === 'object') {
-                    return { idFirebase: k, ...data[k] };
-                  }
-                  return data[k];
-                });
-                callback(converted);
-              } else {
-                callback(data);
+      listen: function() {
+        State.db.ref('estoque').on('value', function(snap) {
+          var val = snap.val();
+          if (val) {
+            if (Array.isArray(val)) {
+              var obj = {};
+              val.forEach(function(item, index) {
+                if (item) {
+                  var nome = item.nome || item.tema || ("Tema " + index);
+                  obj[nome] = typeof item === 'object' ? item : { kits: 1, png: "" };
+                }
+              });
+              State.estoque = obj;
+            } else {
+              State.estoque = val;
+            }
+          } else {
+            State.estoque = {};
+            for (var key in CONFIG.temasDefault) {
+              if (CONFIG.temasDefault.hasOwnProperty(key)) {
+                State.estoque[key] = CONFIG.temasDefault[key];
               }
-            } else {
-              callback(defaultVal);
             }
-          }).catch(() => callback(defaultVal));
-        } else {
-          const val = localStorage.getItem(caminho);
-          callback(val ? JSON.parse(val) : defaultVal);
-        }
-      }
-    };
-
-    // ============================================================
-    // GERENCIAMENTO DE PEÇAS E ESTOQUE (OTIMIZADO)
-    // ============================================================
-    const Database = {
-      salvarPecaNuvem: async function(peca) {
-        if (State.salvandoPeca) return;
-        State.salvandoPeca = true;
-        
-        const btnSalvar = document.getElementById("btn-adicionar-peca");
-        if (btnSalvar) btnSalvar.disabled = true;
-
-        ModalStatus.exibir("LANÇANDO TEMA...", "Salvando no acervo, aguarde.");
-
-        try {
-          if (db) {
-            const refEstoque = db.ref("estoque");
-            const newRef = peca.idFirebase ? db.ref("estoque/" + peca.idFirebase) : refEstoque.push();
-            const pecaId = peca.idFirebase || newRef.key;
-            
-            const payload = {
-              idFirebase: pecaId,
-              nome: peca.nome || "",
-              quantidade: parseInt(peca.quantidade) || 1,
-              categoria: peca.categoria || "Outros",
-              modelo: peca.modelo || "",
-              imagem: peca.imagem || "",
-              atualizadoEm: Date.now()
-            };
-
-            await newRef.set(payload);
-          } else {
-            const localData = JSON.parse(localStorage.getItem("estoque") || "[]");
-            localData.push(peca);
-            localStorage.setItem("estoque", JSON.stringify(localData));
           }
+          UI.renderReservas();
+        });
 
-          ModalStatus.sucesso("✓ TEMA LANÇADO COM SUCESSO", () => {
-            document.getElementById("catalogo-peca-nome").value = "";
-            document.getElementById("catalogo-peca-qtd").value = "1";
-            document.getElementById("catalogo-peca-modelo").value = "";
-            document.getElementById("catalogo-peca-imagem").value = "";
-          });
+        State.db.ref('reservas').on('value', function(snap) {
+          State.carregando = false;
+          var val = snap.val();
+          var arr = [];
+          if (val) {
+            if (Array.isArray(val)) {
+              val.forEach(function(data, id) {
+                if (data) {
+                  var copy = { id: String(id) };
+                  for (var k in data) { if (data.hasOwnProperty(k)) copy[k] = data[k]; }
+                  arr.push(copy);
+                }
+              });
+            } else {
+              for (var id in val) {
+                if (val.hasOwnProperty(id) && val[id]) {
+                  var copy = { id: id };
+                  for (var k in val[id]) { if (val[id].hasOwnProperty(k)) copy[k] = val[id][k]; }
+                  arr.push(copy);
+                }
+              }
+            }
+          }
+          State.reservas = arr;
+          UI.renderReservas();
+        });
 
-        } catch (error) {
-          console.error("Erro ao salvar peça:", error);
-          ModalStatus.erro("Não foi possível salvar a peça. Tente novamente.");
-        } finally {
-          State.salvandoPeca = false;
-          if (btnSalvar) btnSalvar.disabled = false;
-        }
+        State.db.ref('orcamentos').on('value', function(snap) {
+          var val = snap.val();
+          var arr = [];
+          if (val) {
+            for (var id in val) {
+              if (val.hasOwnProperty(id) && val[id]) {
+                var copy = { id: id };
+                for (var k in val[id]) { if (val[id].hasOwnProperty(k)) copy[k] = val[id][k]; }
+                arr.push(copy);
+              }
+            }
+          }
+          State.orcamentos = arr;
+          UI.renderOrcamentos();
+        });
       },
-
-      removerPecaNuvem: async function(indexOuId) {
-        if (State.salvandoPeca) return;
-        State.salvandoPeca = true;
-
-        const btnRemover = document.getElementById("btn-remover-tema-admin");
-        if (btnRemover) btnRemover.disabled = true;
-
-        ModalStatus.exibir("REMOVENDO TEMA...", "Atualizando o acervo, aguarde.");
-
-        try {
-          const item = todosOsTemas[indexOuId];
-          if (!item) throw new Error("Item não localizado.");
-
-          if (db) {
-            if (item.idFirebase) {
-              await db.ref("estoque/" + item.idFirebase).remove();
-            } else {
-              const novalist = todosOsTemas.filter((_, idx) => idx !== parseInt(indexOuId));
-              await db.ref("estoque").set(novalist);
-            }
-          } else {
-            todosOsTemas.splice(indexOuId, 1);
-            localStorage.setItem("estoque", JSON.stringify(todosOsTemas));
-            renderizarTemas();
-          }
-
-          ModalStatus.sucesso("✓ TEMA REMOVIDO COM SUCESSO");
-        } catch (error) {
-          console.error("Erro ao remover peça:", error);
-          ModalStatus.erro("Não foi possível remover o tema.");
-        } finally {
-          State.salvandoPeca = false;
-          if (btnRemover) btnRemover.disabled = false;
-        }
-      }
-    };
-
-    // ============================================================
-    // CARREGAMENTO E OTIMIZAÇÃO DE LISTENERS DO ESTOQUE
-    // ============================================================
-    function carregarEstoqueIncremental() {
-      if (!db || State.listenerEstoqueIniciado) return;
-      State.listenerEstoqueIniciado = true;
-
-      const refEstoque = db.ref("estoque");
-
-      refEstoque.once("value").then((snapshot) => {
-        const val = snapshot.val();
-        todosOsTemas = [];
-        if (val) {
-          if (Array.isArray(val)) {
-            todosOsTemas = val.filter(i => i !== null);
-          } else if (typeof val === 'object') {
-            Object.keys(val).forEach(k => {
-              if (val[k]) todosOsTemas.push({ idFirebase: k, ...val[k] });
+      
+      listenCategorias: function() {
+        if (!State.db) return;
+        State.db.ref('categorias').on('value', function(snapshot) {
+          var data = snapshot.val();
+          var categorias = [];
+          if (data && typeof data === 'object') {
+            Object.keys(data).forEach(function(key) {
+              if (data[key] && data[key].nome) {
+                categorias.push(data[key].nome);
+              }
             });
           }
-        }
-        renderizarTemas();
-        
-        // Ativação dos escutadores incrementais sem re-baixar o banco inteiro
-        refEstoque.on("child_added", (childSnap) => {
-          const item = { idFirebase: childSnap.key, ...childSnap.val() };
-          const existe = todosOsTemas.some(t => t.idFirebase === item.idFirebase);
-          if (!existe) {
-            todosOsTemas.push(item);
-            renderizarTemas();
-          }
+          State.categorias = categorias;
+          UI.atualizarSeletoresCategoria(categorias);
         });
-
-        refEstoque.on("child_changed", (childSnap) => {
-          const item = { idFirebase: childSnap.key, ...childSnap.val() };
-          const idx = todosOsTemas.findIndex(t => t.idFirebase === item.idFirebase);
-          if (idx !== -1) {
-            todosOsTemas[idx] = item;
-            renderizarTemas();
-          }
-        });
-
-        refEstoque.on("child_removed", (childSnap) => {
-          const key = childSnap.key;
-          todosOsTemas = todosOsTemas.filter(t => t.idFirebase !== key);
-          renderizarTemas();
-        });
-      }).catch(() => {
-        CloudDB.buscar("estoque", [], (dados) => {
-          todosOsTemas = dados || [];
-          renderizarTemas();
-        });
-      });
-    }
-
-    function renderizarTemas() {
-      const corpo = document.getElementById("lista-temas-gerenciados-corpo");
-      const contador = document.getElementById("contador-catalogo-total");
+      },
       
-      if (contador) contador.textContent = `${todosOsTemas.length} itens`;
-
-      if (!corpo) return;
-
-      if (todosOsTemas.length === 0) {
-        corpo.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#999; padding:15px;">Nenhum tema ou peça cadastrada.</td></tr>`;
-        return;
-      }
-
-      let html = "";
-      todosOsTemas.forEach((tema, idx) => {
-        const img = tema.imagem ? `<img src="${tema.imagem}" class="catalogo-foto" alt="Foto">` : `<div style="width:50px;height:50px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#888;">Sem Foto</div>`;
-        
-        html += `
-          <tr>
-            <td style="text-align:center;">${img}</td>
-            <td>
-              <strong>${tema.nome || "Sem Nome"}</strong><br>
-              <span style="font-size:11px; color:var(--text-muted);">
-                Categoria: ${tema.categoria || "Geral"} | Modelo: ${tema.modelo || "Padrão"}<br>
-                Qtd: <strong>${tema.quantidade || 1}</strong>
-              </span>
-            </td>
-            <td style="text-align:center;">
-              <button type="button" onclick="window.removerTema(${idx})" class="btn-acao-tabela btn-remover-orc" title="Remover Peça">🗑️</button>
-            </td>
-          </tr>
-        `;
-      });
-
-      corpo.innerHTML = html;
-
-      // Atualiza Select de remoção
-      const selectRemover = document.getElementById("select-remover-tema");
-      if (selectRemover) {
-        const valorAtual = selectRemover.value;
-        selectRemover.innerHTML = '<option value="">Selecione um tema para remover...</option>';
-        todosOsTemas.forEach((item, idx) => {
-          const opt = document.createElement("option");
-          opt.value = idx;
-          const disponivel = item.quantidade > 0 ? `${item.quantidade} disponíveis` : 'ESGOTADO';
-          opt.textContent = `${item.nome} (${item.categoria || 'Geral'}) - ${disponivel}`;
-          selectRemover.appendChild(opt);
+      salvarCategoriaNuvem: function(nome) {
+        if (!State.db) return Promise.reject("Sem conexão");
+        nome = nome.trim();
+        if (!nome) return Promise.reject("Nome vazio");
+        var novaRef = State.db.ref('categorias').push();
+        return novaRef.set({ nome: nome, criadoEm: Date.now() });
+      },
+      
+      removerCategoriaNuvem: function(nome) {
+        if (!State.db) return Promise.reject("Sem conexão");
+        return State.db.ref('categorias').once('value').then(function(snapshot) {
+          var data = snapshot.val();
+          var chaveRemover = null;
+          if (data && typeof data === 'object') {
+            Object.keys(data).forEach(function(key) {
+              if (data[key] && data[key].nome === nome) {
+                chaveRemover = key;
+              }
+            });
+          }
+          if (chaveRemover) {
+            return State.db.ref('categorias/' + chaveRemover).remove();
+          }
+          return Promise.reject("Não encontrada");
         });
-        if (valorAtual && todosOsTemas[parseInt(valorAtual)]) {
-          selectRemover.value = valorAtual;
-        }
-      }
-    }
+      },
+      
+      registrarPonto: function(tipo) {
+        if (!State.db || !State.usuarioLogadoEmail) return Utils.showToast("Erro de identificação do usuário.", "error");
+        var chaveUsuario = State.usuarioLogadoEmail.replace(/[.#$[\]]/g, "_");
+        var hoje = Utils.getHojeDataString();
+        var hora = Utils.getHoraString();
+        var updateData = { usuario: State.usuarioLogadoEmail, data: hoje };
+        updateData[tipo] = hora;
 
-    window.removerTema = function(index) {
-      const tema = todosOsTemas[index];
-      if (!tema) return;
-      if (confirm(`Deseja realmente remover o item "${tema.nome}"?`)) {
-        Database.removerPecaNuvem(index);
+        State.db.ref("pontos/" + chaveUsuario + "/" + hoje).update(updateData)
+        .then(function() { Utils.showToast("Ponto registrado com sucesso!", "success"); })
+        .catch(function() { Utils.showToast("Erro ao salvar ponto.", "error"); });
+      },
+
+      salvarOrcamentoNuvem: function(dadosOrcamento) {
+        if(!State.db) return Utils.showToast("Sem conexão com Firebase", "error");
+        var novoRef = State.db.ref('orcamentos').push();
+        novoRef.set(dadosOrcamento)
+        .then(function() { Utils.showToast("Orçamento gravado com sucesso!", "success"); })
+        .catch(function() { Utils.showToast("Erro ao salvar orçamento.", "error"); });
+      },
+
+      salvarReservaNuvem: function(dadosReserva) {
+        if(!State.db) return Utils.showToast("Sem conexão com Firebase", "error");
+        var novoRef = State.db.ref('reservas').push();
+        return novoRef.set(dadosReserva)
+        .then(function() {
+          Utils.showToast("Agendamento salvo com sucesso!", "success");
+          return true;
+        })
+        .catch(function() {
+          Utils.showToast("Erro ao salvar agendamento.", "error");
+          return false;
+        });
+      },
+
+      excluirReservaNuvem: function(idReserva) {
+        if(!State.db) return Promise.reject("Sem conexão");
+        return State.db.ref("reservas/" + idReserva).remove();
       }
     };
 
-    // ============================================================
-    // CATEGORIAS
-    // ============================================================
-    let categoriasList = [];
+    window.adicionarCategoria = function(nome) {
+      return Database.salvarCategoriaNuvem(nome);
+    };
 
-    function carregarCategorias() {
-      CloudDB.buscar("categorias", {}, (dados) => {
-        if (dados && typeof dados === 'object') {
-          const nomes = Object.keys(dados).filter(key => dados[key] && dados[key].nome);
-          if (nomes.length > 0) {
-            categoriasList = nomes;
-          } else {
-            categoriasList = ["Infantil", "Casamento", "15 Anos", "Outros"];
+    window.removerCategoria = function(nome) {
+      return Database.removerCategoriaNuvem(nome);
+    };
+
+    var UI = {
+      init: function() {
+        this.bindEvents();
+      },
+      bindEvents: function() {
+        var self = this;
+        var mapeamentoBotoes = {
+          "btn-login-direto": function() { self.handleLogin(); },
+          "btn-logout-direto": function() { self.handleLogout(); },
+          "btn-ponto-entrada": function() { Database.registrarPonto('entrada'); },
+          "btn-ponto-saida": function() { Database.registrarPonto('saida'); },
+          "btn-abrir-relatorio-pontos": function() { self.toggleRelatorioPontos(); },
+          "btn-abrir-orcamentos": function() { self.toggleOrcamentos(); },
+          "btn-abrir-reuniao": function() { self.toggleReuniao(); },
+          "btn-venda-mensal": function() { self.toggleVendaMensal(); },
+          "btn-salvar-orcamento": function() { self.acaoSalvarOrcamentoCorrente(); },
+          "btn-confirmar-agendamento": function() { self.handleSalvarFesta(); }
+        };
+
+        for (var id in mapeamentoBotoes) {
+          if (mapeamentoBotoes.hasOwnProperty(id)) {
+            (function(idAtual) {
+              var elemento = document.getElementById(idAtual);
+              if (elemento) {
+                elemento.onclick = function(e) { e.preventDefault(); mapeamentoBotoes[idAtual](); };
+              }
+            })(id);
           }
-        } else {
-          categoriasList = ["Infantil", "Casamento", "15 Anos", "Outros"];
         }
-        atualizarInterfaceCategorias();
-      });
-    }
 
-    function atualizarInterfaceCategorias() {
-      const contador = document.getElementById("contador-categorias");
-      if (contador) contador.textContent = categoriasList.length;
-      
-      const container = document.getElementById("lista-categorias-admin");
-      if (container) {
-        container.innerHTML = '';
-        categoriasList.forEach(cat => {
-          const div = document.createElement("div");
-          div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:#f8f0f2; border-radius:6px; border:1px solid #e1cbd4;";
-          div.innerHTML = `
-            <span style="font-size:13px;">📁 ${cat}</span>
-            <button type="button" onclick="removerCategoria('${cat}')" class="btn btn-danger" style="padding:2px 8px; font-size:10px; width:auto; margin-left:6px;">✕</button>
-          `;
+        var btnAdicionarCategoria = document.getElementById("btn-adicionar-categoria");
+        if (btnAdicionarCategoria) {
+          btnAdicionarCategoria.onclick = function(e) {
+            e.preventDefault();
+            var input = document.getElementById("input-nova-categoria");
+            var nome = input.value.trim();
+            if (nome) {
+              window.adicionarCategoria(nome).then(function() {
+                input.value = "";
+                Utils.showToast("Categoria adicionada!", "success");
+              });
+            }
+          };
+        }
+
+        var botoesKit = document.querySelectorAll('.btn-kit-opcao');
+        botoesKit.forEach(function(btn) {
+          btn.onclick = function(e) {
+            e.preventDefault();
+            botoesKit.forEach(function(b) { b.classList.remove('ativo'); });
+            btn.classList.add('ativo');
+            State.kitAtual = btn.getAttribute('data-kit');
+            Utils.showToast("Kit \"" + State.kitAtual + "\" selecionado!", "success");
+          };
+        });
+
+        var calcularFrete = function() {
+          var km = parseFloat(document.getElementById('frete-km').value) || 0;
+          var valorLitro = parseFloat(document.getElementById('frete-valor-litro').value) || 0;
+          var boxResultado = document.getElementById('painel-frete-resultado');
+          var txtLitros = document.getElementById('res-frete-litros');
+          var txtTotal = document.getElementById('res-frete-total');
+          
+          if (km > 0) {
+            var litros = km / 10; 
+            var totalFrete = litros * valorLitro;
+            if(txtLitros) txtLitros.innerText = litros.toFixed(2);
+            if(txtTotal) txtTotal.innerText = totalFrete.toFixed(2);
+            if(boxResultado) boxResultado.style.display = 'block';
+          } else {
+            if(boxResultado) boxResultado.style.display = 'none';
+            if(txtTotal) txtTotal.innerText = "0.00";
+          }
+        };
+
+        var inputKm = document.getElementById('frete-km');
+        var inputLitro = document.getElementById('frete-valor-litro');
+        if (inputKm) inputKm.oninput = calcularFrete;
+        if (inputLitro) inputLitro.oninput = calcularFrete;
+
+        var inputBuscaReserva = document.getElementById("busca-reserva");
+        if (inputBuscaReserva) {
+          inputBuscaReserva.oninput = function(e) { self.renderReservas(e.target.value); };
+        }
+
+        var inputBuscaTemaFicha = document.getElementById("busca-tema-input");
+        if(inputBuscaTemaFicha) {
+          inputBuscaTemaFicha.oninput = function(e) {
+            var termo = e.target.value;
+            State.temaAtual = termo;
+            self.renderSuggestions(termo);
+          };
+        }
+
+        var inputContratoBusca = document.getElementById("contrato-busca-tema");
+        if(inputContratoBusca) {
+          inputContratoBusca.oninput = function(e) {
+            var termo = e.target.value;
+            self.renderContratoSuggestions(termo);
+          };
+        }
+      },
+
+      atualizarSeletoresCategoria: function(categorias) {
+        if (!categorias) categorias = [];
+        var container = document.getElementById("lista-categorias-admin");
+        if (container) {
+          container.innerHTML = '';
+          categorias.forEach(function(cat) {
+            var div = document.createElement("div");
+            div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:#f8f0f2; border-radius:6px; border:1px solid #e1cbd4;";
+            div.innerHTML = `
+              <span style="font-size:13px;">📁 ${cat}</span>
+              <button onclick="window.removerCategoria('${cat}')" class="btn btn-danger" style="padding:2px 8px; font-size:10px; width:auto; margin-left:6px;">✕</button>
+            `;
+            container.appendChild(div);
+          });
+        }
+        var contador = document.getElementById("contador-categorias");
+        if (contador) contador.textContent = categorias.length;
+      },
+
+      renderSuggestions: function(termo) {
+        var caixa = document.getElementById("lista-sugestoes-temas");
+        if(!caixa) return;
+        termo = termo.toLowerCase().trim();
+        if(!termo) { caixa.style.display = "none"; return; }
+
+        var filtrados = Object.keys(State.estoque).filter(function(t) { return t.toLowerCase().includes(termo); });
+        caixa.innerHTML = "";
+
+        filtrados.forEach(function(tema) {
+          var item = document.createElement("div");
+          item.className = "sugestao-item";
+          item.innerText = tema;
+          item.onclick = function() {
+            var inputTema = document.getElementById("busca-tema-input");
+            if(inputTema) inputTema.value = tema;
+            State.temaAtual = tema;
+            caixa.style.display = "none";
+            Utils.showToast("Tema " + tema + " selecionado.", "info");
+          };
+          caixa.appendChild(item);
+        });
+        caixa.style.display = filtrados.length ? "block" : "none";
+      },
+
+      renderContratoSuggestions: function(termo) {
+        var caixa = document.getElementById("contrato-sugestoes-tema");
+        if(!caixa) return;
+        termo = termo.toLowerCase().trim();
+        if(!termo) { caixa.style.display = "none"; return; }
+
+        var filtrados = Object.keys(State.estoque).filter(function(t) { return t.toLowerCase().includes(termo); });
+        caixa.innerHTML = "";
+
+        filtrados.forEach(function(tema) {
+          var item = document.createElement("div");
+          item.className = "sugestao-item";
+          item.innerText = tema;
+          item.onclick = function() {
+            var inputBusca = document.getElementById("contrato-busca-tema");
+            if(inputBusca) inputBusca.value = tema;
+            caixa.style.display = "none";
+            UI.renderContratoPecas(tema);
+          };
+          caixa.appendChild(item);
+        });
+        caixa.style.display = filtrados.length ? "block" : "none";
+      },
+
+      renderContratoPecas: function(temaNome) {
+        var container = document.getElementById("contrato-pecas-container");
+        if(!container) return;
+        container.innerHTML = "";
+        
+        var info = State.estoque[temaNome];
+        var pecasDisponiveis = info && info.pecas ? info.pecas : ["Painel Redondo", "Trios de Cilindros", "Mesa Principal", "Bandejas Decorativas"];
+        
+        pecasDisponiveis.forEach(function(peca, idx) {
+          var div = document.createElement("div");
+          div.className = "multi-select-item";
+          div.innerHTML = `<input type="checkbox" id="peca-contrato-${idx}" value="${peca}"> <label for="peca-contrato-${idx}">${peca}</label>`;
           container.appendChild(div);
         });
-      }
-      atualizarSelectCategoria();
-    }
+      },
 
-    function atualizarSelectCategoria() {
-      const selectCat = document.getElementById("catalogo-peca-categoria");
-      if (selectCat) {
-        selectCat.innerHTML = '';
-        categoriasList.forEach(cat => {
-          const opt = document.createElement("option");
-          opt.value = cat;
-          opt.textContent = cat;
-          selectCat.appendChild(opt);
+      handleSalvarFesta: function() {
+        var elCliente = document.getElementById("nome-cliente");
+        var elData = document.getElementById("data");
+        var elTotal = document.getElementById("valor-total");
+        var elSinal = document.getElementById("valor-sinal");
+        var elObs = document.getElementById("adicionais-festa");
+        var elFrete = document.getElementById("res-frete-total");
+
+        var cliente = elCliente ? elCliente.value.trim() : "";
+        var data = elData ? elData.value : "";
+        var total = elTotal ? elTotal.value || "0" : "0";
+        var sinal = elSinal ? elSinal.value || "0" : "0";
+        var obs = elObs ? elObs.value.trim() : "";
+        
+        if(!cliente || !data || !State.temaAtual || !State.kitAtual) {
+          return Utils.showToast("Preencha cliente, data, tema e selecione o modelo do kit!", "warning");
+        }
+
+        var frete = elFrete ? (parseFloat(elFrete.innerText) || 0) : 0;
+        
+        Database.salvarReservaNuvem({
+          cliente: cliente,
+          data: data,
+          tema: State.temaAtual,
+          kit: State.kitAtual,
+          total: total,
+          sinal: sinal,
+          frete: frete,
+          obs: obs,
+          dataCriacao: Utils.getHojeDataString()
+        }).then(function(sucesso) {
+          if(sucesso) {
+            if(elCliente) elCliente.value = "";
+            if(elData) elData.value = "";
+            if(elTotal) elTotal.value = "";
+            if(elSinal) elSinal.value = "";
+            if(elObs) elObs.value = "";
+            State.temaAtual = "";
+            State.kitAtual = "";
+            document.querySelectorAll('.btn-kit-opcao').forEach(function(b) { b.classList.remove('ativo'); });
+          }
         });
-      }
-    }
+      },
 
-    function adicionarCategoria(nome) {
-      nome = nome.trim();
-      if (!nome) return alert("⚠️ Digite um nome para a categoria!");
-      if (categoriasList.some(c => c.toLowerCase() === nome.toLowerCase())) return alert(`⚠️ Categoria já existe!`);
-      
-      categoriasList.push(nome);
-      const obj = {};
-      categoriasList.forEach(c => obj[c] = { nome: c, criadoEm: Date.now() });
-      CloudDB.salvar("categorias", obj, () => {
-        atualizarInterfaceCategorias();
-      });
-    }
+      acaoSalvarOrcamentoCorrente: function() {
+        var clienteEl = document.getElementById("nome-cliente");
+        var totalEl = document.getElementById("valor-total");
+        var dataEl = document.getElementById("data");
+        var obsEl = document.getElementById("adicionais-festa");
 
-    function removerCategoria(nome) {
-      if (confirm(`Remover a categoria "${nome}"?`)) {
-        categoriasList = categoriasList.filter(c => c !== nome);
-        const obj = {};
-        categoriasList.forEach(c => obj[c] = { nome: c, criadoEm: Date.now() });
-        CloudDB.salvar("categorias", obj, () => {
-          atualizarInterfaceCategorias();
+        var nomeCliente = clienteEl ? clienteEl.value.trim() : "";
+        var valorTotal = totalEl ? totalEl.value.trim() : "0";
+        var dataReserva = dataEl ? dataEl.value : "";
+        var obs = obsEl ? obsEl.value.trim() : "";
+        
+        if(!nomeCliente) return Utils.showToast("Preencha o campo do nome do cliente para salvar o orçamento.", "warning");
+        
+        Database.salvarOrcamentoNuvem({
+          cliente: nomeCliente,
+          tema: State.temaAtual || "Não selecionado",
+          total: valorTotal,
+          dataFesta: dataReserva,
+          obs: obs,
+          dataCriacao: Utils.getHojeDataString()
         });
-      }
-    }
+      },
 
-    // ============================================================
-    // GERENCIADOR DE EVENTOS DA INTERFACE
-    // ============================================================
-    document.addEventListener('DOMContentLoaded', function() {
-      carregarEstoqueIncremental();
-      carregarCategorias();
+      handleLogin: function() {
+        var email = document.getElementById("email").value.trim();
+        var senha = document.getElementById("senha").value;
+        if (CONFIG.usuarios[email] === senha) {
+          State.usuarioLogadoEmail = email;
+          document.getElementById("secao-login").style.display = "none";
+          document.getElementById("secao-verificador").style.display = "block";
+          document.getElementById("nome-usuario").innerHTML = "👤 <b>" + email.split('@')[0] + "</b>";
+          Utils.showToast("Login realizado!", "success");
+        } else {
+          Utils.showToast("E-mail ou senha incorretos.", "error");
+        }
+      },
+      handleLogout: function() { window.location.reload(); },
 
-      // Transição de Login / Painel
-      document.getElementById("btn-login-direto").addEventListener("click", () => {
-        document.getElementById("secao-login").style.display = "none";
-        document.getElementById("secao-verificador").style.display = "block";
-      });
+      toggleRelatorioPontos: function() {
+        var p = document.getElementById("painel-relatorio-pontos-geral");
+        if(p) p.style.display = p.style.display === "none" ? "block" : "none";
+      },
+      toggleOrcamentos: function() {
+        var p = document.getElementById("painel-orcamentos-salvos");
+        if(p) p.style.display = p.style.display === "none" ? "block" : "none";
+      },
+      toggleReuniao: function() {
+        Utils.showToast("Área de Agendamento de Reunião ativada.", "info");
+      },
+      toggleVendaMensal: function() {
+        Utils.showToast("Painel de Venda Mensal carregado.", "info");
+      },
 
-      document.getElementById("btn-logout-direto").addEventListener("click", () => {
-        document.getElementById("secao-verificador").style.display = "none";
-        document.getElementById("secao-login").style.display = "block";
-      });
+      renderReservas: function(filtro) {
+        if (!filtro) filtro = "";
+        var container = document.getElementById("lista-reservas-render");
+        if (!container) return;
+        container.innerHTML = "";
 
-      // Painéis Alternáveis
-      document.getElementById("btn-abrir-catalogo-temas").addEventListener("click", () => {
-        const p = document.getElementById("painel-catalogo-temas");
-        p.style.display = p.style.display === "none" ? "block" : "none";
-      });
-
-      // Ação de Salvar Peça no Acervo
-      document.getElementById("btn-adicionar-peca").addEventListener("click", () => {
-        const nome = document.getElementById("catalogo-peca-nome").value.trim();
-        const qtd = parseInt(document.getElementById("catalogo-peca-qtd").value) || 1;
-        const categoria = document.getElementById("catalogo-peca-categoria").value;
-        const modelo = document.getElementById("catalogo-peca-modelo").value.trim();
-        const fileInput = document.getElementById("catalogo-peca-imagem");
-
-        if (!nome) {
-          alert("Por favor, preencha o nome do tema/peça!");
+        if (State.carregando) {
+          container.innerHTML = "<div style='text-align:center; padding:20px;'>⌛ Carregando agendamentos...</div>";
           return;
         }
 
-        const executarSalvar = (imagemBase64) => {
-          const novaPeca = {
-            nome: nome,
-            quantidade: qtd,
-            categoria: categoria,
-            modelo: modelo,
-            imagem: imagemBase64 || ""
-          };
-          Database.salvarPecaNuvem(novaPeca);
-        };
-
-        if (fileInput.files && fileInput.files[0]) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            executarSalvar(e.target.result);
-          };
-          reader.readAsDataURL(fileInput.files[0]);
-        } else {
-          executarSalvar("");
+        if (State.reservas.length === 0) {
+          container.innerHTML = "<div style='text-align:center; padding:20px; color:#777;'>Nenhum agendamento encontrado.</div>";
+          return;
         }
-      });
 
-      // Adicionar e Remover Categorias
-      document.getElementById("btn-adicionar-categoria").addEventListener("click", () => {
-        const input = document.getElementById("input-nova-categoria");
-        adicionarCategoria(input.value);
-        input.value = "";
-      });
-
-      document.getElementById("btn-remover-tema-admin").addEventListener("click", () => {
-        const select = document.getElementById("select-remover-tema");
-        const idx = parseInt(select.value);
-        if (!isNaN(idx)) {
-          window.removerTema(idx);
-        } else {
-          alert("Selecione um tema válido!");
+        var reservasFiltradas = State.reservas.slice().sort(function(a, b) { return new Date(a.data) - new Date(b.data); });
+        if (filtro.trim() !== "") {
+          var f = filtro.toLowerCase().trim();
+          reservasFiltradas = reservasFiltradas.filter(function(res) {
+            return (res.cliente && res.cliente.toLowerCase().includes(f)) || 
+                   (res.tema && res.tema.toLowerCase().includes(f));
+          });
         }
-      });
-    });
 
-    // ============================================================
-    // GERADOR DE CONTRATOS E MODAIS
-    // ============================================================
-    function gerarModeloComFrete(dados) {
-      const { nome, cpf, endereco, telefone, dataFesta, valor, local, pecasSelecionadas, obs } = dados;
-      const dataFmt = dataFesta ? dataFesta.split("-").reverse().join("/") : "____/____/______";
-      const pecasTexto = pecasSelecionadas && pecasSelecionadas.length > 0 ? pecasSelecionadas.join(", ") : "__________________________________";
-      const valorFormatado = valor ? valor.toFixed(2).replace('.', ',') : "______,____";
-      const valorMetade = valor ? (valor/2).toFixed(2).replace('.', ',') : "______,____";
-      const dataAtual = new Date().toLocaleDateString('pt-BR');
+        reservasFiltradas.forEach(function(res) {
+          var card = document.createElement("div");
+          card.className = "card-reserva";
+          var total = parseFloat(res.total) || 0;
+          var sinal = parseFloat(res.sinal) || 0;
+          var frete = parseFloat(res.frete) || 0;
+          var totGeral = total + frete;
+          var devedor = totGeral - sinal;
+          var quitado = devedor <= 0;
 
-      return `
-        <div class="pagina-contrato">
-          <div class="logo-container">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" alt="Tralalá" class="logo-contrato">
-          </div>
-          <div class="titulo-contrato">CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO</div>
-          <div class="dados-contratada"><span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS</div>
-          <div class="dados-contratante"><span class="negrito">CONTRATANTE:</span> ${nome || "_________________________"}</div>
-          <div class="dados-contratante"><span class="negrito">CPF:</span> ${cpf || "_________________________"}</div>
-          <div class="dados-contratante"><span class="negrito">LOCAL DA FESTA:</span> ${local || "_________________________"}</div>
-          <div class="dados-contratante"><span class="negrito">DATA DA FESTA:</span> ${dataFmt}</div>
-          <br>
-          <div class="clausula-titulo">DO OBJETO DO CONTRATO</div>
-          <div class="clausula-texto"><span class="negrito">Cláusula 1ª.</span> Aluguel das peças: ${pecasTexto}.</div>
-          <div class="clausula-titulo">VALORES E PAGAMENTO</div>
-          <div class="clausula-texto">Valor Total: R$ ${valorFormatado} (Sinal: R$ ${valorMetade}).</div>
-          <br>
-          <div style="text-align: center;">Brasília-DF, ${dataAtual}.</div>
-        </div>
-      `;
-    }
+          card.innerHTML = '<div class="reserva-header"><strong>👶 ' + res.cliente + '</strong>' +
+            '<span style="background:' + (quitado ? '#27ae60' : '#e67e22') + '; color:#fff; padding:2px 8px; border-radius:4px; font-size:11px;">' + (quitado ? 'PAGO' : 'PENDENTE') + '</span></div>' +
+            '<div class="reserva-body" style="margin-top:8px;">' +
+            '<p>📅 Data: <b>' + Utils.formatDateBR(res.data) + '</b></p>' +
+            '<p>🎨 Tema: <b style="color:var(--primary);">' + res.tema + '</b></p>' +
+            '<p>🛍️ Modelo: <b>' + (res.kit || 'Não informado') + '</b></p>' + 
+            '<p>💰 Total Geral: <b>' + Utils.formatCurrency(totGeral) + '</b></p>' +
+            '</div>' +
+            '<button type="button" style="width:100%; padding:8px; margin-top:10px; background:var(--error, #e74c3c); color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="window.DeletarReserva(\'' + res.id + '\')">🗑️ Excluir Agendamento</button>';
+          container.appendChild(card);
+        });
+      },
 
-    const btnAbrirGerador = document.getElementById("btn-abrir-gerador-contrato");
-    const btnFecharGerador = document.getElementById("btn-fechar-modal-contrato");
-    const modalContrato = document.getElementById("modal-gerador-contrato");
+      renderOrcamentos: function() {
+        var container = document.getElementById("lista-orcamentos-render");
+        if (!container) return;
+        container.innerHTML = "";
 
-    if (btnAbrirGerador) {
-      btnAbrirGerador.addEventListener("click", () => modalContrato.classList.add("ativo"));
-    }
-    if (btnFecharGerador) {
-      btnFecharGerador.addEventListener("click", () => modalContrato.classList.remove("ativo"));
-    }
+        if (State.orcamentos.length === 0) {
+          container.innerHTML = "<div style='text-align:center; padding:20px; color:#777;'>Nenhum orçamento salvo.</div>";
+          return;
+        }
+
+        State.orcamentos.forEach(function(orc) {
+          var card = document.createElement("div");
+          card.className = "card-reserva";
+          card.innerHTML = '<div><strong>👤 ' + orc.cliente + '</strong></div>' +
+            '<div style="margin-top:5px;">' +
+            '<p>📅 Data: <b>' + Utils.formatDateBR(orc.dataFesta) + '</b></p>' +
+            '<p>🎨 Tema: <b>' + orc.tema + '</b></p>' +
+            '<p>💰 Total: <b>' + Utils.formatCurrency(orc.total) + '</b></p>' +
+            '</div>';
+          container.appendChild(card);
+        });
+      }
+    };
+
+    window.DeletarReserva = function(idReserva) {
+      if (confirm("Tem certeza que deseja excluir este agendamento?")) {
+        Database.excluirReservaNuvem(idReserva).then(function() {
+          Utils.showToast("Agendamento removido!", "success");
+        });
+      }
+    };
+
+    window.onload = function() {
+      Database.init();
+      UI.init();
+    };
   </script>
 </body>
 </html>
