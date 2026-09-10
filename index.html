@@ -278,11 +278,11 @@
       <p class="instrucao">Faça login para gerenciar reservas e estoque.</p>
       <div class="input-group">
         <label for="email">E-mail de Acesso:</label>
-        <input type="email" id="email" value="contato@tralala.com.br" autocomplete="off">
+        <input type="email" id="email" value="tralaladecoracoes@gmail.com" autocomplete="off">
       </div>
       <div class="input-group">
         <label for="senha">Senha Segura:</label>
-        <input type="password" id="senha" value="123456" placeholder="••••••••">
+        <input type="password" id="senha" value="tralala123" placeholder="••••••••">
       </div>
       <button type="button" id="btn-login-direto" class="btn btn-primary">Entrar no Painel</button>
     </section>
@@ -523,11 +523,11 @@
         </div>
       </div>
 
-      <!-- PAINEL ORÇAMENTOS SALVOS (oculto, aberto pelo botão "Ver Orçamentos") -->
+      <!-- PAINEL ORÇAMENTOS SALVOS -->
       <div id="painel-orcamentos-salvos" class="painel-central-relatorios" style="display: none;">
         <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center;">
           <span>📋 Orçamentos Salvos</span>
-          <button type="button" onclick="document.getElementById('painel-orcamentos-salvos').style.display='none'" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;">✕ Fechar</button>
+          <button type="button" id="btn-fechar-orcamentos-painel" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;">✕ Fechar</button>
         </h3>
         <div id="lista-orcamentos-render" style="max-height: 400px; overflow-y: auto;">
           <p style="text-align: center; color:#999;">Carregando orçamentos...</p>
@@ -791,9 +791,6 @@
           <input type="text" id="c-local" placeholder="Endereço Completo do Evento">
         </div>
         
-        <!-- NOVO: busca de tema para o contrato (populado via JS) -->
-        <!-- (o JS insere este bloco automaticamente após o campo Local do Evento) -->
-        
         <div class="input-group">
           <label>Selecione as Peças (Retiradas do Catálogo):</label>
           <select id="c-pecas" multiple style="height:90px; padding:5px;"></select>
@@ -900,20 +897,17 @@
   </div>
 
   <!-- ============================================================
-       CARREGA O SCRIPT PRINCIPAL (script (1).js) — cérebro do sistema
-       O HTML inline abaixo apenas inicializa o Firebase e delega
-       as ações de UI/Database para o script principal.
+       CARREGA O SCRIPT PRINCIPAL (script (1).js)
        ============================================================ -->
   <script src="script (1).js"></script>
 
   <script>
     // ============================================================
-    // INICIALIZAÇÃO DO FIREBASE (compat) — mantém compatibilidade
-    // com o script (1).js, que espera firebase.apps / firebase.database()
+    // INICIALIZAÇÃO DO FIREBASE (compat) — necessário ANTES do script principal
     // ============================================================
     (function() {
       try {
-        if (!firebase.apps.length) {
+        if (typeof firebase !== 'undefined' && !firebase.apps.length) {
           firebase.initializeApp({
             apiKey: "AIzaSyCS6ofyis160STTrjhFJZDcsqAiyh_Gnmc",
             authDomain: "tralala-d8ce2.firebaseapp.com",
@@ -924,8 +918,7 @@
             appId: "1:704078064009:web:4d6ffc34c21b14322f9958"
           });
         }
-        // Expor para o script (1).js
-        if (typeof window.State !== 'undefined') {
+        if (typeof window.State !== 'undefined' && typeof firebase !== 'undefined') {
           window.State.db = firebase.database();
         }
       } catch (err) {
@@ -934,103 +927,154 @@
     })();
 
     // ============================================================
-    // INICIALIZAÇÃO DA UI — dispara depois do script (1).js
+    // FALLBACK DE LOGIN — garante que SEMPRE funcione,
+    // mesmo se o script (1).js falhar por qualquer motivo.
     // ============================================================
     document.addEventListener('DOMContentLoaded', function() {
-      // Se o script (1).js não tiver inicializado a UI (ex: falha), tenta aqui
-      if (typeof window.UI !== 'undefined' && !window.__tralala_ui_iniciada) {
-        // O script (1).js já cuida disso no 'load'. Aqui só garantimos
-        // que o painel de vendas e reuniões fiquem prontos.
+      var btnLogin = document.getElementById('btn-login-direto');
+      if (btnLogin) {
+        // Mantém o handler do script principal, mas adiciona fallback
+        var originalOnClick = btnLogin.onclick;
+        btnLogin.onclick = function(e) {
+          if (e) e.preventDefault();
+          // Tenta o handler oficial primeiro
+          if (typeof originalOnClick === 'function') {
+            try {
+              originalOnClick.call(this, e);
+              // Se o login foi bem-sucedido, a seção verificador ficará visível
+              var secVerif = document.getElementById('secao-verificador');
+              if (secVerif && secVerif.style.display === 'block') return;
+            } catch (err) {
+              console.warn("Handler oficial falhou, usando fallback:", err);
+            }
+          }
+          // Fallback manual
+          var email = (document.getElementById('email') || {}).value || '';
+          var senha = (document.getElementById('senha') || {}).value || '';
+          email = email.trim();
+          var usuarios = (window.CONFIG && CONFIG.usuarios) ? CONFIG.usuarios : {
+            "jorgeguivalle@gmail.com": "Viperrt11",
+            "leonardodovalle@gmail.com": "Viperrt11@",
+            "tralaladecoracoes@gmail.com": "tralala123"
+          };
+          if (usuarios[email] === senha) {
+            var sLogin = document.getElementById('secao-login');
+            var sVerif = document.getElementById('secao-verificador');
+            if (sLogin) sLogin.style.display = 'none';
+            if (sVerif) sVerif.style.display = 'block';
+            var nome = document.getElementById('nome-usuario');
+            if (nome) nome.innerHTML = '👤 <b>' + email.split('@')[0] + '</b>';
+            if (window.State) window.State.usuarioLogadoEmail = email;
+          } else {
+            alert('❌ E-mail ou senha incorretos.');
+          }
+        };
+      }
+
+      // Fallback logout
+      var btnLogout = document.getElementById('btn-logout-direto');
+      if (btnLogout) {
+        var origLogout = btnLogout.onclick;
+        btnLogout.onclick = function(e) {
+          if (e) e.preventDefault();
+          if (typeof origLogout === 'function') {
+            try { origLogout.call(this, e); return; } catch (err) {}
+          }
+          window.location.reload();
+        };
       }
     });
 
     // ============================================================
-    // HANDLERS EXTRAS (botões que existiam no HTML mas sem listeners)
-    // Agora delegados às funções do script (1).js via UI.*
+    // HANDLERS EXTRAS
     // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      // Fechar painel de orçamentos
+      var btnFecharOrc = document.getElementById('btn-fechar-orcamentos-painel');
+      if (btnFecharOrc) {
+        btnFecharOrc.addEventListener('click', function() {
+          var p = document.getElementById('painel-orcamentos-salvos');
+          if (p) p.style.display = 'none';
+        });
+      }
 
-    // "Transformar Planilha em Gráfico" — usa Chart.js
-    var btnTransformarGrafico = document.getElementById('btn-transformar-grafico');
-    if (btnTransformarGrafico) {
-      btnTransformarGrafico.addEventListener('click', function() {
-        var painelGrafico = document.getElementById('painel-grafico-faturamento');
-        if (painelGrafico) painelGrafico.style.display = 'block';
-        try {
-          var ctx = document.getElementById('graficoAnual');
-          if (!ctx) return;
-          if (window.chartInstance) window.chartInstance.destroy();
-          var meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-          var valores = new Array(12).fill(0);
-          if (window.State && window.State.reservas) {
-            window.State.reservas.forEach(function(r) {
-              if (!r.data) return;
-              var p = r.data.split("-");
-              if (p.length !== 3) return;
-              var idx = parseInt(p[1]) - 1;
-              if (idx >= 0 && idx < 12) {
-                valores[idx] += (parseFloat(r.total) || 0) + (parseFloat(r.frete) || 0);
-              }
+      // Transformar Planilha em Gráfico
+      var btnTransformarGrafico = document.getElementById('btn-transformar-grafico');
+      if (btnTransformarGrafico) {
+        btnTransformarGrafico.addEventListener('click', function() {
+          var painelGrafico = document.getElementById('painel-grafico-faturamento');
+          if (painelGrafico) painelGrafico.style.display = 'block';
+          try {
+            var ctx = document.getElementById('graficoAnual');
+            if (!ctx || typeof Chart === 'undefined') return;
+            if (window.chartInstance) window.chartInstance.destroy();
+            var meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+            var valores = new Array(12).fill(0);
+            if (window.State && window.State.reservas) {
+              window.State.reservas.forEach(function(r) {
+                if (!r.data) return;
+                var p = r.data.split("-");
+                if (p.length !== 3) return;
+                var idx = parseInt(p[1]) - 1;
+                if (idx >= 0 && idx < 12) {
+                  valores[idx] += (parseFloat(r.total) || 0) + (parseFloat(r.frete) || 0);
+                }
+              });
+            }
+            window.chartInstance = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels: meses,
+                datasets: [{ label: 'Faturamento (R$)', data: valores, backgroundColor: '#a3536a' }]
+              },
+              options: { responsive: true, maintainAspectRatio: false }
             });
+          } catch (e) { console.error("Erro gráfico:", e); }
+        });
+      }
+
+      var btnToggleGrafico = document.getElementById('btn-toggle-grafico');
+      if (btnToggleGrafico) {
+        btnToggleGrafico.addEventListener('click', function() {
+          var painelGrafico = document.getElementById('painel-grafico-faturamento');
+          if (painelGrafico) {
+            painelGrafico.style.display = painelGrafico.style.display === 'none' ? 'block' : 'none';
           }
-          window.chartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels: meses,
-              datasets: [{
-                label: 'Faturamento (R$)',
-                data: valores,
-                backgroundColor: '#a3536a'
-              }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-          });
-        } catch (e) { console.error("Erro gráfico:", e); }
-      });
-    }
+        });
+      }
 
-    // "Gráfico Anual" (toggle)
-    var btnToggleGrafico = document.getElementById('btn-toggle-grafico');
-    if (btnToggleGrafico) {
-      btnToggleGrafico.addEventListener('click', function() {
-        var painelGrafico = document.getElementById('painel-grafico-faturamento');
-        if (painelGrafico) {
-          painelGrafico.style.display = painelGrafico.style.display === 'none' ? 'block' : 'none';
-        }
-      });
-    }
+      var seletorMes = document.getElementById('seletor-mes-planilha');
+      if (seletorMes) {
+        seletorMes.addEventListener('change', function() {
+          if (window.UI && typeof window.UI.renderPlanilhaVendas === 'function') {
+            window.UI.renderPlanilhaVendas();
+          }
+        });
+      }
 
-    // Recarregar planilha ao trocar o mês
-    var seletorMes = document.getElementById('seletor-mes-planilha');
-    if (seletorMes && window.UI && typeof window.UI.renderPlanilhaVendas === 'function') {
-      seletorMes.addEventListener('change', function() {
-        window.UI.renderPlanilhaVendas();
-      });
-    }
+      var btnResumoMensal = document.getElementById('btn-gerar-resumo-mensal');
+      if (btnResumoMensal) {
+        btnResumoMensal.addEventListener('click', function() {
+          if (window.UI && typeof window.UI.renderPlanilhaVendas === 'function') {
+            window.UI.renderPlanilhaVendas();
+            if (window.Utils) window.Utils.showToast("Relatório mensal atualizado.", "success");
+          }
+        });
+      }
 
-    // Botão "Adicionar Avulso" — apenas avisa que está desabilitado
-    var btnAddAvulso = document.getElementById('btn-adicionar-linha-planilha');
-    if (btnAddAvulso) {
-      btnAddAvulso.addEventListener('click', function() {
-        if (window.Utils) window.Utils.showToast("Para adicionar uma venda avulsa, crie uma Reserva normalmente.", "info");
-      });
-    }
-    var btnSalvarPlanilha = document.getElementById('btn-salvar-dados-planilha');
-    if (btnSalvarPlanilha) {
-      btnSalvarPlanilha.addEventListener('click', function() {
-        if (window.Utils) window.Utils.showToast("A planilha é sincronizada automaticamente pelas reservas.", "info");
-      });
-    }
-
-    // "Relatório Mensal"
-    var btnResumoMensal = document.getElementById('btn-gerar-resumo-mensal');
-    if (btnResumoMensal) {
-      btnResumoMensal.addEventListener('click', function() {
-        if (window.UI && typeof window.UI.renderPlanilhaVendas === 'function') {
-          window.UI.renderPlanilhaVendas();
-          if (window.Utils) window.Utils.showToast("Relatório mensal atualizado.", "success");
-        }
-      });
-    }
+      var btnAddAvulso = document.getElementById('btn-adicionar-linha-planilha');
+      if (btnAddAvulso) {
+        btnAddAvulso.addEventListener('click', function() {
+          if (window.Utils) window.Utils.showToast("Para adicionar venda avulsa, crie uma Reserva normalmente.", "info");
+        });
+      }
+      var btnSalvarPlanilha = document.getElementById('btn-salvar-dados-planilha');
+      if (btnSalvarPlanilha) {
+        btnSalvarPlanilha.addEventListener('click', function() {
+          if (window.Utils) window.Utils.showToast("A planilha é sincronizada automaticamente pelas reservas.", "info");
+        });
+      }
+    });
   </script>
 </body>
 </html>
