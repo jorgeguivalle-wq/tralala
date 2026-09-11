@@ -118,7 +118,36 @@
     .tabela-pontos th { background: var(--primary); color: white; padding: 10px; text-align: left; }
     .tabela-pontos td { padding: 10px; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; }
     
-    .categoria-header-linha { background-color: #fdf5f6 !important; font-weight: bold; color: var(--primary-dark) !important; }
+    /* ============================================================ */
+    /* CABEÇALHO DE CATEGORIA (NOVO) */
+    /* ============================================================ */
+    .categoria-header-linha {
+      background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+      color: white !important;
+      padding: 12px 15px !important;
+      font-weight: 700 !important;
+      font-size: 14px !important;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-top: 3px solid var(--primary-dark) !important;
+    }
+    .categoria-header-linha:first-child {
+      border-top: none !important;
+    }
+    .categoria-header-linha .icone-cat {
+      margin-right: 8px;
+      font-size: 16px;
+    }
+    .categoria-header-linha .contador-cat {
+      float: right;
+      background: rgba(255,255,255,0.25);
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0;
+      text-transform: none;
+    }
 
     .painel-kits { background: #fafafa; border: 1px solid var(--border-color); padding: 20px; border-radius: var(--radius); margin-bottom: 25px; }
     .grid-kits { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
@@ -415,6 +444,8 @@
             <div class="input-group" style="margin-bottom: 10px;">
               <label style="font-size: 11px;">Categoria:</label>
               <select id="catalogo-peca-categoria">
+                <option value="Maquete">Maquete</option>
+                <option value="Louças de porcelana">Louças de porcelana</option>
                 <option value="Infantil">Infantil</option>
                 <option value="Casamento">Casamento</option>
                 <option value="15 Anos">15 Anos</option>
@@ -922,7 +953,7 @@
   </div>
 
   <!-- ============================================================ -->
-  <!-- MODAL DE EDIÇÃO DE MAQUETE (NOVO) -->
+  <!-- MODAL DE EDIÇÃO DE MAQUETE -->
   <!-- ============================================================ -->
   <div id="modal-editar-tema" class="modal-editar-tema">
     <div class="modal-editar-conteudo">
@@ -958,7 +989,7 @@
         </div>
         <div class="input-group">
           <label>🏷️ Categoria:</label>
-          <input type="text" id="editar-tema-categoria" placeholder="Ex: Infantil, Outros...">
+          <input type="text" id="editar-tema-categoria" placeholder="Ex: Maquete, Louças de porcelana...">
         </div>
       </div>
 
@@ -1318,7 +1349,7 @@
     window.removerCategoria = function(nome) { return Database.removerCategoriaNuvem(nome); };
 
     // ============================================================
-    // REDUZIR IMAGEM (para não pesar o Firebase)
+    // REDUZIR IMAGEM
     // ============================================================
     function reduzirImagem(file, maxWidth, quality) {
       return new Promise(function(resolve, reject) {
@@ -1487,19 +1518,66 @@
       });
     }
 
+    // ============================================================
+    // RENDERIZAR TEMAS — AGRUPADO POR CATEGORIA (NOVO)
+    // ============================================================
     function renderizarTemas() {
       const corpo = document.getElementById("lista-temas-gerenciados-corpo");
       const contador = document.getElementById("contador-catalogo-total");
       if (contador) contador.textContent = State.estoqueArray.length + " itens";
       if (!corpo) return;
+
       if (State.estoqueArray.length === 0) {
         corpo.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999; padding:15px;">Nenhum tema ou peça cadastrada.</td></tr>';
-      } else {
-        let html = "";
-        State.estoqueArray.forEach((tema, idx) => {
-          const img = tema.imagem
+        return;
+      }
+
+      // ============================================================
+      // AGRUPA POR CATEGORIA
+      // ============================================================
+      const grupos = {};
+      State.estoqueArray.forEach(function(item) {
+        var cat = (item.categoria && String(item.categoria).trim()) || "Sem Categoria";
+        if (!grupos[cat]) grupos[cat] = [];
+        grupos[cat].push(item);
+      });
+
+      // Ordena as categorias: "Maquete" e "Louças de porcelana" primeiro, resto em ordem alfabética
+      var ordemPreferida = ["Maquete", "Louças de porcelana"];
+      var categoriasOrdenadas = Object.keys(grupos).sort(function(a, b) {
+        var ia = ordemPreferida.indexOf(a);
+        var ib = ordemPreferida.indexOf(b);
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return a.localeCompare(b, 'pt-BR');
+      });
+
+      // ============================================================
+      // MONTA O HTML
+      // ============================================================
+      var html = "";
+
+      categoriasOrdenadas.forEach(function(cat) {
+        var itens = grupos[cat];
+
+        // Cabeçalho da categoria
+        html += '<tr class="categoria-header-linha">' +
+          '<td colspan="3">' +
+          '<span class="icone-cat">📁</span>' +
+          cat +
+          '<span class="contador-cat">' + itens.length + ' ' + (itens.length === 1 ? 'item' : 'itens') + '</span>' +
+          '</td>' +
+          '</tr>';
+
+        // Itens da categoria
+        itens.forEach(function(tema) {
+          var idxOriginal = State.estoqueArray.indexOf(tema);
+
+          var img = tema.imagem
             ? '<img src="' + tema.imagem + '" class="catalogo-foto" alt="Foto">'
             : '<div style="width:50px;height:50px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#888;">Sem Foto</div>';
+
           html += '<tr>' +
             '<td style="text-align:center;">' + img + '</td>' +
             '<td><strong>' + (tema.nome || "Sem Nome") + '</strong><br>' +
@@ -1508,12 +1586,15 @@
             'Qtd: <strong>' + (tema.quantidade || 1) + '</strong>' +
             '</span></td>' +
             '<td style="text-align:center; white-space: nowrap;">' +
-            '<button type="button" onclick="window.editarTema(' + idx + ')" class="btn-acao-tabela btn-editar-tema" title="Editar Peça">✏️</button>' +
-            '<button type="button" onclick="window.removerTema(' + idx + ')" class="btn-acao-tabela btn-remover-orc" title="Remover Peça">🗑️</button>' +
+            '<button type="button" onclick="window.editarTema(' + idxOriginal + ')" class="btn-acao-tabela btn-editar-tema" title="Editar Peça">✏️</button>' +
+            '<button type="button" onclick="window.removerTema(' + idxOriginal + ')" class="btn-acao-tabela btn-remover-orc" title="Remover Peça">🗑️</button>' +
             '</td></tr>';
         });
-        corpo.innerHTML = html;
-      }
+      });
+
+      corpo.innerHTML = html;
+
+      // Atualiza select de remoção
       const selectRemover = document.getElementById("select-remover-tema");
       if (selectRemover) {
         const valorAtual = selectRemover.value;
@@ -1538,7 +1619,7 @@
     };
 
     // ============================================================
-    // EDITAR TEMA (NOVO)
+    // EDITAR TEMA
     // ============================================================
     window.editarTema = function(index) {
       const tema = State.estoqueArray[index];
@@ -2697,7 +2778,6 @@
         window.removerTema(idx);
       };
 
-      // Inicializa o modal de edição
       initModalEditar();
     }
 
@@ -2710,7 +2790,7 @@
       listenReservas();
       listenOrcamentos();
       bindTudo();
-      console.log("✅ Sistema Tralalá inicializado com botão Editar.");
+      console.log("✅ Sistema Tralalá com catálogo agrupado por categoria!");
     });
   </script>
 </body>
