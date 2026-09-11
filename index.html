@@ -4,399 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tralalá Festas - Sistema Pro</title>
-  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  
-  <style>
-    :root {
-      --primary: #a3536a;
-      --primary-light: #c26e85;
-      --primary-dark: #8e5868;
-      --bg-color: #fbe9eb;
-      --bg-panel: #ffffff;
-      --text-main: #2d3436;
-      --text-muted: #636e72;
-      --border-color: #e1cbd4;
-      --success: #27ae60;
-      --error: #e74c3c;
-      --shadow: 0 10px 30px rgba(163, 105, 122, 0.15);
-      --radius: 16px;
-    }
-    * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-    body {
-      background-color: var(--bg-color); margin: 0; padding: 20px;
-      display: flex; justify-content: center; align-items: flex-start;
-      min-height: 100vh; color: var(--text-main);
-    }
-    .site-container {
-      width: 100%; max-width: 800px; background: var(--bg-panel);
-      padding: 40px;
-      box-shadow: var(--shadow); border-radius: var(--radius);
-      position: relative;
-    }
-    .fachada { text-align: center; margin-bottom: 25px; }
-    .logo-imagem { max-width: 180px; height: auto; display: block; margin: 0 auto; transition: transform 0.3s; }
-    .logo-imagem:hover { transform: scale(1.05); }
-    h2 { color: var(--primary); font-size: 24px; font-weight: 700; margin-top: 0; margin-bottom: 20px; }
-    h3 { color: var(--primary-dark); font-size: 18px; font-weight: 600; margin-bottom: 15px; }
-    .instrucao { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 25px; }
-    
-    .usuario-logado {
-      display: flex; justify-content: space-between; align-items: center;
-      background: #fdf5f6; padding: 15px 20px; border-radius: var(--radius);
-      font-weight: 600; color: var(--primary); border: 1px solid #f9e1e5;
-      margin-bottom: 30px;
-    }
-    
-    .input-group { margin-bottom: 20px; position: relative; }
-    .input-group label { display: block; font-weight: 500; margin-bottom: 8px; color: var(--text-main); font-size: 14px; }
-    .input-group input, .input-group select, .input-group textarea {
-      width: 100%; padding: 14px 16px; border: 1.5px solid var(--border-color);
-      border-radius: 10px; font-size: 14px; color: var(--text-main); background-color: #fafafa;
-      transition: all 0.3s ease;
-    }
-    .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
-      outline: none; border-color: var(--primary); background-color: #fff;
-      box-shadow: 0 0 0 4px rgba(163, 83, 106, 0.1);
-    }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
-    
-    .busca-container { position: relative; margin-bottom: 8px; }
-    .busca-container input { padding-left: 40px !important; }
-    .busca-container::before {
-      content: "🔍"; position: absolute; left: 15px; top: 50%;
-      transform: translateY(-50%); font-size: 14px; pointer-events: none; z-index: 2;
-    }
-
-    .sugestoes-wrapper { position: relative; width: 100%; }
-    .lista-sugestoes {
-      position: absolute; top: 100%; left: 0; right: 0; background: #ffffff;
-      border: 1.5px solid var(--primary-light); border-radius: 10px; max-height: 200px;
-      overflow-y: auto; z-index: 999; box-shadow: 0 8px 20px rgba(163, 105, 122, 0.15);
-      margin-top: 5px; display: none;
-    }
-    .sugestao-item, .item-sugestao {
-      padding: 12px 16px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f9e1e5;
-      transition: background 0.2s; display: flex; justify-content: space-between; align-items: center;
-    }
-    .sugestao-item:hover, .item-sugestao:hover { background-color: #fdf5f6; color: var(--primary); font-weight: 500; }
-
-    .btn {
-      padding: 14px 20px; font-size: 15px; font-weight: 600; border-radius: 10px;
-      cursor: pointer; transition: all 0.3s ease; border: none; width: 100%;
-      display: inline-flex; justify-content: center; align-items: center; gap: 8px;
-    }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
-    .btn-primary { background-color: var(--primary); color: #fff; box-shadow: 0 4px 15px rgba(163, 105, 122, 0.3); }
-    .btn-primary:hover:not(:disabled) { background-color: var(--primary-dark); transform: translateY(-2px); }
-    .btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); width: auto; padding: 8px 16px; font-size: 13px; cursor: pointer; }
-    .btn-outline:hover:not(:disabled) { background: var(--primary); color: #fff; }
-    .btn-danger { background-color: #fff5f6; color: var(--error); border: 1px solid #fadbd8; }
-    .btn-danger:hover:not(:disabled) { background-color: var(--error); color: #fff; }
-    .btn-success { background-color: var(--success); color: #fff; }
-    .btn-success:hover:not(:disabled) { background-color: #219a52; transform: translateY(-2px); }
-    .btn-pecas-tema {
-      background: #f0f4ff; color: #3498db; border: 1.5px solid #3498db;
-      padding: 10px 14px; font-size: 13px; font-weight: 600; border-radius: 8px;
-      cursor: pointer; width: 100%; transition: all 0.2s;
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    }
-    .btn-pecas-tema:hover { background: #3498db; color: white; }
-    
-    .painel-ponto {
-      background: #fffafb; border: 1px solid var(--border-color); padding: 20px;
-      border-radius: var(--radius); margin-bottom: 30px;
-    }
-    
-    .painel-relatorio-pontos {
-      background: #fdfbfc; border: 1px solid var(--primary-light); padding: 20px;
-      border-radius: var(--radius); margin-bottom: 30px; display: none;
-    }
-    .tabela-pontos { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-    .tabela-pontos th { background: var(--primary); color: white; padding: 10px; text-align: left; }
-    .tabela-pontos td { padding: 10px; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; }
-    
-    .categoria-header-linha {
-      background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
-      color: white !important;
-      padding: 12px 15px !important;
-      font-weight: 700 !important;
-      font-size: 14px !important;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      border-top: 3px solid var(--primary-dark) !important;
-    }
-    .categoria-header-linha:first-child { border-top: none !important; }
-    .categoria-header-linha .icone-cat { margin-right: 8px; font-size: 16px; }
-    .categoria-header-linha .contador-cat {
-      float: right; background: rgba(255,255,255,0.25);
-      padding: 2px 10px; border-radius: 12px; font-size: 12px;
-      font-weight: 600; letter-spacing: 0; text-transform: none;
-    }
-
-    .painel-kits { background: #fafafa; border: 1px solid var(--border-color); padding: 20px; border-radius: var(--radius); margin-bottom: 25px; }
-    .grid-kits { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-    .btn-kit-opcao {
-      padding: 12px; border: 1.5px solid var(--border-color); border-radius: 10px;
-      background: #ffffff; cursor: pointer; font-weight: 500; color: var(--text-muted);
-      font-size: 13px; transition: all 0.2s;
-    }
-    .btn-kit-opcao.ativo { background: var(--primary); border-color: var(--primary); color: #ffffff; }
-    
-    .kit-acoes-box {
-      display: none;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 20px;
-      padding: 12px;
-      background: #f0f4ff;
-      border-radius: 10px;
-      border: 1.5px dashed #3498db;
-    }
-    .kit-acoes-box.ativo { display: grid; }
-    .kit-acoes-titulo {
-      grid-column: 1 / -1;
-      font-size: 12px;
-      font-weight: 700;
-      color: #3498db;
-      margin-bottom: 4px;
-      text-align: center;
-    }
-    .kit-acoes-info {
-      grid-column: 1 / -1;
-      font-size: 11px;
-      color: var(--text-muted);
-      text-align: center;
-      margin-top: 4px;
-    }
-
-    .card-reserva, .card-reuniao, .card-contrato {
-      background: #ffffff; border: 1px solid var(--border-color); border-left: 6px solid var(--primary);
-      padding: 22px; border-radius: 12px; margin-bottom: 15px;
-    }
-    .card-reuniao { border-left-color: #3498db; }
-    .card-contrato { border-left-color: #e67e22; }
-
-    .painel-central-relatorios {
-      background: #fdfbfc; border: 1.5px solid var(--primary-light); padding: 22px;
-      border-radius: var(--radius); margin-bottom: 30px; box-shadow: var(--shadow);
-    }
-    .planilha-festa-simulada { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-    .planilha-festa-simulada th { background: #8e5868; color: white; padding: 8px; }
-    .planilha-festa-simulada td { border: 1px solid var(--border-color); padding: 8px; vertical-align: middle; }
-    .input-tabela { width: 100%; border: none; background: transparent; font-size: 12px; padding: 4px; }
-    .input-tabela:focus { outline: 1px solid var(--primary-light); background: #fff5f6; }
-    .seletor-kit-tabela { padding: 4px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 5px; width: 100%; }
-    
-    .catalogo-foto { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-color); }
-    
-    .calc-frete-box {
-      background: #fff3f5; border: 1px dashed var(--primary-light);
-      padding: 15px; border-radius: 10px; margin-top: 15px;
-    }
-    
-    .grafico-wrapper {
-      background: #ffffff; border: 1px solid var(--border-color);
-      padding: 15px; border-radius: 12px; margin-top: 15px;
-    }
-
-    .btn-acao-tabela {
-      padding: 6px 10px; font-size: 14px; border-radius: 6px; cursor: pointer; border: none;
-      display: inline-flex; align-items: center; justify-content: center; transition: transform 0.2s;
-      margin: 0 2px;
-    }
-    .btn-acao-tabela:hover { transform: scale(1.1); }
-    .btn-promover { background-color: #27ae60; color: white; margin-right: 5px; }
-    .btn-remover-orc { background-color: #e74c3c; color: white; }
-    .btn-editar-tema { background-color: #3498db; color: white; }
-
-    .montagem-local-container {
-      background: #f4f6f9; border: 1.5px solid #dcdde1; border-radius: 10px; padding: 15px; margin-top: 15px; display: none;
-    }
-    .check-container { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--primary-dark); cursor: pointer; margin-bottom: 15px; }
-    .check-container input { width: 20px; height: 20px; cursor: pointer; }
-    .multi-select-box { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; max-height: 120px; overflow-y: auto; padding: 8px; }
-    .multi-select-item { display: flex; align-items: center; gap: 8px; padding: 4px; font-size: 13px; }
-    .multi-select-item input { width: 16px; height: 16px; }
-
-    .modal-contrato {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
-      z-index: 10000; opacity: 0; pointer-events: none; transition: all 0.3s ease;
-    }
-    .modal-contrato.ativo { opacity: 1; pointer-events: auto; }
-    .modal-conteudo {
-      background: #fff; padding: 30px; border-radius: var(--radius);
-      width: 90%; max-width: 700px; max-height: 85vh; overflow-y: auto;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    }
-
-    .modal-visualizar-contrato {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center;
-      z-index: 10001; opacity: 0; pointer-events: none; transition: all 0.3s ease;
-    }
-    .modal-visualizar-contrato.ativo { opacity: 1; pointer-events: auto; }
-    .modal-visualizar-conteudo {
-      background: #fff; padding: 30px; border-radius: var(--radius);
-      width: 95%; max-width: 1000px; max-height: 90vh; overflow-y: auto;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    }
-
-    .visualizador-contrato-scroll {
-      max-height: 75vh; overflow-y: auto; background: #e8e8e8; padding: 20px; border-radius: 8px;
-    }
-
-    .modal-loading-overlay {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center;
-      z-index: 20000; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
-    }
-    .modal-loading-overlay.ativo { opacity: 1; pointer-events: auto; }
-    .modal-loading-box {
-      background: #ffffff; padding: 35px 30px; border-radius: 20px; text-align: center;
-      max-width: 400px; width: 85%; box-shadow: 0 15px 35px rgba(0,0,0,0.25);
-      border: 2px solid var(--primary-light);
-    }
-    .spinner-loading {
-      width: 45px; height: 45px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary);
-      border-radius: 50%; animation: spin 0.9s linear infinite; margin: 0 auto 18px auto;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .modal-loading-titulo { font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
-    .modal-loading-subtitulo { font-size: 13px; color: var(--text-muted); margin: 0; }
-
-    .pagina-contrato {
-      background: white; width: 210mm; min-height: 297mm; margin: 10px auto;
-      padding: 18mm 16mm; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-radius: 2px;
-      box-sizing: border-box; page-break-after: always; break-after: page;
-      font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.4;
-      text-align: justify; position: relative;
-    }
-    .pagina-contrato .logo-container { text-align: center; margin-bottom: 6px; }
-    .pagina-contrato .logo-contrato { max-width: 120px; max-height: 50px; height: auto; }
-    .pagina-contrato .titulo-contrato {
-      text-align: center; font-size: 15pt; font-weight: bold; text-transform: uppercase;
-      margin: 0 0 5px 0; padding: 0; letter-spacing: 1px;
-    }
-    .pagina-contrato .dados-contratada { margin: 0; padding: 0; line-height: 1.3; }
-    .pagina-contrato .dados-contratante { margin: 2px 0 0 0; padding: 0; line-height: 1.3; }
-    .pagina-contrato .clausula-titulo { font-weight: bold; font-size: 11.5pt; margin: 5px 0 2px 0; padding: 0; text-transform: uppercase; }
-    .pagina-contrato .clausula-texto { margin: 0 0 2px 0; padding: 0; text-align: justify; }
-    .pagina-contrato .paragrafo { margin: 0 0 2px 18px; padding: 0; text-align: justify; }
-    .pagina-contrato .assinatura { margin-top: 14px; text-align: center; }
-    .pagina-contrato .linha-assinatura { border-top: 1px solid #000; width: 60%; margin: 3px auto; padding-top: 3px; }
-    .pagina-contrato .assinatura-nome { font-weight: bold; font-size: 10pt; }
-    .pagina-contrato .negrito { font-weight: bold; }
-    .pagina-contrato p { margin: 0 0 2px 0; padding: 0; }
-    .pagina-contrato .rodape-loja {
-      text-align: center; font-size: 9pt; margin-top: 8px; padding-top: 4px;
-      border-top: 1px solid #ccc;
-    }
-    .pagina-contrato .tabela-itens {
-      width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 10pt;
-    }
-    .pagina-contrato .tabela-itens th, .pagina-contrato .tabela-itens td {
-      border: 1px solid #000; padding: 4px 6px; text-align: left;
-    }
-    .pagina-contrato .tabela-itens th {
-      background: #f0f0f0; font-weight: bold; text-align: center;
-    }
-
-    .btn-pdf { background-color: #e67e22; color: #fff; }
-    .btn-pdf:hover { background-color: #d35400; transform: translateY(-2px); }
-
-    .modal-pecas, .modal-tema-reserva {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center;
-      z-index: 16000; opacity: 0; pointer-events: none; transition: all 0.3s ease;
-    }
-    .modal-pecas.ativo, .modal-tema-reserva.ativo { opacity: 1; pointer-events: auto; }
-    .modal-pecas-conteudo, .modal-tema-reserva-conteudo {
-      background: #fff; padding: 25px; border-radius: var(--radius);
-      width: 92%; max-width: 550px; max-height: 85vh; overflow-y: auto;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    }
-    .lista-pecas-checkbox {
-      max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color);
-      border-radius: 8px; padding: 10px; background: #fafafa;
-    }
-    .peca-check-item {
-      display: flex; align-items: center; gap: 10px; padding: 8px 10px;
-      border-bottom: 1px solid #eee; cursor: pointer; border-radius: 6px;
-      transition: background 0.15s;
-    }
-    .peca-check-item:hover { background: #fdf5f6; }
-    .peca-check-item:last-child { border-bottom: none; }
-    .peca-check-item input[type="checkbox"] {
-      width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);
-    }
-    .peca-check-item .nome-peca { font-size: 14px; font-weight: 500; }
-    .peca-check-item .info-peca { font-size: 11px; color: var(--text-muted); margin-left: auto; }
-    .badge-contador {
-      display: inline-block; padding: 3px 10px; border-radius: 12px;
-      background: var(--primary); color: white; font-size: 12px; font-weight: 600;
-    }
-    .item-tema-selecionavel {
-      padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #eee;
-      transition: background 0.15s; font-size: 14px;
-    }
-    .item-tema-selecionavel:hover { background: #fdf5f6; color: var(--primary); font-weight: 500; }
-    .item-tema-selecionavel.selecionado { background: var(--primary); color: white; font-weight: 600; }
-
-    .modal-editar-tema {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center;
-      z-index: 15000; opacity: 0; pointer-events: none; transition: all 0.3s ease;
-    }
-    .modal-editar-tema.ativo { opacity: 1; pointer-events: auto; }
-    .modal-editar-conteudo {
-      background: #fff; padding: 30px; border-radius: var(--radius);
-      width: 92%; max-width: 600px; max-height: 90vh; overflow-y: auto;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    }
-    .preview-foto-editar {
-      width: 100%; max-width: 200px; height: 200px; border-radius: 12px;
-      object-fit: cover; border: 2px solid var(--border-color);
-      display: block; margin: 0 auto 15px auto; background: #f5f5f5;
-    }
-    .preview-box-editar {
-      text-align: center; padding: 15px;
-      background: #fafafa; border-radius: 12px; margin-bottom: 15px;
-    }
-    .input-file-editar {
-      width: 100%; padding: 12px; border: 1.5px dashed var(--primary-light);
-      border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px;
-    }
-
-    @media print {
-      .pagina-contrato { box-shadow: none; margin: 0; padding: 18mm 16mm; width: 100%; min-height: 297mm; page-break-after: always; break-after: page; border-radius: 0; }
-      .visualizador-contrato-scroll { max-height: none; overflow-y: visible; padding: 0; background: white; }
-      .no-print { display: none !important; }
-    }
-
-    @media (max-width: 600px) {
-      .site-container { padding: 25px 20px; }
-      .grid-2, .grid-3, .grid-4, .grid-kits { grid-template-columns: 1fr; }
-      .pagina-contrato { width: 100%; min-height: 297mm; padding: 15mm 12mm; margin: 5px auto; }
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="site-container">
     <header class="fachada">
       <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" alt="Logo Tralalá" class="logo-imagem">
     </header>
-    
+
+    <!-- ================= LOGIN ================= -->
     <section id="secao-login">
       <h2 style="text-align: center;">Acesso ao Sistema</h2>
       <p class="instrucao">Faça login para gerenciar reservas e estoque.</p>
@@ -410,38 +33,35 @@
       </div>
       <button type="button" id="btn-login-direto" class="btn btn-primary">Entrar no Painel</button>
     </section>
-    
+
+    <!-- ================= PAINEL PRINCIPAL ================= -->
     <section id="secao-verificador" style="display: none;">
       <div class="usuario-logado">
         <span id="nome-usuario"> 👤 Administrador (Tralalá)</span>
         <button type="button" id="btn-logout-direto" class="btn btn-outline">Sair</button>
       </div>
-   
+
+      <!-- PONTO ELETRÔNICO -->
       <div id="painel-ponto-eletronico" class="painel-ponto">
         <div class="ponto-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-          <h3> ⏰ Ponto Eletrônico</h3>
-          <button type="button" id="btn-abrir-relatorio-pontos" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;"> 📋 Histórico</button>
+          <h3>⏰ Ponto Eletrônico</h3>
+          <button type="button" id="btn-abrir-relatorio-pontos" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;">📋 Histórico</button>
         </div>
         <div class="grid-2">
-          <button type="button" id="btn-ponto-entrada" class="btn btn-primary" style="background-color: var(--success);"> 🟢 Registrar Entrada</button>
-          <button type="button" id="btn-ponto-saida" class="btn btn-primary" style="background-color: var(--error);"> 🔴 Registrar Saída</button>
+          <button type="button" id="btn-ponto-entrada" class="btn btn-primary" style="background-color: var(--success);">🟢 Registrar Entrada</button>
+          <button type="button" id="btn-ponto-saida" class="btn btn-primary" style="background-color: var(--error);">🔴 Registrar Saída</button>
         </div>
         <div id="ponto-status-hoje" class="ponto-status" style="font-size: 13px; color: var(--text-muted); text-align: center; margin-top: 12px; padding: 8px; background: #ffffff; border-radius: 8px; border: 1px dashed var(--border-color);">
           Buscando registros do servidor...
         </div>
       </div>
-      
+
       <div id="painel-relatorio-pontos-geral" class="painel-relatorio-pontos">
-        <h3 style="margin-top: 0; border-bottom: 2px solid var(--primary-light); padding-bottom: 5px;"> 📊 Histórico de Pontos</h3>
+        <h3 style="margin-top: 0; border-bottom: 2px solid var(--primary-light); padding-bottom: 5px;">📊 Histórico de Pontos</h3>
         <div style="overflow-x: auto; max-height: 200px;">
           <table class="tabela-pontos">
             <thead>
-              <tr>
-                <th>Funcionário</th>
-                <th>Data</th>
-                <th>Entrada</th>
-                <th>Saída</th>
-              </tr>
+              <tr><th>Funcionário</th><th>Data</th><th>Entrada</th><th>Saída</th></tr>
             </thead>
             <tbody id="lista-pontos-geral-corpo">
               <tr><td colspan="4" style="text-align:center; color:#999;">Nenhum ponto registrado.</td></tr>
@@ -450,20 +70,22 @@
         </div>
       </div>
 
+      <!-- BOTÕES DE NAVEGAÇÃO -->
       <div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">
-        <button type="button" id="btn-abrir-central-relatorios" class="btn btn-primary" style="flex: 1; min-width: 140px; background-color: #3498db;"> 📊 Venda Mensal & Anual</button>
-        <button type="button" id="btn-abrir-reunioes-painel" class="btn btn-primary" style="flex: 1; min-width: 140px; background-color: #27ae60;"> 📅 Agendar Reuniões</button>
-        <button type="button" id="btn-abrir-orcamentos" class="btn btn-outline" style="flex: 1; min-width: 140px; background-color: #a3536a; color: white; border: none;"> 📋 Ver Orçamentos </button>
-        <button type="button" id="btn-abrir-catalogo-temas" class="btn btn-outline" style="flex: 1; min-width: 110px;"> 🎨 Ver Catálogo </button>
-        <button type="button" id="btn-abrir-gerador-contrato" class="btn btn-outline" style="flex: 1; min-width: 130px; border-color: #e67e22; color: #e67e22;"> ✍️ Gerar Contrato </button>
+        <button type="button" id="btn-abrir-central-relatorios" class="btn btn-primary" style="flex: 1; min-width: 140px; background-color: #3498db;">📊 Venda Mensal & Anual</button>
+        <button type="button" id="btn-abrir-reunioes-painel" class="btn btn-primary" style="flex: 1; min-width: 140px; background-color: #27ae60;">📅 Agendar Reuniões</button>
+        <button type="button" id="btn-abrir-orcamentos" class="btn btn-outline" style="flex: 1; min-width: 140px; background-color: #a3536a; color: white; border: none;">📋 Ver Orçamentos</button>
+        <button type="button" id="btn-abrir-catalogo-temas" class="btn btn-outline" style="flex: 1; min-width: 110px;">🎨 Ver Catálogo</button>
+        <button type="button" id="btn-abrir-gerador-kits" class="btn btn-outline" style="flex: 1; min-width: 110px; border-color: #9b59b6; color: #9b59b6;">🎁 Gerar Kits</button>
+        <button type="button" id="btn-abrir-gerador-contrato" class="btn btn-outline" style="flex: 1; min-width: 130px; border-color: #e67e22; color: #e67e22;">✍️ Gerar Contrato</button>
       </div>
 
+      <!-- ========== PAINEL DE REUNIÕES ========== -->
       <div id="painel-reunioes-exclusivo" class="painel-central-relatorios" style="display: none; border-color: #27ae60;">
         <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center; color: #27ae60;">
           <span>📅 Painel de Reuniões com Clientes</span>
           <button type="button" id="btn-fechar-reunioes" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px; border-color: #27ae60; color: #27ae60;">✕ Fechar</button>
         </h3>
-        
         <div style="background: #f4faf6; border: 1px solid #d4efdf; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
           <h4 style="margin: 0 0 10px 0; color: #27ae60;">➕ Marcar Nova Reunião</h4>
           <div class="grid-2">
@@ -477,33 +99,33 @@
             </div>
           </div>
           <div class="input-group" style="margin-bottom: 10px;">
-            <label style="font-size: 12px;">Pauta / Objetivo da Reunião:</label>
-            <input type="text" id="reuniao-pauta" placeholder="Ex: Escolha das flores, Ajuste do layout, Assinatura de contrato">
+            <label style="font-size: 12px;">Pauta / Objetivo:</label>
+            <input type="text" id="reuniao-pauta" placeholder="Ex: Escolha das flores">
           </div>
           <button type="button" id="btn-salvar-reuniao-avulsa" class="btn btn-primary" style="background-color: #27ae60;">Agendar Reunião</button>
         </div>
-
         <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px;">📍 Reuniões Agendadas:</h4>
         <div id="lista-reunioes-container" style="max-height: 250px; overflow-y: auto;">
           <p style="color: #999; text-align: center;">Buscando reuniões da nuvem...</p>
         </div>
       </div>
 
+      <!-- ========== PAINEL CATÁLOGO ========== -->
       <div id="painel-catalogo-temas" class="painel-relatorio-pontos" style="border-color: var(--primary); background: #ffffff; display: none;">
         <h3 style="margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 5px; color: var(--primary); display: flex; justify-content: space-between; align-items: center;">
           <span>🎨 Catálogo de Temas & Peças</span>
           <span id="contador-catalogo-total" style="font-size: 13px; font-weight: normal; background: var(--primary); color: white; padding: 2px 8px; border-radius: 20px;">0 itens</span>
         </h3>
-        
+
         <div style="background: #ffffff; border: 1.5px solid var(--primary-light); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-          <h4 style="margin: 0 0 10px 0; color: var(--primary); font-size: 14px;">➕ Adicionar Peça / Tema ao Catálogo</h4>
+          <h4 style="margin: 0 0 10px 0; color: var(--primary); font-size: 14px;">➕ Adicionar Peça / Tema</h4>
           <div class="grid-3">
             <div class="input-group" style="margin-bottom: 10px;">
               <label style="font-size: 11px;">Nome da Peça/Tema:</label>
-              <input type="text" id="catalogo-peca-nome" placeholder="Ex: Mesa Provençal Branca">
+              <input type="text" id="catalogo-peca-nome" placeholder="Ex: Mesa Provençal">
             </div>
             <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 11px;">Quantidade Disponível:</label>
+              <label style="font-size: 11px;">Quantidade:</label>
               <input type="number" id="catalogo-peca-qtd" value="1" min="0">
             </div>
             <div class="input-group" style="margin-bottom: 10px;">
@@ -518,55 +140,55 @@
               </select>
             </div>
           </div>
-          <div class="grid-2">
+          <div class="grid-3">
             <div class="input-group" style="margin-bottom: 10px;">
               <label style="font-size: 11px;">Modelo/Estilo:</label>
-              <input type="text" id="catalogo-peca-modelo" placeholder="Ex: Rústico, Luxo, Painel Redondo">
+              <input type="text" id="catalogo-peca-modelo" placeholder="Ex: Rústico">
             </div>
             <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 11px;">Tirar Foto da Peça / Upload:</label>
-              <input type="file" id="catalogo-peca-imagem" accept="image/*" capture="environment" style="padding: 10px;">
+              <label style="font-size: 11px;">💰 Preço da Locação (R$):</label>
+              <input type="number" id="catalogo-peca-preco" placeholder="0.00" step="0.01" value="0">
             </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">🔧 Preço de Reposição (R$):</label>
+              <input type="number" id="catalogo-peca-preco-reposicao" placeholder="0.00" step="0.01" value="0">
+            </div>
+          </div>
+          <div class="input-group" style="margin-bottom: 10px;">
+            <label style="font-size: 11px;">Foto da Peça / Upload:</label>
+            <input type="file" id="catalogo-peca-imagem" accept="image/*" capture="environment" style="padding: 10px;">
           </div>
           <button type="button" id="btn-adicionar-peca" class="btn btn-primary" style="margin-top: 5px;">Salvar Peça no Acervo</button>
         </div>
 
-        <div style="background: #f5f0f0; border: 1.5px solid #e1cbd4; padding: 15px; border-radius: 10px; margin-bottom: 20px; margin-top: 15px;">
+        <div style="background: #f5f0f0; border: 1.5px solid #e1cbd4; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
           <h4 style="margin: 0 0 12px 0; color: var(--primary-dark); display: flex; justify-content: space-between; align-items: center;">
             <span>📂 Gerenciar Categorias</span>
             <span id="contador-categorias" style="font-size:12px; background:var(--primary); color:#fff; padding:2px 10px; border-radius:12px;">0</span>
           </h4>
-          
           <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
             <div style="flex: 1; min-width: 200px; display: flex; gap: 8px;">
               <input type="text" id="input-nova-categoria" placeholder="Nome da nova categoria" style="flex:1; padding:8px 12px; border:1.5px solid var(--border-color); border-radius:8px;">
-              <button type="button" id="btn-adicionar-categoria" class="btn btn-primary" style="padding:8px 16px; width:auto; font-size:13px; white-space:nowrap;">➕ Adicionar</button>
+              <button type="button" id="btn-adicionar-categoria" class="btn btn-primary" style="padding:8px 16px; width:auto; font-size:13px;">➕ Adicionar</button>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
               <select id="select-remover-categoria" style="padding:8px 12px; border:1.5px solid var(--border-color); border-radius:8px; min-width:150px;">
                 <option value="">Selecione...</option>
               </select>
-              <button type="button" id="btn-remover-categoria" class="btn btn-danger" style="padding:8px 16px; width:auto; font-size:13px; white-space:nowrap;">🗑️ Remover</button>
+              <button type="button" id="btn-remover-categoria" class="btn btn-danger" style="padding:8px 16px; width:auto; font-size:13px;">🗑️ Remover</button>
             </div>
           </div>
-          
-          <div id="lista-categorias-admin" style="display:flex; flex-wrap:wrap; gap:6px; padding:8px; background:#fff; border-radius:8px; min-height:40px; border:1px solid var(--border-color);">
-          </div>
+          <div id="lista-categorias-admin" style="display:flex; flex-wrap:wrap; gap:6px; padding:8px; background:#fff; border-radius:8px; min-height:40px; border:1px solid var(--border-color);"></div>
         </div>
 
-        <div style="background: #fff5f5; border: 1.5px solid #f5c6c6; padding: 15px; border-radius: 10px; margin-top: 15px;">
-          <h4 style="margin: 0 0 12px 0; color: var(--error); display: flex; justify-content: space-between; align-items: center;">
-            <span>🗑️ Remover Tema/Peça</span>
-          </h4>
+        <div style="background: #fff5f5; border: 1.5px solid #f5c6c6; padding: 15px; border-radius: 10px;">
+          <h4 style="margin: 0 0 12px 0; color: var(--error);">🗑️ Remover Tema/Peça</h4>
           <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
             <select id="select-remover-tema" style="flex:1; min-width:200px; padding:10px 14px; border:1.5px solid var(--border-color); border-radius:8px;">
               <option value="">Selecione um tema para remover...</option>
             </select>
-            <button type="button" id="btn-remover-tema-admin" class="btn btn-danger" style="padding:10px 20px; width:auto; font-size:14px;">
-              🗑️ Remover Tema Selecionado
-            </button>
+            <button type="button" id="btn-remover-tema-admin" class="btn btn-danger" style="padding:10px 20px; width:auto; font-size:14px;">🗑️ Remover</button>
           </div>
-          <div id="info-tema-remover" style="margin-top:8px; font-size:12px; color:var(--text-muted);"></div>
         </div>
 
         <div style="overflow-x: auto; max-height: 500px; margin-top: 15px;">
@@ -574,86 +196,126 @@
             <thead>
               <tr style="background: var(--primary);">
                 <th style="background: var(--primary); width: 60px;">Imagem</th>
-                <th style="background: var(--primary);">Item / Modelo / Qtd</th>
-                <th style="background: var(--primary); width: 130px; text-align: center;">Ações</th>
+                <th style="background: var(--primary);">Item / Preços</th>
+                <th style="background: var(--primary); width: 180px; text-align: center;">Ações</th>
               </tr>
             </thead>
             <tbody id="lista-temas-gerenciados-corpo">
-              <tr><td colspan="3" style="text-align:center; color:#999; padding: 10px;">Buscando catálogo na nuvem...</td></tr>
+              <tr><td colspan="3" style="text-align:center; color:#999; padding: 10px;">Buscando catálogo...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <div id="secao-central-relatorios" class="painel-central-relatorios" style="display: none;">
-        <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center;">
-          <span>📊 Relatório de Vendas & Faturamento Mensal</span>
-          <button type="button" id="btn-fechar-central-relatorios" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;">✕ Fechar</button>
+      <!-- ========== PAINEL GERADOR DE KITS ========== -->
+      <div id="painel-gerador-kits" class="painel-central-relatorios" style="display: none; border-color: #9b59b6;">
+        <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center; color: #9b59b6;">
+          <span>🎁 Gerador de Kits Personalizados</span>
+          <button type="button" id="btn-fechar-gerador-kits" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px; border-color: #9b59b6; color: #9b59b6;">✕ Fechar</button>
         </h3>
 
+        <div style="background: #f9f4fb; border: 1.5px solid #d8b4e2; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+          <h4 style="margin: 0 0 10px 0; color: #9b59b6; font-size: 14px;">➕ Criar Novo Kit</h4>
+          <div class="grid-2">
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">Nome do Kit:</label>
+              <input type="text" id="kit-nome" placeholder="Ex: Kit Princesa Encantada">
+            </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">Quantidade Disponível:</label>
+              <input type="number" id="kit-quantidade" value="1" min="0">
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-bottom: 10px;">
+            <button type="button" id="btn-kit-selecionar-pecas" class="btn-pecas-tema" style="padding:12px;">🍽️ Selecionar Peças</button>
+            <button type="button" id="btn-kit-selecionar-temas" class="btn-pecas-tema" style="padding:12px;">🎨 Selecionar Temas</button>
+          </div>
+
+          <div id="kit-info-selecao" style="background:#fff; padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px; color:var(--text-muted); border:1px dashed #d8b4e2; min-height:40px;">
+            Nenhuma peça ou tema selecionado ainda.
+          </div>
+
+          <div class="input-group" style="margin-bottom: 10px;">
+            <label style="font-size: 11px;">Foto do Kit / Upload:</label>
+            <input type="file" id="kit-imagem" accept="image/*" capture="environment" style="padding: 10px;">
+          </div>
+
+          <button type="button" id="btn-salvar-kit" class="btn btn-primary" style="background-color: #9b59b6;">💾 Salvar Kit no Acervo</button>
+        </div>
+
+        <h4 style="color: #9b59b6; border-bottom: 1px solid #d8b4e2; padding-bottom: 5px;">📦 Kits Cadastrados:</h4>
+        <div id="lista-kits-render" style="max-height: 400px; overflow-y: auto;">
+          <p style="text-align:center; color:#999;">Carregando kits...</p>
+        </div>
+      </div>
+
+      <!-- ========== PAINEL RELATÓRIOS ========== -->
+      <div id="secao-central-relatorios" class="painel-central-relatorios" style="display: none;">
+        <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center;">
+          <span>📊 Relatório de Vendas & Faturamento</span>
+          <button type="button" id="btn-fechar-central-relatorios" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;">✕ Fechar</button>
+        </h3>
         <div class="grid-2" style="margin-bottom: 15px; align-items: flex-end;">
           <div class="input-group" style="margin-bottom: 0;">
-            <label>Selecione o Mês para Lançamento:</label>
+            <label>Mês:</label>
             <select id="seletor-mes-planilha">
-              <option value="Janeiro">Janeiro 2026</option>
-              <option value="Fevereiro">Fevereiro 2026</option>
-              <option value="Março">Março 2026</option>
-              <option value="Abril">Abril 2026</option>
-              <option value="Maio">Maio 2026</option>
-              <option value="Junho">Junho 2026</option>
-              <option value="Julho" selected>Julho 2026</option>
-              <option value="Agosto">Agosto 2026</option>
-              <option value="Setembro">Setembro 2026</option>
-              <option value="Outubro">Outubro 2026</option>
-              <option value="Novembro">Novembro 2026</option>
-              <option value="Dezembro">Dezembro 2026</option>
+              <option value="Janeiro">Janeiro</option>
+              <option value="Fevereiro">Fevereiro</option>
+              <option value="Março">Março</option>
+              <option value="Abril">Abril</option>
+              <option value="Maio">Maio</option>
+              <option value="Junho">Junho</option>
+              <option value="Julho" selected>Julho</option>
+              <option value="Agosto">Agosto</option>
+              <option value="Setembro">Setembro</option>
+              <option value="Outubro">Outubro</option>
+              <option value="Novembro">Novembro</option>
+              <option value="Dezembro">Dezembro</option>
             </select>
           </div>
           <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-            <button type="button" id="btn-transformar-grafico" class="btn btn-primary" style="background-color: #e74c3c; font-size: 11px; padding: 8px; width: auto;">📈 Transformar Planilha em Gráfico</button>
-            <button type="button" id="btn-toggle-grafico" class="btn btn-outline" style="border-color: #3498db; color: #3498db; font-size: 11px; padding: 8px;">📈 Gráfico Anual</button>
-            <button type="button" id="btn-gerar-resumo-mensal" class="btn btn-outline" style="border-color: #27ae60; color: #27ae60; font-size: 11px; padding: 8px;">📊 Relatório Mensal</button>
+            <button type="button" id="btn-transformar-grafico" class="btn btn-primary" style="background-color: #e74c3c; font-size: 11px; padding: 8px;">📈 Gráfico</button>
+            <button type="button" id="btn-toggle-grafico" class="btn btn-outline" style="border-color: #3498db; color: #3498db; font-size: 11px; padding: 8px;">📈 Anual</button>
           </div>
         </div>
-
         <div id="painel-grafico-faturamento" class="grafico-wrapper" style="display: none;">
-          <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📈 Desempenho Faturamento Anual (2026)</h4>
+          <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📈 Desempenho Anual</h4>
           <canvas id="graficoAnual" style="max-height: 250px; width: 100%;"></canvas>
         </div>
-
-        <div id="form-planilha-vendas" style="overflow-x: auto; margin-top: 15px;">
-          <div style="background: #e8f4fd; border-left: 5px solid #3498db; padding: 10px; font-size: 11px; border-radius: 4px; margin-bottom: 10px; color: #2c3e50;">
-            ℹ️ <strong>Sincronização Ativa:</strong> Todas as Reservas Ativas são automaticamente lançadas na planilha com base no mês do evento.
-          </div>
-          
+        <div style="overflow-x: auto; margin-top: 15px;">
           <table class="planilha-festa-simulada" id="tabela-planilha-corpo">
             <thead>
               <tr>
                 <th style="width: 35%;">Cliente</th>
-                <th style="width: 25%;">Modelo de Kit</th>
+                <th style="width: 25%;">Kit</th>
                 <th style="width: 25%;">Valor (R$)</th>
                 <th style="width: 15%;">Ação</th>
               </tr>
             </thead>
-            <tbody>
-            </tbody>
+            <tbody></tbody>
           </table>
-
-          <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-            <button type="button" id="btn-adicionar-linha-planilha" class="btn btn-outline" style="font-size: 12px; padding: 8px; flex: 1;">➕ Adicionar Avulso</button>
-            <button type="button" id="btn-salvar-dados-planilha" class="btn btn-outline" style="font-size: 12px; padding: 8px; border-color: #3498db; color: #3498db; flex: 1;">☁️ Salvar Alterações na Nuvem</button>
-          </div>
         </div>
       </div>
 
-      <!-- FORMULÁRIO DE RESERVA -->
+      <!-- ========== FORMULÁRIO DE RESERVA ========== -->
       <h2 id="titulo-form-reserva">Agendar Nova Festa</h2>
-      <input type="hidden" id="editando-id-reserva" value="">
-      
+
       <div class="grid-2">
         <div class="input-group">
           <label>Nome do Cliente:</label>
           <input type="text" id="nome-cliente" placeholder="Ex: Maria Flor">
+        </div>
+        <div class="input-group">
+          <label>CPF do Cliente:</label>
+          <input type="text" id="cliente-cpf" placeholder="000.000.000-00">
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="input-group">
+          <label>Telefone:</label>
+          <input type="text" id="cliente-telefone" placeholder="(61) 9XXXX-XXXX">
         </div>
         <div class="input-group">
           <label>Data do Evento:</label>
@@ -661,29 +323,18 @@
         </div>
       </div>
 
-      <div class="grid-2">
-        <div class="input-group">
-          <label>CPF do Cliente:</label>
-          <input type="text" id="cliente-cpf" placeholder="000.000.000-00">
-        </div>
-        <div class="input-group">
-          <label>Telefone do Cliente:</label>
-          <input type="text" id="cliente-telefone" placeholder="(61) 9XXXX-XXXX">
-        </div>
-      </div>
-
       <div class="input-group">
         <label>Endereço do Cliente:</label>
-        <input type="text" id="cliente-endereco" placeholder="Endereço completo do cliente">
+        <input type="text" id="cliente-endereco" placeholder="Endereço completo">
       </div>
 
       <div class="input-group">
-        <label>Local do Evento (se diferente do endereço do cliente):</label>
-        <input type="text" id="local-evento" placeholder="Endereço completo do evento">
+        <label>Local do Evento:</label>
+        <input type="text" id="local-evento" placeholder="Local do evento">
       </div>
 
       <div class="input-group">
-        <label id="label-busca-tema">Buscar e Selecionar Tema/Peça do Catálogo:</label>
+        <label>Buscar e Selecionar Tema/Peça:</label>
         <div class="sugestoes-wrapper">
           <div class="busca-container">
             <input type="text" id="filtro-tema-input" placeholder="Digite para buscar..." autocomplete="off">
@@ -692,214 +343,167 @@
         </div>
         <input type="hidden" id="busca-tema-input" value="">
       </div>
-   
+
       <div class="painel-kits">
-        <label style="font-weight: 600; display: block; margin-bottom: 12px; color: var(--primary);"> 🛍️ Escolha o Modelo do Kit:</label>
+        <label style="font-weight: 600; display: block; margin-bottom: 12px; color: var(--primary);">🛍️ Modelo do Kit:</label>
         <div id="grupo-kits-dinamico" class="grid-kits">
-          <button type="button" class="btn-kit-opcao" data-kit="Só um Bolinho"> 🧁 Só um Bolinho</button>
-          <button type="button" class="btn-kit-opcao" data-kit="Kit Básico"> 📦 Kit Básico</button>
-          <button type="button" class="btn-kit-opcao" data-kit="Kit Prata"> 🥈 Kit Prata</button>
-          <button type="button" class="btn-kit-opcao" data-kit="Kit Ouro"> 🥇 Kit Ouro</button>
+          <button type="button" class="btn-kit-opcao" data-kit="Só um Bolinho">🧁 Só um Bolinho</button>
+          <button type="button" class="btn-kit-opcao" data-kit="Kit Básico">📦 Kit Básico</button>
+          <button type="button" class="btn-kit-opcao" data-kit="Kit Prata">🥈 Kit Prata</button>
+          <button type="button" class="btn-kit-opcao" data-kit="Kit Ouro">🥇 Kit Ouro</button>
         </div>
-        
+
         <div id="kit-acoes-box" class="kit-acoes-box">
           <div class="kit-acoes-titulo">📋 Personalizar <span id="kit-acoes-nome">Kit</span></div>
           <button type="button" id="btn-esc-pecas" class="btn-pecas-tema">🍽️ Escolher Peças</button>
           <button type="button" id="btn-esc-tema" class="btn-pecas-tema">🎨 Escolher Tema</button>
-          <div class="kit-acoes-info" id="kit-acoes-info">Nenhuma peça selecionada ainda</div>
+          <div class="kit-acoes-info" id="kit-acoes-info">Nenhuma peça selecionada</div>
         </div>
-        
+
         <div style="margin-top: 20px;">
           <label class="check-container">
             <input type="checkbox" id="chk-montar-local">
             <span>🛠️ Montar no Local?</span>
           </label>
-          
           <div id="painel-montagem-local" class="montagem-local-container">
-            <h4 style="margin: 0 0 12px 0; color: var(--primary-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Perguntas de Montagem no Local:</h4>
-            
             <div class="grid-2">
               <div class="input-group" style="margin-bottom: 10px;">
                 <label style="font-size:12px;">Quantas peças vão?</label>
                 <input type="number" id="ml-qtd-pecas" value="0" min="0">
               </div>
               <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Selecione quais peças vão (Estoque):</label>
-                <div id="ml-pecas-estoque" class="multi-select-box">
-                </div>
-              </div>
-            </div>
-
-            <div class="grid-3">
-              <div class="input-group" style="margin-bottom: 10px;">
                 <label style="font-size:12px;">Vai LED?</label>
-                <select id="ml-led">
-                  <option value="Não">Não</option>
-                  <option value="Sim">Sim</option>
-                </select>
-              </div>
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Quantos cilindros?</label>
-                <input type="number" id="ml-qtd-cilindros" value="0" min="0">
-              </div>
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Quantas mesas?</label>
-                <input type="number" id="ml-qtd-mesas" value="0" min="0">
-              </div>
-            </div>
-
-            <div class="grid-2">
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Selecione quais mesas/cilindros vão (Estoque):</label>
-                <div id="ml-mesas-estoque" class="multi-select-box">
-                </div>
-              </div>
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Vai Balão?</label>
-                <select id="ml-balao">
-                  <option value="Não">Não</option>
-                  <option value="Sim">Sim</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="grid-2">
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Vai Display Personalizado?</label>
-                <select id="ml-display">
-                  <option value="Não">Não</option>
-                  <option value="Sim">Sim</option>
-                </select>
-              </div>
-              <div class="input-group" style="margin-bottom: 10px;">
-                <label style="font-size:12px;">Vai Personalizados?</label>
-                <select id="ml-personalizados">
-                  <option value="Não">Não</option>
-                  <option value="Sim">Sim</option>
-                </select>
+                <select id="ml-led"><option value="Não">Não</option><option value="Sim">Sim</option></select>
               </div>
             </div>
           </div>
         </div>
 
         <div class="input-group" style="margin-top: 15px;">
-          <label style="font-weight: 600; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;"> 📄 Modelo do Contrato:</label>
+          <label style="font-weight: 600; color: var(--primary);">📄 Modelo do Contrato:</label>
           <select id="modelo-contrato">
-            <option value="pegue-monte">🏠 Pegue e Monte (Cliente Retira na Loja)</option>
-            <option value="com-frete">📦 Com Frete (Entrega + Retirada pela Tralalá)</option>
+            <option value="pegue-monte">🏠 Pegue e Monte</option>
+            <option value="com-frete">📦 Com Frete</option>
           </select>
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
-            💡 Se "Montar no Local" está marcado, sugerimos o Com Frete.
-          </div>
         </div>
 
+        <!-- RESUMO DE SELEÇÃO -->
+        <div id="resumo-selecao" style="background: #f8f4ff; border: 1.5px solid #d8b4e2; padding: 15px; border-radius: 10px; margin-top: 20px; display: none;">
+          <h4 style="margin: 0 0 10px 0; color: #9b59b6; font-size: 14px;">📋 Itens Selecionados</h4>
+          <div id="resumo-temas-pecas" style="font-size: 13px; line-height: 1.6;"></div>
+        </div>
+
+        <!-- FRETE + SOMA + DESCONTO -->
         <div class="input-group" style="margin-top: 15px;">
-          <label style="font-weight: 600; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;"> 💰 Acerto Financeiro & Frete Inteligente</label>
-          
+          <label style="font-weight: 600; color: var(--primary);">💰 Acerto Financeiro & Frete</label>
+
           <div class="calc-frete-box">
-            <span style="font-size: 12px; font-weight: 600; color: var(--primary-dark);">🚗 Calculadora de Frete (Consumo: 9 km/L):</span>
+            <span style="font-size: 12px; font-weight: 600; color: var(--primary-dark);">🚗 Calculadora de Frete (9 km/L):</span>
             <div class="grid-2" style="margin-top: 10px;">
               <div>
-                <label style="font-size: 11px;">Quilometragem (KM só IDA):</label>
+                <label style="font-size: 11px;">KM só IDA:</label>
                 <input type="number" id="calc-km" placeholder="Ex: 45" style="padding: 8px;">
               </div>
               <div>
-                <label style="font-size: 11px;">Preço Base do Combustível (R$):</label>
+                <label style="font-size: 11px;">Preço Combustível (R$):</label>
                 <input type="number" id="calc-valor-litro" value="8.00" step="0.01" style="padding: 8px;">
               </div>
             </div>
             <div style="margin-top: 10px;">
-              <label class="check-container" style="font-size: 12px; margin-bottom: 0;">
+              <label class="check-container" style="font-size: 12px;">
                 <input type="checkbox" id="chk-segunda-viagem" style="width: 16px; height: 16px;">
-                <span>🔄 Cliente pediu 2ª viagem (ida+volta de novo)?</span>
+                <span>🔄 Cliente pediu 2ª viagem?</span>
               </label>
             </div>
-            <div style="font-size: 12px; color: var(--text-main); margin-top: 12px; font-weight: 500; line-height: 1.6;">
-              🚗 KM total rodada: <span id="calc-km-total">0</span> km<br>
-              Combustível Base: <span id="calc-total-combustivel">R$ 0.00</span> | 
-              Manutenção (+20%): <span id="calc-manutencao">R$ 0.00</span><br>
-              <strong>Total do Frete a Cobrar: <span id="calc-cobrar-cliente" style="color: var(--success);">R$ 0.00</span></strong>
+            <div style="font-size: 12px; margin-top: 12px; line-height: 1.6;">
+              🚗 KM total: <span id="calc-km-total">0</span> km<br>
+              Combustível: <span id="calc-total-combustivel">R$ 0.00</span> | Manutenção: <span id="calc-manutencao">R$ 0.00</span><br>
+              <strong>Frete: <span id="calc-cobrar-cliente" style="color: var(--success);">R$ 0.00</span></strong>
             </div>
           </div>
 
-          <div id="card-orcamentos-integrado" style="background: #fdf5f6; border: 1.5px solid var(--primary-light); padding: 18px; border-radius: 12px; margin-top: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <h3 style="margin: 0; font-size: 16px; color: var(--primary);">📋 Orçamentos Salvos</h3>
-              <button type="button" id="btn-salvar-como-orcamento" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; font-weight: bold; border-color: var(--primary); color: var(--primary);">
-                💾 Salvar Orçamento
-              </button>
-            </div>
-            
-            <div style="overflow-x: auto; max-height: 250px; overflow-y: auto; margin-top: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: #ffffff;">
-              <table class="planilha-festa-simulada" style="width: 100%; border-collapse: collapse; margin-top: 0;">
-                <thead>
-                  <tr style="background: var(--primary); color: white;">
-                    <th style="padding: 8px; font-size: 11px; text-align: left;">Cliente</th>
-                    <th style="padding: 8px; font-size: 11px; text-align: left;">Tema / Kit</th>
-                    <th style="padding: 8px; font-size: 11px; text-align: left;">Valor (R$)</th>
-                    <th style="padding: 8px; font-size: 11px; text-align: center; width: 90px;">Ações</th>
-                  </tr>
-                </thead>
-                <tbody id="lista-orcamentos-interno-corpo">
-                  <tr><td colspan="4" style="text-align:center; color:#999; padding: 15px;">Buscando orçamentos da nuvem...</td></tr>
-                </tbody>
-              </table>
-            </div>
+          <!-- SOMA AUTOMÁTICA -->
+          <div style="background: #e8f8f5; border: 1.5px solid #27ae60; padding: 15px; border-radius: 10px; margin-top: 15px;">
+            <h4 style="margin: 0 0 10px 0; color: #27ae60; font-size: 14px;">🧮 Soma Automática</h4>
+            <button type="button" id="btn-soma-automatica" class="btn btn-success" style="margin-bottom: 10px;">🧮 Calcular Soma Automática</button>
+            <div id="detalhes-soma" style="font-size: 12px; line-height: 1.6; color: var(--text-main);"></div>
           </div>
 
+          <!-- DESCONTO -->
+          <div style="background: #fff3e0; border: 1.5px solid #ff9800; padding: 15px; border-radius: 10px; margin-top: 15px;">
+            <h4 style="margin: 0 0 10px 0; color: #e65100; font-size: 14px;">🏷️ Aplicar Desconto</h4>
+            <div class="grid-3">
+              <div>
+                <label style="font-size: 11px;">Tipo:</label>
+                <select id="desconto-tipo" style="padding: 8px;">
+                  <option value="percent">% Percentual</option>
+                  <option value="reais">R$ Reais</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size: 11px;">Valor do Desconto:</label>
+                <input type="number" id="desconto-valor" placeholder="0" step="0.01" style="padding: 8px;">
+              </div>
+              <div style="display:flex; align-items:flex-end;">
+                <button type="button" id="btn-aplicar-desconto" class="btn btn-primary" style="background-color:#ff9800;">Aplicar</button>
+              </div>
+            </div>
+            <div id="resultado-desconto" style="margin-top:12px; font-size:13px; line-height:1.6;"></div>
+          </div>
+
+          <!-- VALORES FINAIS -->
           <div class="grid-3" style="margin-top: 15px;">
             <div>
               <label style="font-size: 12px;">Valor da Festa (R$):</label>
               <input type="number" id="valor-festa" placeholder="0.00" step="0.01" value="0.00">
             </div>
             <div>
-              <label style="font-size: 12px;">Frete Calculado (R$):</label>
-              <input type="number" id="valor-frete" placeholder="0.00" step="0.01" readonly style="background: #fdf5f6; font-weight: bold; color: var(--primary);">
+              <label style="font-size: 12px;">Frete (R$):</label>
+              <input type="number" id="valor-frete" placeholder="0.00" step="0.01" readonly style="background:#fdf5f6; font-weight:bold; color:var(--primary);">
             </div>
             <div>
-              <label style="font-size: 12px;">Valor Total (Festa + Frete):</label>
-              <input type="number" id="valor-total" placeholder="0.00" step="0.01" readonly style="font-weight: bold; background: #ebfbf2;">
+              <label style="font-size: 12px;">Total (Festa + Frete):</label>
+              <input type="number" id="valor-total" placeholder="0.00" step="0.01" readonly style="font-weight:bold; background:#ebfbf2;">
             </div>
           </div>
 
           <div class="grid-2" style="margin-top: 15px;">
             <div>
-              <label style="font-size: 12px;">Sinal Pago (Ex: 50%):</label>
+              <label style="font-size: 12px;">Sinal Pago (R$):</label>
               <input type="number" id="valor-sinal" placeholder="0.00" step="0.01" value="0.00">
             </div>
             <div>
-              <label style="font-size: 12px; color: var(--error); font-weight: 600;">Resta Pagar (R$):</label>
-              <input type="number" id="valor-restante" placeholder="0.00" step="0.01" readonly style="background: #fff5f6; font-weight: bold; color: var(--error);">
+              <label style="font-size: 12px; color: var(--error); font-weight:600;">Resta Pagar (R$):</label>
+              <input type="number" id="valor-restante" placeholder="0.00" step="0.01" readonly style="background:#fff5f6; font-weight:bold; color:var(--error);">
             </div>
           </div>
         </div>
-        
+
         <div class="input-group" style="margin-bottom: 0;">
-          <label> ➕ Observações / Local da Festa:</label>
-          <input type="text" id="adicionais-festa" placeholder="Ex: Salão de Festas ou Detalhes adicionais">
+          <label>➕ Observações / Local da Festa:</label>
+          <input type="text" id="adicionais-festa" placeholder="Ex: Salão de Festas">
         </div>
       </div>
-      
-      <button type="button" id="btn-confirmar-agendamento" class="btn btn-primary" style="padding: 18px; font-size: 16px;"> ✅ Confirmar e Salvar Reserva Ativa</button>
-      <button type="button" id="btn-cancelar-edicao" class="btn btn-danger" style="padding: 12px; font-size: 14px; margin-top: 10px; display: none;"> Cancelar Edição </button>
-      
+
+      <button type="button" id="btn-confirmar-agendamento" class="btn btn-primary" style="padding: 18px; font-size: 16px;">✅ Confirmar e Salvar Reserva</button>
+
       <div style="margin-top: 40px; border-top: 2px solid var(--border-color); padding-top: 30px;">
-        <h3 style="margin-bottom: 20px;"> 📋 Relatório de Agendamentos Ativos (Reservas)</h3>
+        <h3 style="margin-bottom: 20px;">📋 Relatório de Agendamentos Ativos</h3>
         <div id="lista-reservas-render">
-          <p style="text-align: center; color: #999;">Carregando agendamentos da nuvem...</p>
+          <p style="text-align: center; color: #999;">Carregando agendamentos...</p>
         </div>
       </div>
     </section>
   </div>
 
-  <!-- MODAL GERADOR DE CONTRATO -->
+  <!-- ================= MODAL GERADOR DE CONTRATO ================= -->
   <div id="modal-gerador-contrato" class="modal-contrato">
     <div class="modal-conteudo">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
-        <h3 style="margin:0; color:var(--primary);">✍️ Gerador de Contrato Tralalá</h3>
+        <h3 style="margin:0; color:var(--primary);">✍️ Gerador de Contrato</h3>
         <button type="button" id="btn-fechar-modal-contrato" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
       </div>
-      
+
       <form id="form-contrato-avulso">
         <div class="grid-2">
           <div class="input-group">
@@ -917,7 +521,7 @@
             <input type="date" id="c-data">
           </div>
           <div class="input-group">
-            <label>Horário de Início:</label>
+            <label>Horário:</label>
             <input type="time" id="c-horario">
           </div>
         </div>
@@ -928,7 +532,7 @@
           </div>
           <div class="input-group">
             <label>Endereço do Cliente:</label>
-            <input type="text" id="c-endereco" placeholder="Endereço completo do cliente">
+            <input type="text" id="c-endereco" placeholder="Endereço completo">
           </div>
         </div>
         <div class="grid-2">
@@ -939,18 +543,18 @@
           <div class="input-group">
             <label>Modelo do Contrato:</label>
             <select id="c-modelo">
-              <option value="com-frete">📦 Com Frete (Entrega e Retirada)</option>
-              <option value="pegue-monte">🏠 Pegue e Monte (Retirada pelo Cliente)</option>
+              <option value="com-frete">📦 Com Frete</option>
+              <option value="pegue-monte">🏠 Pegue e Monte</option>
             </select>
           </div>
         </div>
         <div class="input-group">
           <label>Local do Evento:</label>
-          <input type="text" id="c-local" placeholder="Endereço Completo do Evento">
+          <input type="text" id="c-local" placeholder="Endereço do evento">
         </div>
 
         <div class="input-group">
-          <label>🔍 Tema do Contrato (busque pelo nome):</label>
+          <label>🔍 Tema do Contrato:</label>
           <div class="sugestoes-wrapper">
             <div class="busca-container">
               <input type="text" id="contrato-tema-busca" placeholder="Digite o nome do tema..." autocomplete="off">
@@ -959,139 +563,76 @@
           </div>
           <input type="hidden" id="contrato-tema-selecionado" value="">
         </div>
-        
+
         <div class="input-group">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="margin: 0;">Selecione as Peças (Retiradas do Catálogo):</label>
-            <button type="button" id="btn-abrir-pecas-contrato" class="btn-pecas-tema" style="width: auto; padding: 6px 12px; font-size: 12px;">🍽️ Abrir Lista de Peças</button>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <label style="margin:0;">Peças (do Catálogo):</label>
+            <button type="button" id="btn-abrir-pecas-contrato" class="btn-pecas-tema" style="width:auto; padding:6px 12px; font-size:12px;">🍽️ Abrir Lista de Peças</button>
           </div>
           <select id="c-pecas" multiple style="height:90px; padding:5px;"></select>
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;" id="c-pecas-info">
-            Clique em "Abrir Lista de Peças" pra escolher com checkboxes.
-          </div>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:5px;" id="c-pecas-info">Clique em "Abrir Lista de Peças" pra escolher.</div>
         </div>
-        
-        <div class="input-group" style="margin-top: 5px; border-top: 1px dashed var(--border-color); padding-top: 15px;">
-          <label style="font-weight: 600; color: var(--primary-dark);">🍽️ Itens Adicionais para Locação</label>
-          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Selecione os itens adicionais que farão parte da locação:</div>
-          
-          <div class="grid-2">
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 12px;">Porcelanas:</label>
-              <select id="c-porcelanas" multiple style="height:60px; padding:5px;">
-                <option value="Jogo de Porcelana Branca 20 peças">Jogo de Porcelana Branca 20 peças</option>
-                <option value="Jogo de Porcelana Flor 20 peças">Jogo de Porcelana Flor 20 peças</option>
-                <option value="Jogo de Porcelana Dourada 20 peças">Jogo de Porcelana Dourada 20 peças</option>
-                <option value="Conjunto de Café 12 peças">Conjunto de Café 12 peças</option>
-                <option value="Conjunto de Chá 12 peças">Conjunto de Chá 12 peças</option>
-              </select>
-            </div>
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 12px;">Bolos e Doces:</label>
-              <select id="c-bolos" multiple style="height:60px; padding:5px;">
-                <option value="Bolo de Aniversário 2kg - Personalizado">Bolo de Aniversário 2kg - Personalizado</option>
-                <option value="Bolo de Casamento 3kg">Bolo de Casamento 3kg</option>
-                <option value="Bolo de 15 Anos 3kg">Bolo de 15 Anos 3kg</option>
-                <option value="Kit 50 Doces Finos">Kit 50 Doces Finos</option>
-                <option value="Kit 100 Doces Finos">Kit 100 Doces Finos</option>
-              </select>
-            </div>
-          </div>
-          
-          <div class="grid-2">
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 12px;">Decoração Adicional:</label>
-              <select id="c-decoracao" multiple style="height:60px; padding:5px;">
-                <option value="Arranjo de Flores Natural">Arranjo de Flores Natural</option>
-                <option value="Arranjo de Flores Artificiais">Arranjo de Flores Artificiais</option>
-                <option value="Painel de Fundo 2x2m">Painel de Fundo 2x2m</option>
-                <option value="Mesa de Doces 1,5m">Mesa de Doces 1,5m</option>
-                <option value="Toalha de Mesa Personalizada">Toalha de Mesa Personalizada</option>
-              </select>
-            </div>
-            <div class="input-group" style="margin-bottom: 10px;">
-              <label style="font-size: 12px;">Outros Itens:</label>
-              <select id="c-outros" multiple style="height:60px; padding:5px;">
-                <option value="Cadeiras 20 unidades">Cadeiras 20 unidades</option>
-                <option value="Cadeiras 50 unidades">Cadeiras 50 unidades</option>
-                <option value="Mesas 10 unidades">Mesas 10 unidades</option>
-                <option value="Mesas 20 unidades">Mesas 20 unidades</option>
-                <option value="Iluminação LED 10m">Iluminação LED 10m</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        
+
         <div class="input-group">
-          <label>Observações (opcional):</label>
+          <label>Observações:</label>
           <input type="text" id="c-obs" placeholder="Ex: Fazer entrega às 13h">
         </div>
-        
-        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
-          <button type="button" id="btn-gerar-salvar-contrato" class="btn btn-primary" style="background-color:#e67e22; flex: 1;">💾 Salvar Contrato</button>
-          <button type="button" id="btn-gerar-pdf-contrato" class="btn btn-success" style="flex: 1;">📄 Gerar PDF</button>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
+          <button type="button" id="btn-gerar-salvar-contrato" class="btn btn-primary" style="background-color:#e67e22; flex:1;">💾 Salvar Contrato</button>
+          <button type="button" id="btn-gerar-pdf-contrato" class="btn btn-success" style="flex:1;">📄 Gerar PDF</button>
         </div>
       </form>
-
-      <div style="border-top:1px dashed var(--border-color); padding-top:20px;">
-        <h4 style="color:var(--primary-dark); margin-bottom:10px;">📄 Histórico de Contratos</h4>
-        <div id="historico-contratos-lista" style="max-height:200px; overflow-y:auto;">
-          <p style="color:#999; font-size:12px; text-align:center;">Nenhum contrato salvo.</p>
-        </div>
-      </div>
     </div>
   </div>
 
-  <!-- MODAL DE VISUALIZAÇÃO -->
+  <!-- ================= MODAL VISUALIZAR CONTRATO ================= -->
   <div id="modal-visualizar-contrato" class="modal-visualizar-contrato">
     <div class="modal-visualizar-conteudo">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
         <h3 style="margin:0; color:var(--primary);">📄 Visualização do Contrato</h3>
         <button type="button" id="btn-fechar-visualizacao" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
       </div>
-      
       <div class="visualizador-contrato-scroll" id="visualizador-scroll">
-        <div id="contrato-preview-content">
-        </div>
+        <div id="contrato-preview-content"></div>
       </div>
-      
-      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;" class="no-print">
-        <button type="button" id="btn-baixar-pdf-contrato" class="btn btn-pdf" style="width: auto; padding: 12px 24px;">📥 Baixar PDF</button>
-        <button type="button" id="btn-imprimir-contrato" class="btn btn-outline" style="width: auto; padding: 12px 24px;">🖨️ Imprimir</button>
+      <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;" class="no-print">
+        <button type="button" id="btn-baixar-pdf-contrato" class="btn btn-pdf" style="width:auto; padding:12px 24px;">📥 Baixar PDF</button>
+        <button type="button" id="btn-imprimir-contrato" class="btn btn-outline" style="width:auto; padding:12px 24px;">🖨️ Imprimir</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL DE PEÇAS -->
+  <!-- ================= MODAL DE PEÇAS ================= -->
   <div id="modal-pecas" class="modal-pecas">
     <div class="modal-pecas-conteudo">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #3498db; padding-bottom:10px; margin-bottom:20px;">
-        <h3 style="margin:0; color:#3498db;">🍽️ Escolher Peças</h3>
+        <h3 style="margin:0; color:#3498db;" id="titulo-modal-pecas">🍽️ Escolher Peças</h3>
         <button type="button" id="btn-fechar-modal-pecas" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
       </div>
 
       <div class="input-group" style="margin-bottom: 12px;">
         <label style="font-size: 13px;">🔍 Filtrar peças:</label>
-        <input type="text" id="filtro-pecas" placeholder="Digite o nome da peça..." style="padding: 10px;">
+        <input type="text" id="filtro-pecas" placeholder="Digite o nome..." style="padding: 10px;">
       </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <span style="font-size: 13px; color: var(--text-muted);">Marque as peças que vão neste evento:</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:13px; color:var(--text-muted);">Marque as peças:</span>
         <span class="badge-contador" id="contador-pecas-selecionadas">0 selecionadas</span>
       </div>
 
       <div class="lista-pecas-checkbox" id="lista-pecas-checkbox">
-        <div style="text-align:center; padding: 20px; color: #999; font-size: 13px;">Carregando peças do catálogo...</div>
+        <div style="text-align:center; padding: 20px; color: #999; font-size: 13px;">Carregando peças...</div>
       </div>
 
-      <div style="display: flex; gap: 10px; margin-top: 20px;">
-        <button type="button" id="btn-cancelar-pecas" class="btn btn-outline" style="flex: 1;">Cancelar</button>
-        <button type="button" id="btn-confirmar-pecas" class="btn btn-success" style="flex: 2;">✅ Confirmar Peças</button>
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button type="button" id="btn-cancelar-pecas" class="btn btn-outline" style="flex:1;">Cancelar</button>
+        <button type="button" id="btn-confirmar-pecas" class="btn btn-success" style="flex:2;">✅ Confirmar Peças</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL DE TEMA -->
+  <!-- ================= MODAL DE TEMA ================= -->
   <div id="modal-tema-reserva" class="modal-tema-reserva">
     <div class="modal-tema-reserva-conteudo">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
@@ -1101,29 +642,27 @@
 
       <div class="input-group" style="margin-bottom: 12px;">
         <label style="font-size: 13px;">🔍 Buscar tema:</label>
-        <input type="text" id="filtro-tema-modal" placeholder="Digite o nome do tema..." style="padding: 10px;">
+        <input type="text" id="filtro-tema-modal" placeholder="Digite o nome..." style="padding: 10px;">
       </div>
 
-      <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">
-        Clique em um tema da lista pra selecionar:
-      </div>
+      <div style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Clique em um tema pra selecionar:</div>
 
       <div class="lista-pecas-checkbox" id="lista-temas-modal">
-        <div style="text-align:center; padding: 20px; color: #999; font-size: 13px;">Carregando temas do catálogo...</div>
+        <div style="text-align:center; padding:20px; color:#999; font-size:13px;">Carregando temas...</div>
       </div>
 
-      <div style="display: flex; gap: 10px; margin-top: 20px;">
-        <button type="button" id="btn-cancelar-tema" class="btn btn-outline" style="flex: 1;">Cancelar</button>
-        <button type="button" id="btn-confirmar-tema" class="btn btn-success" style="flex: 2;">✅ Confirmar Tema</button>
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button type="button" id="btn-cancelar-tema" class="btn btn-outline" style="flex:1;">Cancelar</button>
+        <button type="button" id="btn-confirmar-tema" class="btn btn-success" style="flex:2;">✅ Confirmar Tema</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL DE EDIÇÃO DE MAQUETE -->
+  <!-- ================= MODAL EDITAR TEMA ================= -->
   <div id="modal-editar-tema" class="modal-editar-tema">
     <div class="modal-editar-conteudo">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
-        <h3 style="margin:0; color:var(--primary);">✏️ Editar Maquete</h3>
+        <h3 style="margin:0; color:var(--primary);">✏️ Editar Peça / Tema</h3>
         <button type="button" id="btn-fechar-editar-tema" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
       </div>
 
@@ -1131,19 +670,16 @@
 
       <div class="preview-box-editar">
         <img id="editar-tema-preview" class="preview-foto-editar" src="https://placehold.co/200x200?text=Sem+Foto" alt="Preview">
-        <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">Pré-visualização da foto</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-top:5px;">Pré-visualização</div>
       </div>
 
       <div class="input-group">
         <label>📷 Trocar Foto (opcional):</label>
         <input type="file" id="editar-tema-imagem" class="input-file-editar" accept="image/*">
-        <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">
-          Deixe em branco pra manter a foto atual. A nova foto será reduzida automaticamente.
-        </div>
       </div>
 
       <div class="input-group">
-        <label>📝 Nome da Maquete:</label>
+        <label>📝 Nome:</label>
         <input type="text" id="editar-tema-nome" placeholder="Ex: Fundo do Mar">
       </div>
 
@@ -1154,2228 +690,42 @@
         </div>
         <div class="input-group">
           <label>🏷️ Categoria:</label>
-          <input type="text" id="editar-tema-categoria" placeholder="Ex: Maquete, Louças de porcelana...">
+          <input type="text" id="editar-tema-categoria" placeholder="Ex: Maquete">
         </div>
       </div>
 
       <div class="input-group">
-        <label>✨ Modelo / Estilo (opcional):</label>
-        <input type="text" id="editar-tema-modelo" placeholder="Ex: Rústico, Luxo, Padrão">
+        <label>✨ Modelo / Estilo:</label>
+        <input type="text" id="editar-tema-modelo" placeholder="Ex: Rústico">
       </div>
 
-      <div style="display: flex; gap: 10px; margin-top: 20px;">
-        <button type="button" id="btn-cancelar-editar-tema" class="btn btn-outline" style="flex: 1;">Cancelar</button>
-        <button type="button" id="btn-salvar-editar-tema" class="btn btn-success" style="flex: 2;">💾 Salvar Alterações</button>
+      <div class="grid-2">
+        <div class="input-group">
+          <label>💰 Preço Locação (R$):</label>
+          <input type="number" id="editar-tema-preco" value="0" step="0.01">
+        </div>
+        <div class="input-group">
+          <label>🔧 Preço Reposição (R$):</label>
+          <input type="number" id="editar-tema-preco-reposicao" value="0" step="0.01">
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button type="button" id="btn-cancelar-editar-tema" class="btn btn-outline" style="flex:1;">Cancelar</button>
+        <button type="button" id="btn-salvar-editar-tema" class="btn btn-success" style="flex:2;">💾 Salvar Alterações</button>
       </div>
     </div>
   </div>
 
-  <!-- TELA DE LOADING -->
+  <!-- ================= MODAL DE LOADING ================= -->
   <div id="modal-status-operacao" class="modal-loading-overlay">
     <div class="modal-loading-box">
       <div id="spinner-status" class="spinner-loading"></div>
-      <div id="titulo-status-operacao" class="modal-loading-titulo">LANÇANDO TEMA...</div>
-      <p id="subtitulo-status-operacao" class="modal-loading-subtitulo">Salvando no acervo, aguarde.</p>
+      <div id="titulo-status-operacao" class="modal-loading-titulo">PROCESSANDO...</div>
+      <p id="subtitulo-status-operacao" class="modal-loading-subtitulo">Aguarde um momento.</p>
     </div>
   </div>
 
-  <script>
-    // ============================================================================
-    // SISTEMA PRINCIPAL — Tralalá Festas
-    // ============================================================================
-
-    const CONFIG = {
-      usuarios: {
-        "jorgeguivalle@gmail.com": "Viperrt11",
-        "leonardodovalle@gmail.com": "Viperrt11@",
-        "tralaladecoracoes@gmail.com": "tralala123"
-      },
-      frete: {
-        consumoKmPorLitro: 9,
-        percentualManutencao: 0.20
-      }
-    };
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCS6ofyis160STTrjhFJZDcsqAiyh_Gnmc",
-      authDomain: "tralala-d8ce2.firebaseapp.com",
-      databaseURL: "https://tralala-d8ce2-default-rtdb.firebaseio.com/",
-      projectId: "tralala-d8ce2",
-      storageBucket: "tralala-d8ce2.appspot.com",
-      messagingSenderId: "704078064009",
-      appId: "1:704078064009:web:4d6ffc34c21b14322f9958"
-    };
-
-    const State = {
-      db: null,
-      salvandoPeca: false,
-      usuarioLogadoEmail: "",
-      estoqueArray: [],
-      reservas: [],
-      orcamentos: [],
-      categorias: [],
-      temaAtual: "",
-      kitAtual: "",
-      montarNoLocal: false,
-      // Estado das peças e temas selecionados por kit
-      pecasSelecionadasKit: {},   // { "Kit Básico": ["Mesa Redonda", "Painel"], ... }
-      temaSelecionadoKit: {},     // { "Kit Básico": "Sonic", ... }
-      pecasSelecionadasContrato: [], // pra modal do gerador de contrato
-      frete: { kmIda: 0, kmTotal: 0, precoCombustivel: 0, litros: 0, custoCombustivel: 0, manutencao: 0, freteTotal: 0, segundaViagem: false },
-      carregando: true
-    };
-
-    let db = null;
-    let chartInstance = null;
-    const mesesAno = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-
-    try {
-      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-      db = firebase.database();
-      State.db = db;
-    } catch (err) {
-      console.error("Erro no Firebase:", err);
-    }
-
-    const ModalStatus = {
-      exibir: (titulo, subtitulo) => {
-        const modal = document.getElementById("modal-status-operacao");
-        const spinner = document.getElementById("spinner-status");
-        const t = document.getElementById("titulo-status-operacao");
-        const sub = document.getElementById("subtitulo-status-operacao");
-        if (!modal) return;
-        if (spinner) { spinner.style.display = "block"; spinner.style.borderColor = "#f3f3f3"; spinner.style.borderTopColor = "var(--primary)"; }
-        if (t) { t.style.color = "var(--primary)"; t.innerText = titulo || "PROCESSANDO..."; }
-        if (sub) sub.innerText = subtitulo || "Aguarde a confirmação.";
-        modal.classList.add("ativo");
-      },
-      sucesso: (mensagem, callback) => {
-        const spinner = document.getElementById("spinner-status");
-        const t = document.getElementById("titulo-status-operacao");
-        const sub = document.getElementById("subtitulo-status-operacao");
-        if (spinner) spinner.style.display = "none";
-        if (t) { t.style.color = "var(--success)"; t.innerText = "✓ SUCESSO"; }
-        if (sub) sub.innerText = mensagem || "Operação realizada com êxito.";
-        setTimeout(() => { ModalStatus.fechar(); if (callback) callback(); }, 650);
-      },
-      erro: (mensagem) => {
-        const spinner = document.getElementById("spinner-status");
-        const t = document.getElementById("titulo-status-operacao");
-        const sub = document.getElementById("subtitulo-status-operacao");
-        if (spinner) spinner.style.display = "none";
-        if (t) { t.style.color = "var(--error)"; t.innerText = "ERRO NA OPERAÇÃO"; }
-        if (sub) sub.innerText = mensagem || "Não foi possível concluir.";
-        setTimeout(() => { ModalStatus.fechar(); }, 2200);
-      },
-      fechar: () => {
-        const modal = document.getElementById("modal-status-operacao");
-        if (modal) modal.classList.remove("ativo");
-      }
-    };
-
-    const Utils = {
-      showToast: function(message, type) {
-        if (!type) type = 'info';
-        var icone = type === 'success' ? '✅' : (type === 'error' ? '🚨' : '⚠️');
-        console.log(icone + " " + message);
-        var container = document.getElementById('toast-container');
-        if (container) {
-          var toast = document.createElement('div');
-          toast.className = "toast toast-" + type;
-          toast.innerHTML = "<span>" + icone + "</span> <span>" + message + "</span>";
-          container.appendChild(toast);
-          setTimeout(function() { toast.remove(); }, 3500);
-        } else if (type === 'error') {
-          alert('❌ ' + message);
-        }
-      },
-      formatCurrency: function(value) {
-        var v = parseFloat(value);
-        if (isNaN(v) || !isFinite(v)) v = 0;
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
-      },
-      formatDateBR: function(dateString) {
-        if (!dateString) return "Não informada";
-        var p = String(dateString).split("-");
-        return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : dateString;
-      },
-      getHojeDataString: function() {
-        var d = new Date();
-        var mes = String(d.getMonth() + 1);
-        var dia = String(d.getDate());
-        if (mes.length < 2) mes = '0' + mes;
-        if (dia.length < 2) dia = '0' + dia;
-        return d.getFullYear() + "-" + mes + "-" + dia;
-      },
-      getHoraString: function() { return new Date().toTimeString().split(' ')[0]; },
-      normalizar: function(s) {
-        return (s || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      }
-    };
-
-    const CloudDB = {
-      salvar: (caminho, dados, callback) => {
-        if (db) {
-          db.ref(caminho).set(dados).then(() => { if(callback) callback(true); }).catch(e => { if(callback) callback(false, e); });
-        } else {
-          localStorage.setItem(caminho, JSON.stringify(dados));
-          if(callback) callback(true);
-        }
-      },
-      buscar: (caminho, defaultVal, callback) => {
-        if (db) {
-          db.ref(caminho).once('value').then((snapshot) => {
-            let data = snapshot.val();
-            if (data !== null) {
-              if (typeof data === 'object' && !Array.isArray(data)) {
-                const converted = Object.keys(data).map(k => {
-                  if (data[k] && typeof data[k] === 'object') return { idFirebase: k, ...data[k] };
-                  return { idFirebase: k, valor: data[k] };
-                });
-                callback(converted);
-              } else {
-                callback(data);
-              }
-            } else {
-              callback(defaultVal);
-            }
-          }).catch(() => callback(defaultVal));
-        } else {
-          const val = localStorage.getItem(caminho);
-          callback(val ? JSON.parse(val) : defaultVal);
-        }
-      }
-    };
-
-    const Database = {
-      salvarPecaNuvem: async function(peca) {
-        if (State.salvandoPeca) return;
-        State.salvandoPeca = true;
-        const btnSalvar = document.getElementById("btn-adicionar-peca");
-        if (btnSalvar) btnSalvar.disabled = true;
-        ModalStatus.exibir("LANÇANDO TEMA...", "Salvando no acervo, aguarde.");
-        try {
-          if (db) {
-            const refEstoque = db.ref("estoque");
-            const newRef = peca.idFirebase ? db.ref("estoque/" + peca.idFirebase) : refEstoque.push();
-            const pecaId = peca.idFirebase || newRef.key;
-            const payload = {
-              idFirebase: pecaId,
-              nome: peca.nome || "",
-              quantidade: parseInt(peca.quantidade) || 1,
-              categoria: peca.categoria || "Outros",
-              modelo: peca.modelo || "",
-              imagem: peca.imagem || "",
-              atualizadoEm: Date.now()
-            };
-            await newRef.set(payload);
-          }
-          ModalStatus.sucesso("✓ TEMA LANÇADO COM SUCESSO", () => {
-            const n = document.getElementById("catalogo-peca-nome"); if (n) n.value = "";
-            const q = document.getElementById("catalogo-peca-qtd"); if (q) q.value = "1";
-            const m = document.getElementById("catalogo-peca-modelo"); if (m) m.value = "";
-            const i = document.getElementById("catalogo-peca-imagem"); if (i) i.value = "";
-          });
-        } catch (error) {
-          console.error("Erro ao salvar peça:", error);
-          ModalStatus.erro("Não foi possível salvar a peça.");
-        } finally {
-          State.salvandoPeca = false;
-          if (btnSalvar) btnSalvar.disabled = false;
-        }
-      },
-      atualizarPecaNuvem: async function(idFirebase, dadosAtualizados) {
-        if (!db) return false;
-        try {
-          await db.ref("estoque/" + idFirebase).update(dadosAtualizados);
-          return true;
-        } catch (error) {
-          console.error("Erro ao atualizar peça:", error);
-          return false;
-        }
-      },
-      removerPecaNuvem: async function(indexOuId) {
-        if (State.salvandoPeca) return;
-        State.salvandoPeca = true;
-        const btnRemover = document.getElementById("btn-remover-tema-admin");
-        if (btnRemover) btnRemover.disabled = true;
-        ModalStatus.exibir("REMOVENDO TEMA...", "Atualizando o acervo, aguarde.");
-        try {
-          const item = State.estoqueArray[indexOuId];
-          if (!item) throw new Error("Item não localizado.");
-          if (db) {
-            if (item.idFirebase) {
-              await db.ref("estoque/" + item.idFirebase).remove();
-            } else {
-              await db.ref("estoque").set(State.estoqueArray.filter((_, idx) => idx !== parseInt(indexOuId)));
-            }
-          }
-          ModalStatus.sucesso("✓ TEMA REMOVIDO COM SUCESSO");
-        } catch (error) {
-          console.error("Erro ao remover peça:", error);
-          ModalStatus.erro("Não foi possível remover o tema.");
-        } finally {
-          State.salvandoPeca = false;
-          if (btnRemover) btnRemover.disabled = false;
-        }
-      },
-      salvarCategoriaNuvem: function(nome) {
-        if (!db) return Promise.reject("Sem conexão");
-        nome = (nome || "").trim();
-        if (!nome) return Promise.reject("Nome vazio");
-        return db.ref('categorias').once('value').then(function(snapshot) {
-          var data = snapshot.val();
-          var existe = false;
-          if (data && typeof data === 'object') {
-            Object.keys(data).forEach(function(key) {
-              var val = data[key];
-              var n = (val && val.nome) ? val.nome : (typeof val === 'string' ? val : null);
-              if (n && n.toLowerCase() === nome.toLowerCase()) existe = true;
-            });
-          }
-          if (existe) return Promise.reject("Categoria já existe");
-          var novaRef = db.ref('categorias').push();
-          return novaRef.set({ nome: nome, criadoEm: Date.now() });
-        });
-      },
-      removerCategoriaNuvem: function(nome) {
-        if (!db) return Promise.reject("Sem conexão");
-        if (!nome) return Promise.reject("Nome vazio");
-        return db.ref('categorias').once('value').then(function(snapshot) {
-          var data = snapshot.val();
-          var chaveRemover = null;
-          if (data && typeof data === 'object') {
-            Object.keys(data).forEach(function(key) {
-              var val = data[key];
-              var n = (val && val.nome) ? val.nome : (typeof val === 'string' ? val : null);
-              if (n === nome) chaveRemover = key;
-            });
-          }
-          if (!chaveRemover) return Promise.reject("Categoria não encontrada");
-          if (!confirm('Remover a categoria "' + nome + '"?')) return Promise.reject("Cancelado");
-          return db.ref('categorias/' + chaveRemover).remove();
-        });
-      },
-      salvarReservaNuvem: function(dadosReserva) {
-        if (!db) return Promise.reject("Sem conexão");
-        return db.ref('reservas').push().set(dadosReserva);
-      },
-      excluirReservaNuvem: function(idReserva) {
-        if (!db) return Promise.reject("Sem conexão");
-        return db.ref("reservas/" + idReserva).remove();
-      },
-      salvarOrcamentoNuvem: function(dadosOrcamento) {
-        if (!db) return Promise.reject("Sem conexão");
-        return db.ref('orcamentos').push().set(dadosOrcamento);
-      },
-      excluirOrcamentoNuvem: function(idOrcamento) {
-        if (!db) return Promise.reject("Sem conexão");
-        return db.ref("orcamentos/" + idOrcamento).remove();
-      },
-      salvarReuniaoNuvem: function(dadosReuniao) {
-        if (!db) return Promise.reject("Sem conexão");
-        return db.ref('reunioes').push().set(dadosReuniao);
-      },
-      excluirReuniaoNuvem: function(idReuniao) {
-        if (!db) return Promise.reject("Sem conexão");
-        return db.ref("reunioes/" + idReuniao).remove();
-      },
-      salvarContratoNuvem: function(dadosContrato) {
-        if (!db) return Promise.reject("Sem conexão");
-        return db.ref('contratos').push().set(dadosContrato);
-      },
-      registrarPonto: function(tipo) {
-        if (!db || !State.usuarioLogadoEmail) return Utils.showToast("Erro de identificação.", "error");
-        var chaveUsuario = State.usuarioLogadoEmail.replace(/[.#$[\]]/g, "_");
-        var hoje = Utils.getHojeDataString();
-        var hora = Utils.getHoraString();
-        var updateData = { usuario: State.usuarioLogadoEmail, data: hoje };
-        updateData[tipo] = hora;
-        db.ref("pontos/" + chaveUsuario + "/" + hoje).update(updateData)
-          .then(function() { Utils.showToast("Ponto de " + (tipo === 'entrada' ? 'Entrada' : 'Saída') + " marcado!", "success"); })
-          .catch(function() { Utils.showToast("Erro ao salvar ponto.", "error"); });
-      },
-      listenPontoUsuario: function() {
-        if (!db || !State.usuarioLogadoEmail) return;
-        var chaveUsuario = State.usuarioLogadoEmail.replace(/[.#$[\]]/g, "_");
-        var hoje = Utils.getHojeDataString();
-        db.ref("pontos/" + chaveUsuario + "/" + hoje).on('value', function(snap) {
-          var dadosPonto = snap.val() || {};
-          var entrada = dadosPonto.entrada || "--:--:--";
-          var saida = dadosPonto.saida || "--:--:--";
-          var statusEl = document.getElementById("ponto-status-hoje");
-          if (statusEl) {
-            statusEl.innerHTML = "📅 <b>Hoje (" + Utils.formatDateBR(hoje) + "):</b>" +
-              "<span style='color:var(--success); margin-left:10px;'>🟢 Entrada: <b>" + entrada + "</b></span>" +
-              "<span style='color:var(--error); margin-left:15px;'>🔴 Saída: <b>" + saida + "</b></span>";
-          }
-        });
-      }
-    };
-
-    window.adicionarCategoria = function(nome) { return Database.salvarCategoriaNuvem(nome); };
-    window.removerCategoria = function(nome) { return Database.removerCategoriaNuvem(nome); };
-
-    // ============================================================
-    // REDUZIR IMAGEM
-    // ============================================================
-    function reduzirImagem(file, maxWidth, quality) {
-      return new Promise(function(resolve, reject) {
-        if (!file) return reject("Sem arquivo");
-        maxWidth = maxWidth || 900;
-        quality = quality || 0.82;
-        var reader = new FileReader();
-        reader.onload = function(e) {
-          var img = new Image();
-          img.onload = function() {
-            var canvas = document.createElement('canvas');
-            var w = img.width, h = img.height;
-            if (w > maxWidth) {
-              h = Math.round(h * (maxWidth / w));
-              w = maxWidth;
-            }
-            canvas.width = w;
-            canvas.height = h;
-            var ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/jpeg', quality));
-          };
-          img.onerror = function() { reject("Erro ao carregar imagem"); };
-          img.src = e.target.result;
-        };
-        reader.onerror = function() { reject("Erro ao ler arquivo"); };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    // ============================================================
-    // CALCULADORA DE FRETE
-    // ============================================================
-    const FreteCalc = {
-      ler: function() {
-        var kmEl = document.getElementById('calc-km');
-        var precoEl = document.getElementById('calc-valor-litro');
-        var chkSegunda = document.getElementById('chk-segunda-viagem');
-        var kmIda = kmEl ? parseFloat(kmEl.value) : 0;
-        var preco = precoEl ? parseFloat(precoEl.value) : 0;
-        if (isNaN(kmIda) || kmIda < 0 || !isFinite(kmIda)) kmIda = 0;
-        if (isNaN(preco) || preco < 0 || !isFinite(preco)) preco = 0;
-        var segundaViagem = !!(chkSegunda && chkSegunda.checked);
-        return { kmIda: kmIda, preco: preco, segundaViagem: segundaViagem };
-      },
-      calcular: function() {
-        var e = this.ler();
-        var fator = e.segundaViagem ? 4 : 2;
-        var kmTotal = e.kmIda * fator;
-        var litros = kmTotal / CONFIG.frete.consumoKmPorLitro;
-        var custoCombustivel = litros * e.preco;
-        var manutencao = custoCombustivel * CONFIG.frete.percentualManutencao;
-        var freteTotal = custoCombustivel + manutencao;
-        if (!isFinite(litros)) litros = 0;
-        if (!isFinite(custoCombustivel)) custoCombustivel = 0;
-        if (!isFinite(manutencao)) manutencao = 0;
-        if (!isFinite(freteTotal)) freteTotal = 0;
-        State.frete = {
-          kmIda: e.kmIda,
-          kmTotal: kmTotal,
-          precoCombustivel: e.preco,
-          segundaViagem: e.segundaViagem,
-          litros: litros,
-          custoCombustivel: custoCombustivel,
-          manutencao: manutencao,
-          freteTotal: freteTotal
-        };
-        return State.frete;
-      },
-      renderizar: function() {
-        var f = this.calcular();
-        var txtKmTotal = document.getElementById('calc-km-total');
-        var txtCombustivel = document.getElementById('calc-total-combustivel');
-        var txtManutencao = document.getElementById('calc-manutencao');
-        var txtTotal = document.getElementById('calc-cobrar-cliente');
-        if (txtKmTotal) txtKmTotal.textContent = f.kmTotal;
-        if (txtCombustivel) txtCombustivel.textContent = "R$ " + f.custoCombustivel.toFixed(2);
-        if (txtManutencao) txtManutencao.textContent = "R$ " + f.manutencao.toFixed(2);
-        if (txtTotal) txtTotal.textContent = "R$ " + f.freteTotal.toFixed(2);
-
-        var inputFrete = document.getElementById('valor-frete');
-        if (inputFrete) inputFrete.value = f.freteTotal.toFixed(2);
-
-        var inputValorFesta = document.getElementById('valor-festa');
-        var valorFesta = inputValorFesta ? (parseFloat(inputValorFesta.value) || 0) : 0;
-        if (isNaN(valorFesta)) valorFesta = 0;
-
-        var inputTotal = document.getElementById('valor-total');
-        if (inputTotal) inputTotal.value = (valorFesta + f.freteTotal).toFixed(2);
-
-        var inputSinal = document.getElementById('valor-sinal');
-        var sinal = inputSinal ? (parseFloat(inputSinal.value) || 0) : 0;
-        if (isNaN(sinal)) sinal = 0;
-        var inputRestante = document.getElementById('valor-restante');
-        if (inputRestante) {
-          var restante = (valorFesta + f.freteTotal) - sinal;
-          if (restante < 0) restante = 0;
-          inputRestante.value = restante.toFixed(2);
-        }
-        return f;
-      },
-      limpar: function() {
-        State.frete = { kmIda: 0, kmTotal: 0, precoCombustivel: 0, litros: 0, custoCombustivel: 0, manutencao: 0, freteTotal: 0, segundaViagem: false };
-        var kmEl = document.getElementById('calc-km');
-        var chkSegunda = document.getElementById('chk-segunda-viagem');
-        var inputFrete = document.getElementById('valor-frete');
-        if (kmEl) kmEl.value = "";
-        if (chkSegunda) chkSegunda.checked = false;
-        if (inputFrete) inputFrete.value = "0.00";
-        this.renderizar();
-      }
-    };
-
-    // ============================================================
-    // ESTOQUE
-    // ============================================================
-    function carregarEstoqueIncremental() {
-      if (!db) return;
-      const refEstoque = db.ref("estoque");
-
-      refEstoque.once("value").then((snapshot) => {
-        const val = snapshot.val();
-        State.estoqueArray = [];
-        if (val) {
-          if (Array.isArray(val)) {
-            State.estoqueArray = val.filter(i => i !== null);
-          } else if (typeof val === 'object') {
-            Object.keys(val).forEach(k => {
-              if (val[k]) State.estoqueArray.push({ idFirebase: k, ...val[k] });
-            });
-          }
-        }
-        renderizarTemas();
-        carregarTemasNoContrato();
-        carregarSugestoesTemaFicha();
-
-        refEstoque.on("child_added", (childSnap) => {
-          const item = { idFirebase: childSnap.key, ...childSnap.val() };
-          const existe = State.estoqueArray.some(t => t.idFirebase === item.idFirebase);
-          if (!existe) {
-            State.estoqueArray.push(item);
-            renderizarTemas();
-            carregarTemasNoContrato();
-          }
-        });
-        refEstoque.on("child_changed", (childSnap) => {
-          const item = { idFirebase: childSnap.key, ...childSnap.val() };
-          const idx = State.estoqueArray.findIndex(t => t.idFirebase === item.idFirebase);
-          if (idx !== -1) {
-            State.estoqueArray[idx] = item;
-            renderizarTemas();
-            carregarTemasNoContrato();
-          }
-        });
-        refEstoque.on("child_removed", (childSnap) => {
-          State.estoqueArray = State.estoqueArray.filter(t => t.idFirebase !== childSnap.key);
-          renderizarTemas();
-          carregarTemasNoContrato();
-        });
-      }).catch(() => {
-        CloudDB.buscar("estoque", [], (dados) => {
-          State.estoqueArray = dados || [];
-          renderizarTemas();
-          carregarTemasNoContrato();
-        });
-      });
-    }
-
-    // ============================================================
-    // RENDERIZAR TEMAS AGRUPADO
-    // ============================================================
-    function renderizarTemas() {
-      const corpo = document.getElementById("lista-temas-gerenciados-corpo");
-      const contador = document.getElementById("contador-catalogo-total");
-      if (contador) contador.textContent = State.estoqueArray.length + " itens";
-      if (!corpo) return;
-
-      if (State.estoqueArray.length === 0) {
-        corpo.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999; padding:15px;">Nenhum tema ou peça cadastrada.</td></tr>';
-        return;
-      }
-
-      const grupos = {};
-      State.estoqueArray.forEach(function(item) {
-        var cat = (item.categoria && String(item.categoria).trim()) || "Sem Categoria";
-        if (!grupos[cat]) grupos[cat] = [];
-        grupos[cat].push(item);
-      });
-
-      var ordemPreferida = ["Maquete", "Louças de porcelana"];
-      var categoriasOrdenadas = Object.keys(grupos).sort(function(a, b) {
-        var ia = ordemPreferida.indexOf(a);
-        var ib = ordemPreferida.indexOf(b);
-        if (ia !== -1 && ib !== -1) return ia - ib;
-        if (ia !== -1) return -1;
-        if (ib !== -1) return 1;
-        return a.localeCompare(b, 'pt-BR');
-      });
-
-      var html = "";
-
-      categoriasOrdenadas.forEach(function(cat) {
-        var itens = grupos[cat];
-
-        html += '<tr class="categoria-header-linha">' +
-          '<td colspan="3">' +
-          '<span class="icone-cat">📁</span>' +
-          cat +
-          '<span class="contador-cat">' + itens.length + ' ' + (itens.length === 1 ? 'item' : 'itens') + '</span>' +
-          '</td>' +
-          '</tr>';
-
-        itens.forEach(function(tema) {
-          var idxOriginal = State.estoqueArray.indexOf(tema);
-
-          var img = tema.imagem
-            ? '<img src="' + tema.imagem + '" class="catalogo-foto" alt="Foto">'
-            : '<div style="width:50px;height:50px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#888;">Sem Foto</div>';
-
-          html += '<tr>' +
-            '<td style="text-align:center;">' + img + '</td>' +
-            '<td><strong>' + (tema.nome || "Sem Nome") + '</strong><br>' +
-            '<span style="font-size:11px; color:var(--text-muted);">' +
-            'Categoria: ' + (tema.categoria || "Geral") + ' | Modelo: ' + (tema.modelo || "Padrão") + '<br>' +
-            'Qtd: <strong>' + (tema.quantidade || 1) + '</strong>' +
-            '</span></td>' +
-            '<td style="text-align:center; white-space: nowrap;">' +
-            '<button type="button" onclick="window.editarTema(' + idxOriginal + ')" class="btn-acao-tabela btn-editar-tema" title="Editar Peça">✏️</button>' +
-            '<button type="button" onclick="window.removerTema(' + idxOriginal + ')" class="btn-acao-tabela btn-remover-orc" title="Remover Peça">🗑️</button>' +
-            '</td></tr>';
-        });
-      });
-
-      corpo.innerHTML = html;
-
-      const selectRemover = document.getElementById("select-remover-tema");
-      if (selectRemover) {
-        const valorAtual = selectRemover.value;
-        selectRemover.innerHTML = '<option value="">Selecione um tema para remover...</option>';
-        State.estoqueArray.forEach((item, idx) => {
-          const opt = document.createElement("option");
-          opt.value = idx;
-          const disponivel = item.quantidade > 0 ? (item.quantidade + ' disponíveis') : 'ESGOTADO';
-          opt.textContent = (item.nome || 'Sem nome') + ' (' + (item.categoria || 'Geral') + ') - ' + disponivel;
-          selectRemover.appendChild(opt);
-        });
-        if (valorAtual !== "" && State.estoqueArray[parseInt(valorAtual)]) selectRemover.value = valorAtual;
-      }
-    }
-
-    window.removerTema = function(index) {
-      const tema = State.estoqueArray[index];
-      if (!tema) return;
-      if (confirm('Deseja realmente remover o item "' + tema.nome + '"?')) {
-        Database.removerPecaNuvem(index);
-      }
-    };
-
-    // ============================================================
-    // EDITAR TEMA
-    // ============================================================
-    window.editarTema = function(index) {
-      const tema = State.estoqueArray[index];
-      if (!tema) {
-        Utils.showToast("Tema não encontrado.", "error");
-        return;
-      }
-
-      const modal = document.getElementById("modal-editar-tema");
-      if (!modal) return;
-
-      document.getElementById("editar-tema-id").value = tema.idFirebase || "";
-      document.getElementById("editar-tema-nome").value = tema.nome || "";
-      document.getElementById("editar-tema-qtd").value = tema.quantidade || 1;
-      document.getElementById("editar-tema-categoria").value = tema.categoria || "Outros";
-      document.getElementById("editar-tema-modelo").value = tema.modelo || "";
-      document.getElementById("editar-tema-imagem").value = "";
-
-      const preview = document.getElementById("editar-tema-preview");
-      preview.src = tema.imagem || "https://placehold.co/200x200?text=Sem+Foto";
-
-      modal.classList.add("ativo");
-    };
-
-    function fecharModalEditar() {
-      const modal = document.getElementById("modal-editar-tema");
-      if (modal) modal.classList.remove("ativo");
-    }
-
-    function initModalEditar() {
-      const modal = document.getElementById("modal-editar-tema");
-      if (!modal) return;
-
-      const btnFechar = document.getElementById("btn-fechar-editar-tema");
-      if (btnFechar) btnFechar.onclick = fecharModalEditar;
-
-      const btnCancelar = document.getElementById("btn-cancelar-editar-tema");
-      if (btnCancelar) btnCancelar.onclick = fecharModalEditar;
-
-      modal.addEventListener('click', function(e) {
-        if (e.target === modal) fecharModalEditar();
-      });
-
-      const inputImagem = document.getElementById("editar-tema-imagem");
-      if (inputImagem) {
-        inputImagem.onchange = function(e) {
-          const file = e.target.files && e.target.files[0];
-          if (!file) return;
-          const preview = document.getElementById("editar-tema-preview");
-          const reader = new FileReader();
-          reader.onload = function(ev) {
-            preview.src = ev.target.result;
-          };
-          reader.readAsDataURL(file);
-        };
-      }
-
-      const btnSalvar = document.getElementById("btn-salvar-editar-tema");
-      if (btnSalvar) {
-        btnSalvar.onclick = async function() {
-          const idFirebase = document.getElementById("editar-tema-id").value;
-          const nome = document.getElementById("editar-tema-nome").value.trim();
-          const qtd = parseInt(document.getElementById("editar-tema-qtd").value) || 0;
-          const categoria = document.getElementById("editar-tema-categoria").value.trim() || "Outros";
-          const modelo = document.getElementById("editar-tema-modelo").value.trim();
-          const fileInput = document.getElementById("editar-tema-imagem");
-
-          if (!idFirebase) {
-            Utils.showToast("Erro: ID do tema não encontrado.", "error");
-            return;
-          }
-          if (!nome) {
-            Utils.showToast("Preencha o nome da maquete.", "warning");
-            return;
-          }
-
-          btnSalvar.disabled = true;
-          btnSalvar.innerText = "⏳ Salvando...";
-
-          try {
-            let imagemBase64 = null;
-
-            if (fileInput && fileInput.files && fileInput.files[0]) {
-              Utils.showToast("📷 Reduzindo imagem...", "info");
-              imagemBase64 = await reduzirImagem(fileInput.files[0], 900, 0.82);
-            }
-
-            const dadosAtualizados = {
-              nome: nome,
-              quantidade: qtd,
-              categoria: categoria,
-              modelo: modelo,
-              atualizadoEm: Date.now()
-            };
-
-            if (imagemBase64) {
-              dadosAtualizados.imagem = imagemBase64;
-            }
-
-            const sucesso = await Database.atualizarPecaNuvem(idFirebase, dadosAtualizados);
-
-            if (sucesso) {
-              Utils.showToast("✅ Maquete atualizada com sucesso!", "success");
-              fecharModalEditar();
-            } else {
-              Utils.showToast("❌ Erro ao atualizar. Tente novamente.", "error");
-            }
-          } catch (err) {
-            console.error(err);
-            Utils.showToast("❌ Erro: " + (err.message || err), "error");
-          } finally {
-            btnSalvar.disabled = false;
-            btnSalvar.innerText = "💾 Salvar Alterações";
-          }
-        };
-      }
-    }
-
-    // ============================================================
-    // CATEGORIAS
-    // ============================================================
-    function extrairNomesCategorias(data) {
-      var nomes = [];
-      if (!data) return nomes;
-      if (Array.isArray(data)) {
-        data.forEach(function(item) {
-          if (!item) return;
-          if (typeof item === 'string') nomes.push(item);
-          else if (typeof item === 'object') {
-            if (item.nome) nomes.push(item.nome);
-            else if (item.valor) nomes.push(item.valor);
-            else if (item.name) nomes.push(item.name);
-          }
-        });
-        return nomes;
-      }
-      if (typeof data === 'object') {
-        Object.keys(data).forEach(function(key) {
-          var val = data[key];
-          if (val === null || val === undefined) return;
-          if (typeof val === 'string') nomes.push(val);
-          else if (typeof val === 'object') {
-            if (val.nome) nomes.push(val.nome);
-            else if (val.valor) nomes.push(val.valor);
-            else if (val.name) nomes.push(val.name);
-            else if (key && key.charAt(0) !== '-' && !/^\d+$/.test(key)) nomes.push(key);
-          }
-        });
-        return nomes;
-      }
-      return nomes;
-    }
-
-    function carregarCategorias() {
-      if (!db) return;
-      db.ref('categorias').on('value', function(snapshot) {
-        var data = snapshot.val();
-        var nomes = extrairNomesCategorias(data);
-        var unicos = [];
-        nomes.forEach(function(n) {
-          if (n && String(n).trim() !== "" && unicos.indexOf(String(n)) === -1) {
-            unicos.push(String(n));
-          }
-        });
-        State.categorias = unicos;
-        atualizarInterfaceCategorias();
-      });
-    }
-
-    function atualizarInterfaceCategorias() {
-      var cats = State.categorias || [];
-      const contador = document.getElementById("contador-categorias");
-      if (contador) contador.textContent = cats.length;
-
-      const container = document.getElementById("lista-categorias-admin");
-      if (container) {
-        container.innerHTML = '';
-        cats.forEach(cat => {
-          const div = document.createElement("div");
-          div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:4px 10px; background:#f8f0f2; border-radius:6px; border:1px solid #e1cbd4;";
-          div.innerHTML = '<span style="font-size:13px;">📁 ' + cat + '</span>' +
-            '<button type="button" onclick="window.removerCategoria(\'' + String(cat).replace(/'/g, "\\'") + '\')" class="btn btn-danger" style="padding:2px 8px; font-size:10px; width:auto; margin-left:6px;">✕</button>';
-          container.appendChild(div);
-        });
-      }
-
-      const selectCat = document.getElementById("catalogo-peca-categoria");
-      if (selectCat) {
-        const valorAtual = selectCat.value;
-        selectCat.innerHTML = '';
-        cats.forEach(cat => {
-          const opt = document.createElement("option");
-          opt.value = cat; opt.textContent = cat;
-          selectCat.appendChild(opt);
-        });
-        if (cats.indexOf(valorAtual) !== -1) selectCat.value = valorAtual;
-      }
-
-      const selectRemover = document.getElementById("select-remover-categoria");
-      if (selectRemover) {
-        const valorAtual2 = selectRemover.value;
-        selectRemover.innerHTML = '<option value="">Selecione...</option>';
-        cats.forEach(cat => {
-          const opt = document.createElement("option");
-          opt.value = cat; opt.textContent = cat;
-          selectRemover.appendChild(opt);
-        });
-        if (cats.indexOf(valorAtual2) !== -1) selectRemover.value = valorAtual2;
-      }
-    }
-
-    // ============================================================
-    // BUSCA DE TEMAS
-    // ============================================================
-    function carregarSugestoesTemaFicha() {
-      var input = document.getElementById("filtro-tema-input");
-      if (!input) return;
-      if (input.__tralalaBound) return;
-      input.__tralalaBound = true;
-      input.oninput = function(e) {
-        var termo = e.target.value;
-        State.temaAtual = termo.trim();
-        renderSugestoesTemaFicha(termo);
-      };
-      input.onfocus = function(e) {
-        if (e.target.value.trim()) renderSugestoesTemaFicha(e.target.value);
-      };
-    }
-
-    function renderSugestoesTemaFicha(termo) {
-      var caixa = document.getElementById("wrapper-lista-sugestoes");
-      if (!caixa) return;
-      termo = (termo || "").toString().trim();
-      if (!termo) { caixa.style.display = "none"; caixa.innerHTML = ""; return; }
-      var tNorm = Utils.normalizar(termo);
-      var filtrados = State.estoqueArray.filter(function(item) {
-        return Utils.normalizar(item.nome || "").indexOf(tNorm) !== -1;
-      });
-      caixa.innerHTML = "";
-      if (filtrados.length === 0) { caixa.style.display = "none"; return; }
-      filtrados.forEach(function(item) {
-        var div = document.createElement("div");
-        div.className = "sugestao-item";
-        var reservasAtivas = 0;
-        State.reservas.forEach(function(res) {
-          if (res && res.tema && Utils.normalizar(res.tema) === Utils.normalizar(item.nome)) reservasAtivas++;
-        });
-        var qtd = parseInt(item.quantidade) || 0;
-        var livres = qtd - reservasAtivas;
-        div.innerHTML = "⚙️ " + item.nome + " (Livre: " + Math.max(0, livres) + "/" + qtd + ")";
-        div.onclick = function() {
-          var input = document.getElementById("filtro-tema-input");
-          var hidden = document.getElementById("busca-tema-input");
-          if (input) input.value = item.nome;
-          if (hidden) hidden.value = item.nome;
-          State.temaAtual = item.nome;
-          caixa.style.display = "none";
-          Utils.showToast("Tema " + item.nome + " selecionado.", "info");
-        };
-        caixa.appendChild(div);
-      });
-      caixa.style.display = "block";
-    }
-
-    // ============================================================
-    // RESERVAS
-    // ============================================================
-    function listenReservas() {
-      if (!db) return;
-      db.ref('reservas').on('value', function(snap) {
-        State.carregando = false;
-        var val = snap.val();
-        var arr = [];
-        if (val && typeof val === 'object') {
-          Object.keys(val).forEach(function(id) {
-            if (val[id]) {
-              var copy = { id: id };
-              for (var k in val[id]) { if (val[id].hasOwnProperty(k)) copy[k] = val[id][k]; }
-              arr.push(copy);
-            }
-          });
-        }
-        State.reservas = arr;
-        renderReservas();
-      });
-    }
-
-    function renderReservas(filtro) {
-      if (!filtro) filtro = "";
-      var container = document.getElementById("lista-reservas-render");
-      if (!container) return;
-      container.innerHTML = "";
-      if (State.carregando) {
-        container.innerHTML = "<div style='text-align:center; padding:20px;'>⌛ Carregando agendamentos...</div>";
-        return;
-      }
-      if (State.reservas.length === 0) {
-        container.innerHTML = "<div style='text-align:center; padding:20px; color:#777;'>Nenhum agendamento encontrado.</div>";
-        return;
-      }
-      var arr = State.reservas.slice().sort(function(a, b) { return new Date(a.data || 0) - new Date(b.data || 0); });
-      if (filtro.trim() !== "") {
-        var f = Utils.normalizar(filtro);
-        arr = arr.filter(function(r) {
-          return Utils.normalizar(r.cliente).indexOf(f) !== -1 || Utils.normalizar(r.tema).indexOf(f) !== -1;
-        });
-      }
-      arr.forEach(function(res) {
-        var card = document.createElement("div");
-        card.className = "card-reserva";
-        var total = parseFloat(res.total) || 0;
-        var sinal = parseFloat(res.sinal) || 0;
-        var frete = parseFloat(res.frete) || 0;
-        var totGeral = total + frete;
-        var devedor = totGeral - sinal;
-        var quitado = devedor <= 0;
-        var freteDetalhes = "";
-        if (res.freteKmIda) {
-          freteDetalhes = '<p style="font-size:11px;color:#666;">🚗 ' + res.freteKmIda + 'km (ida) × ' +
-            (res.freteSegundaViagem ? '4' : '2') + ' = ' + res.freteKmTotal + 'km totais → ' +
-            (parseFloat(res.freteLitros) || 0).toFixed(2) + 'L → R$ ' +
-            (parseFloat(res.freteCustoCombustivel) || 0).toFixed(2) + ' + manut. R$ ' +
-            (parseFloat(res.freteManutencao) || 0).toFixed(2) + '</p>';
-        }
-        card.innerHTML = '<div class="reserva-header">' +
-          '<strong>👶 ' + (res.cliente || '') + '</strong>' +
-          '<span class="reserva-badge" style="background:' + (quitado ? '#27ae60' : '#e67e22') + ';">' + (quitado ? 'PAGO 100%' : 'PENDENTE') + '</span>' +
-        '</div>' +
-        '<div class="reserva-body">' +
-          '<p>📅 Data: <b>' + Utils.formatDateBR(res.data) + '</b></p>' +
-          '<p>🎨 Tema: <b style="color:var(--primary);">' + (res.tema || '') + '</b></p>' +
-          '<p>🛍️ Modelo: <b>' + (res.kit || 'Não informado') + '</b></p>' +
-          (res.montarNoLocal ? '<p>🛠️ Montagem no local: <b style="color:#27ae60;">SIM</b></p>' : '') +
-          '<p>🚚 Frete: <b>' + Utils.formatCurrency(frete) + '</b></p>' +
-          freteDetalhes +
-          '<p>💰 Total Geral: <b>' + Utils.formatCurrency(totGeral) + '</b></p>' +
-          '<p>💵 Sinal Pago: <b>' + Utils.formatCurrency(sinal) + '</b></p>' +
-          '<p style="color:' + (quitado ? 'green' : 'red') + '">⚠️ Falta Receber: <b>' + Utils.formatCurrency(devedor) + '</b></p>' +
-          (res.obs ? '<p>📝 Obs: ' + res.obs + '</p>' : '') +
-        '</div>' +
-        '<button type="button" style="width:100%; padding:8px; margin-top:10px; background:var(--error,#e74c3c); color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="window.DeletarReserva(\'' + res.id + '\')">🗑️ Excluir Agendamento</button>';
-        container.appendChild(card);
-      });
-    }
-
-    window.DeletarReserva = function(idReserva) {
-      if (confirm("Tem certeza que deseja excluir este agendamento?")) {
-        Database.excluirReservaNuvem(idReserva).then(function() {
-          Utils.showToast("Agendamento removido!", "success");
-        }).catch(function() {
-          Utils.showToast("Falha ao remover o agendamento.", "error");
-        });
-      }
-    };
-
-    // ============================================================
-    // ORÇAMENTOS
-    // ============================================================
-    function listenOrcamentos() {
-      if (!db) return;
-      db.ref('orcamentos').on('value', function(snap) {
-        var val = snap.val();
-        var arr = [];
-        if (val && typeof val === 'object') {
-          Object.keys(val).forEach(function(id) {
-            if (val[id]) {
-              var copy = { id: id };
-              for (var k in val[id]) { if (val[id].hasOwnProperty(k)) copy[k] = val[id][k]; }
-              arr.push(copy);
-            }
-          });
-        }
-        State.orcamentos = arr;
-        renderOrcamentos();
-      });
-    }
-
-    function renderOrcamentos() {
-      var containers = [
-        document.getElementById("lista-orcamentos-render"),
-        document.getElementById("lista-orcamentos-interno-corpo")
-      ].filter(Boolean);
-      if (containers.length === 0) return;
-      containers.forEach(function(container) {
-        container.innerHTML = "";
-        if (State.orcamentos.length === 0) {
-          if (container.tagName === "TBODY") {
-            container.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#777;">Nenhum orçamento salvo.</td></tr>';
-          } else {
-            container.innerHTML = "<div style='text-align:center; padding:20px; color:#777;'>Nenhum orçamento salvo.</div>";
-          }
-          return;
-        }
-        var isTbody = container.tagName === "TBODY";
-        var html = "";
-        State.orcamentos.forEach(function(orc) {
-          var totalFmt = Utils.formatCurrency(orc.total);
-          if (isTbody) {
-            html += '<tr>' +
-              '<td>' + (orc.cliente || '') + '</td>' +
-              '<td>' + (orc.tema || '') + (orc.kit ? ' / ' + orc.kit : '') + '</td>' +
-              '<td>' + totalFmt + '</td>' +
-              '<td style="text-align:center;">' +
-                '<button type="button" onclick="window.PromoverOrcamento(\'' + orc.id + '\')" class="btn-acao-tabela btn-promover" title="Promover para Reserva">✅</button>' +
-                '<button type="button" onclick="window.ExcluirOrcamento(\'' + orc.id + '\')" class="btn-acao-tabela btn-remover-orc" title="Excluir">🗑️</button>' +
-              '</td></tr>';
-          } else {
-            html += '<div class="card-reserva"><div class="reserva-header"><strong>👤 ' + (orc.cliente || '') + '</strong></div>' +
-              '<div class="reserva-body">' +
-              '<p>📅 Data da Festa: <b>' + Utils.formatDateBR(orc.dataFesta) + '</b></p>' +
-              '<p>🎨 Tema: <b>' + (orc.tema || '') + '</b></p>' +
-              (orc.kit ? '<p>🛍️ Kit: <b>' + orc.kit + '</b></p>' : '') +
-              (orc.montarNoLocal ? '<p>🛠️ Montagem no local: <b>SIM</b></p>' : '') +
-              '<p>💰 Total Estimado: <b>' + totalFmt + '</b></p>' +
-              (orc.freteTotal ? '<p>🚚 Frete: <b>' + Utils.formatCurrency(orc.freteTotal) + '</b></p>' : '') +
-              (orc.obs ? '<p>📝 Obs: ' + orc.obs + '</p>' : '') +
-              '</div></div>';
-          }
-        });
-        container.innerHTML = html;
-      });
-    }
-
-    window.ExcluirOrcamento = function(idOrcamento) {
-      if (confirm("Excluir este orçamento?")) {
-        Database.excluirOrcamentoNuvem(idOrcamento).then(function() {
-          Utils.showToast("Orçamento removido!", "success");
-        }).catch(function() {
-          Utils.showToast("Falha ao remover orçamento.", "error");
-        });
-      }
-    };
-
-    window.PromoverOrcamento = function(idOrcamento) {
-      var orc = State.orcamentos.filter(function(o) { return o.id === idOrcamento; })[0];
-      if (!orc) return;
-      var elCliente = document.getElementById("nome-cliente");
-      var elData = document.getElementById("data");
-      var elTotal = document.getElementById("valor-total");
-      var elValorFesta = document.getElementById("valor-festa");
-      var elObs = document.getElementById("adicionais-festa");
-      var hidden = document.getElementById("busca-tema-input");
-      var filtro = document.getElementById("filtro-tema-input");
-      if (elCliente) elCliente.value = orc.cliente || "";
-      if (elData && orc.dataFesta) elData.value = orc.dataFesta;
-      if (elTotal) elTotal.value = orc.total || "";
-      if (elValorFesta) elValorFesta.value = orc.valorFesta || "";
-      if (elObs) elObs.value = orc.obs || "";
-      if (orc.tema) {
-        if (hidden) hidden.value = orc.tema;
-        if (filtro) filtro.value = orc.tema;
-        State.temaAtual = orc.tema;
-      }
-      if (orc.kit) {
-        State.kitAtual = orc.kit;
-        document.querySelectorAll('.btn-kit-opcao').forEach(function(b) {
-          b.classList.toggle('ativo', b.getAttribute('data-kit') === orc.kit);
-        });
-        var kitAcoesBox = document.getElementById("kit-acoes-box");
-        var kitAcoesNome = document.getElementById("kit-acoes-nome");
-        if (kitAcoesBox) kitAcoesBox.classList.add("ativo");
-        if (kitAcoesNome) kitAcoesNome.textContent = orc.kit;
-      }
-      if (orc.montarNoLocal !== undefined) {
-        State.montarNoLocal = !!orc.montarNoLocal;
-        var chk = document.getElementById("chk-montar-local");
-        if (chk) {
-          chk.checked = State.montarNoLocal;
-          var painel = document.getElementById("painel-montagem-local");
-          if (painel) painel.style.display = State.montarNoLocal ? "block" : "none";
-        }
-      }
-      if (orc.freteKmIda) {
-        var kmEl = document.getElementById("calc-km");
-        var precoEl = document.getElementById("calc-valor-litro");
-        var chkSegunda = document.getElementById("chk-segunda-viagem");
-        if (kmEl) kmEl.value = orc.freteKmIda;
-        if (precoEl && orc.fretePrecoCombustivel) precoEl.value = orc.fretePrecoCombustivel;
-        if (chkSegunda) chkSegunda.checked = !!orc.freteSegundaViagem;
-        FreteCalc.renderizar();
-      }
-      Utils.showToast("Orçamento carregado no formulário.", "success");
-      var painelOrc = document.getElementById("painel-orcamentos-salvos");
-      if (painelOrc) painelOrc.style.display = "none";
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    // ============================================================
-    // REUNIÕES
-    // ============================================================
-    function iniciarPainelReunioes() {
-      if (!db) return;
-      db.ref('reunioes').on('value', function(snap) {
-        var val = snap.val();
-        var arr = [];
-        if (val && typeof val === 'object') {
-          Object.keys(val).forEach(function(id) {
-            if (val[id]) {
-              var copy = { id: id };
-              for (var k in val[id]) { if (val[id].hasOwnProperty(k)) copy[k] = val[id][k]; }
-              arr.push(copy);
-            }
-          });
-        }
-        arr.sort(function(a, b) { return new Date(a.dataHora || 0) - new Date(b.dataHora || 0); });
-        var container = document.getElementById("lista-reunioes-container");
-        if (!container) return;
-        if (arr.length === 0) {
-          container.innerHTML = '<p style="color:#999; text-align:center;">Nenhuma reunião agendada.</p>';
-          return;
-        }
-        var html = "";
-        arr.forEach(function(r) {
-          var dataFmt = r.dataHora ? r.dataHora.replace('T', ' às ') : 'Não informada';
-          html += '<div class="card-reuniao" style="border-left-color:#27ae60;">' +
-            '<div class="reserva-header"><strong>👤 ' + (r.cliente || 'Sem nome') + '</strong>' +
-            '<span class="reserva-badge" style="background:#27ae60;">AGENDADA</span></div>' +
-            '<div class="reserva-body">' +
-            '<p>📅 Data/Hora: <b>' + dataFmt + '</b></p>' +
-            (r.pauta ? '<p>📝 Pauta: ' + r.pauta + '</p>' : '') +
-            '</div>' +
-            '<button type="button" style="width:100%; padding:6px; margin-top:8px; background:#e74c3c; color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="window.ExcluirReuniao(\'' + r.id + '\')">🗑️ Excluir Reunião</button>' +
-            '</div>';
-        });
-        container.innerHTML = html;
-      });
-    }
-
-    window.ExcluirReuniao = function(idReuniao) {
-      if (confirm("Excluir esta reunião?")) {
-        Database.excluirReuniaoNuvem(idReuniao).then(function() {
-          Utils.showToast("Reunião removida!", "success");
-        }).catch(function() {
-          Utils.showToast("Falha ao remover reunião.", "error");
-        });
-      }
-    };
-
-    // ============================================================
-    // PLANILHA E GRÁFICO
-    // ============================================================
-    function renderPlanilhaVendas() {
-      var tbody = document.querySelector("#tabela-planilha-corpo tbody");
-      if (!tbody) return;
-      var mesSelecionado = (document.getElementById("seletor-mes-planilha") || {}).value || "";
-      var reservasDoMes = State.reservas.filter(function(r) {
-        if (!r.data) return false;
-        var p = r.data.split("-");
-        if (p.length !== 3) return false;
-        var idx = parseInt(p[1]) - 1;
-        return mesesAno[idx] === mesSelecionado;
-      });
-      if (reservasDoMes.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding:15px;">Nenhuma venda registrada neste mês.</td></tr>';
-        return;
-      }
-      var html = "";
-      reservasDoMes.forEach(function(r) {
-        var total = parseFloat(r.total) || 0;
-        var frete = parseFloat(r.frete) || 0;
-        html += '<tr>' +
-          '<td>' + (r.cliente || '') + '</td>' +
-          '<td>' + (r.kit || 'Não informado') + '</td>' +
-          '<td>R$ ' + (total + frete).toFixed(2) + '</td>' +
-          '<td style="text-align:center;">—</td>' +
-          '</tr>';
-      });
-      tbody.innerHTML = html;
-    }
-
-    function renderGraficoAnual() {
-      if (typeof Chart === 'undefined') return;
-      var painel = document.getElementById('painel-grafico-faturamento');
-      if (painel) painel.style.display = 'block';
-      var ctx = document.getElementById('graficoAnual');
-      if (!ctx) return;
-      if (chartInstance) chartInstance.destroy();
-      var valores = new Array(12).fill(0);
-      State.reservas.forEach(function(r) {
-        if (!r.data) return;
-        var p = r.data.split("-");
-        if (p.length !== 3) return;
-        var idx = parseInt(p[1]) - 1;
-        if (idx >= 0 && idx < 12) valores[idx] += (parseFloat(r.total) || 0) + (parseFloat(r.frete) || 0);
-      });
-      chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: { labels: mesesAno, datasets: [{ label: 'Faturamento (R$)', data: valores, backgroundColor: '#a3536a' }] },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
-    }
-
-    // ============================================================
-    // TEMPLATES DE CONTRATO
-    // ============================================================
-    function gerarContratoPegueMonte(dados) {
-      var dataFmt = dados.data ? dados.data.split("-").reverse().join("/") : "____/____/______";
-      var dataRetiradaFmt = dados.dataRetirada ? dados.dataRetirada.split("-").reverse().join("/") : dataFmt;
-      var dataDevolucaoFmt = dados.dataDevolucao ? dados.dataDevolucao.split("-").reverse().join("/") : dataFmt;
-      var valorFmt = dados.valor ? dados.valor.toFixed(2).replace('.', ',') : "______,____";
-      var dataAtual = new Date().toLocaleDateString('pt-BR');
-      var pecasTexto = dados.pecas && dados.pecas.length > 0 ? dados.pecas.join(", ") : "__________________________________";
-
-      return '<div class="pagina-contrato">' +
-        '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
-        '<div class="titulo-contrato">CONTRATO DE LOCAÇÃO PEGUE & MONTE</div>' +
-        '<div class="dados-contratada"><span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS CNPJ: 21.918.863/0001-12 E-MAIL: tralaladecoracoes@gmail.com</div>' +
-        '<div class="dados-contratante"><span class="negrito">CONTRATANTE:</span> ' + (dados.nome || "_________________________") + '</div>' +
-        '<div class="dados-contratante"><span class="negrito">CPF:</span> ' + (dados.cpf || "_________________________") + '</div>' +
-        '<div class="dados-contratante"><span class="negrito">ENDEREÇO CLIENTE:</span> ' + (dados.endereco || "_________________________") + '</div>' +
-        '<div class="dados-contratante"><span class="negrito">TELEFONE:</span> ' + (dados.telefone || "(61) ________________") + '</div>' +
-        '<div class="dados-contratante"><span class="negrito">DATA DA FESTA:</span> ' + dataFmt + '</div>' +
-        '<div class="dados-contratante"><span class="negrito">RETIRADA DOS ITENS:</span> ' + dataRetiradaFmt + ' ATÉ AS ' + (dados.horario || "____") + '</div>' +
-        '<div class="dados-contratante"><span class="negrito">DEVOLUÇÃO DOS ITENS:</span> ' + dataDevolucaoFmt + ' ATÉ AS 11H00 (caso não seja entregue na data e horário combinado será cobrado o valor de uma locação para cada dia de atraso).</div>' +
-        '<p style="margin-top:4px;">As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.</p>' +
-
-        '<div class="clausula-titulo">DO OBJETO DO CONTRATO</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 1ª.</span> É objeto do presente contrato a prestação de serviço de Locação de:</div>' +
-        '<table class="tabela-itens"><thead><tr><th>QTD E. DESCRIÇÃO DO PRODUTO</th><th>VALOR UNITÁRIO</th><th>VALOR TOTAL</th></tr></thead><tbody>' +
-        '<tr><td>' + pecasTexto + '</td><td>R$ ' + valorFmt + '</td><td>R$ ' + valorFmt + '</td></tr>' +
-        '</tbody></table>' +
-
-        '<div class="clausula-titulo">DO PAGAMENTO</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 2ª.</span> O serviço contratado no presente instrumento deverá ser pago no ato da reserva.</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 3ª.</span> É dever da CONTRATADA oferecer os itens de acordo com as especificações do contrato.</div>' +
-        '<div class="clausula-texto">Em dinheiro ou depósito bancário (Caixa Econômica Federal, Agencia: 2403, Op.001, Conta corrente: 21702-0 em nome de Aline Alves de Araújo do Valle, CPF: 864.331.211-87 pix).</div>' +
-        '<div class="paragrafo"><span class="negrito">Parágrafo primeiro.</span> Não será aceito, sob hipótese alguma, pagamento pós-festa.</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 4ª.</span> O recibo do depósito da transferência bancária ou pix, referente ao valor, efetuada na conta informada pela CONTRATADA, servirá para a CONTRATANTE como comprovante de cumprimento da obrigação de pagar.</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 5ª.</span> É dever da CONTRATANTE devolver o(s) produto(s) de acordo com o que foi locado no dia informado neste contrato.</div>' +
-        '<div class="paragrafo"><span class="negrito">Parágrafo único.</span> A CONTRATANTE deverá retirar e entregar os itens no seguinte endereço: Qn 508 CONJUNTO 03 Loja 06, Samambaia Sul, munido de cópia do comprovante de residência em seu nome, cópia ou foto CPF e RG documentos necessários para a retirada das peças.</div>' +
-
-        '<div class="clausula-titulo">DA DEVOLUÇÃO</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 6ª.</span> Caso haja perda, danos, quebra ou não devolução dos itens, a CONTRATANTE arcará com 50% do valor de uma peça nova para reposição (caso haja recuperação). NÃO havendo recuperação, será cobrado o valor de mercado por cada item, em dinheiro ou outra forma que convier às PARTES. Em caso de quebra ou extravio de peças a CONTRATANTE assinará uma nota promissória se comprometendo com o pagamento que será devolvida após a quitação do débito.</div>' +
-        '<div class="paragrafo"><span class="negrito">Parágrafo primeiro:</span> É dever da CONTRATANTE devolver as peças como foi entregue, no dia e horário marcado, será cobrado multa de uma diária dos itens locados com cada dia de atraso da devolução.</div>' +
-        '<div class="clausula-texto"><span class="negrito">OBS:</span> É proibido furar o bolo cenográfico, usar cola quente no painel, peças e mesas, usar confeitos coloridos, vela faísca — estes itens danificam e mancham peças e mobília (uso estará sujeito em caso de avarias a pagar pela recuperação ou peça nova caso não seja possível a recuperação).</div>' +
-        '<div class="clausula-texto">O tapete deverá ser devolvido como foi entregue, sem doces e bolos, caso contrário pagará multa de limpeza de R$ 40,00 (quarenta reais).</div>' +
-        '<div class="paragrafo"><span class="negrito">Parágrafo Segundo:</span> É dever da CONTRATANTE devolver o kit ou itens na data informada neste contrato, caso contrário será cobrado o valor de uma locação por cada dia de atraso.</div>' +
-
-        '<div class="clausula-titulo">DO CANCELAMENTO</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 7ª.</span> Em caso de desistência a CONTRATANTE arcará com a multa de quebra de contrato de 50% do valor total do seu contrato.</div>' +
-        '<div class="paragrafo"><span class="negrito">Parágrafo primeiro:</span> Em caso de força maior, a CONTRATANTE poderá solicitar uma carta crédito na quantia paga, para utilização de até um ano a partir da data da notificação. Sendo que essa carta crédito não poderá ser transferida para outro titular, nem prorrogada. Cabendo a CONTRATADA confirmar disponibilidade de peças e data. A CONTRATANTE deverá comprovar o fato ocorrido com documentos oficiais.</div>' +
-        '<div class="paragrafo"><span class="negrito">Parágrafo Segundo.</span> A Parte impossibilitada de cumprir sua obrigação deverá notificar a outra, de imediato, acerca da extensão do problema e o prazo estimado para remarcação da nova data.</div>' +
-
-        '<div class="clausula-titulo">DAS CONDIÇÕES GERAIS DO FORO</div>' +
-        '<div class="clausula-texto">As Partes elegem o foro da Circunscrição Judiciária de Brasília – DF para dirimir os conflitos que porventura venham a surgir em decorrência da execução do presente contrato, com renúncia de qualquer outro, por mais privilegiado que seja. E por assim estarem de acordo, o contrato será assinado de forma digitalizada, sendo as vias compartilhadas em meio eletrônico e permitida a assinatura híbrida (física e digital).</div>' +
-        '<div style="text-align:center; margin-top:8px;">Brasília-DF, ' + dataAtual + '.</div>' +
-
-        '<div class="assinatura"><div class="linha-assinatura"></div><div class="assinatura-nome">TRALALÁ DECORAÇÕES DE FESTA — CNPJ: 21.918.863/0001-12</div><div>Representante Legal: Aline Araújo do Valle</div></div>' +
-        '<div class="assinatura"><div class="linha-assinatura"></div><div class="assinatura-nome">CONTRATANTE: ' + (dados.nome || "_________________________") + '</div></div>' +
-        '<div class="rodape-loja">TRALALÁ DECORAÇÕES DE FESTAS — QN 508 CONJUNTO 03 LOJA 06, SAMAMBAIA SUL. (61) 9. 8191-9559</div>' +
-      '</div>';
-    }
-
-    function gerarContratoComFrete(dados) {
-      var dataFmt = dados.data ? dados.data.split("-").reverse().join("/") : "____/____/______";
-      var dataRetiradaFmt = dados.dataRetirada ? dados.dataRetirada.split("-").reverse().join("/") : dataFmt;
-      var valorFmt = dados.valor ? dados.valor.toFixed(2).replace('.', ',') : "______,____";
-      var valorMetade = dados.valor ? (dados.valor/2).toFixed(2).replace('.', ',') : "______,____";
-      var dataAtual = new Date().toLocaleDateString('pt-BR');
-      var pecasTexto = dados.pecas && dados.pecas.length > 0 ? dados.pecas.join(", ") : "__________________________________";
-
-      return '<div class="pagina-contrato">' +
-        '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
-        '<div class="titulo-contrato">CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO</div>' +
-        '<div class="dados-contratada"><span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS — CNPJ: 21.918.863/0001-12 — E-MAIL: tralaladecoracoes@gmail.com</div>' +
-        '<div class="dados-contratante"><span class="negrito">CONTRATANTE:</span> ' + (dados.nome || "_________________________") + '</div>' +
-        '<div class="dados-contratante"><span class="negrito">CPF:</span> ' + (dados.cpf || "_________________________") + '</div>' +
-        '<div class="dados-contratante"><span class="negrito">ENDEREÇO:</span> ' + (dados.endereco || "_________________________") + '</div>' +
-        '<div class="dados-contratante"><span class="negrito">TELEFONE:</span> ' + (dados.telefone || "(61) ________________") + '</div>' +
-        '<div class="dados-contratante"><span class="negrito">LOCAL DO EVENTO:</span> ' + (dados.local || "_________________________") + '</div>' +
-        '<div class="dados-contratante"><span class="negrito">DATA DA FESTA:</span> ' + dataFmt + (dados.horario ? ' às ' + dados.horario : '') + '</div>' +
-        '<br>' +
-
-        '<div class="clausula-titulo">DO OBJETO DO CONTRATO</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 1ª.</span> É objeto do presente contrato a prestação de serviço de Locação de:</div>' +
-        '<table class="tabela-itens"><thead><tr><th>QTD E. DESCRIÇÃO DO PRODUTO</th><th>VALOR UNITÁRIO</th><th>VALOR TOTAL</th></tr></thead><tbody>' +
-        '<tr><td>' + pecasTexto + '</td><td>R$ ' + valorFmt + '</td><td>R$ ' + valorFmt + '</td></tr>' +
-        '</tbody></table>' +
-
-        '<div class="clausula-titulo">DAS OBRIGAÇÕES DA CONTRATADA</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 2ª.</span> É dever da CONTRATADA oferecer o serviço de acordo com as especificações da CONTRATANTE, devendo o material ser entregue no dia ' + dataFmt + ' no endereço especificado na Cláusula 1ª.</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 3ª.</span> A CONTRATADA deverá entregar e buscar o produto no endereço mencionado na Cláusula 1ª.</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 4ª.</span> A CONTRATADA fornecerá as peças conforme descrito na Cláusula 1ª.</div>' +
-
-        '<div class="clausula-titulo">DOS VALORES E PAGAMENTO</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 5ª.</span> O serviço contratado no presente instrumento será remunerado pela quantia de R$ ' + valorFmt + ', pago da seguinte forma:</div>' +
-        '<div class="paragrafo">• R$ ' + valorMetade + ' (no ato da reserva);</div>' +
-        '<div class="paragrafo">• R$ ' + valorMetade + ' (na montagem da festa).</div>' +
-        '<div class="clausula-texto">*pagamentos em cartão de crédito e débito têm acréscimo da taxa da operadora do cartão.</div>' +
-        '<div class="clausula-texto">Em dinheiro ou depósito bancário (Caixa Econômica Federal, Agencia: 2403, Op.001, Conta corrente: 21702-0 em nome de Aline Alves de Araújo do Valle, CPF: 864.331.211-87) ou (Banco Itaú, agência 8624, conta corrente: 06209-0, Aline Alves de Araújo, CPF: 864.331.211-87) ou (Banco do Brasil, Agência: 1230-0, conta corrente 39.464-5, em nome Jorge Leonardo Sampaio do Valle, CPF: 794.883.315-34) — CHAVE PIX CNPJ: 21.918.863/0001-12</div>' +
-        '<div class="paragrafo"><span class="negrito">Parágrafo primeiro.</span> Não será aceito, sob hipótese alguma, pagamento pós-festa.</div>' +
-        '<div class="paragrafo"><span class="negrito">Parágrafo Segundo.</span> No valor acima referido já está incluso frete.</div>' +
-        '<div class="paragrafo"><span class="negrito">Parágrafo Terceiro.</span> O valor do frete é referente à entrega e à retirada que será realizada pela CONTRATADA no local do evento ou onde for combinado entre as PARTES.</div>' +
-        '<div class="paragrafo"><span class="negrito">Parágrafo Quarto.</span> NÃO está incluso no valor da locação de peças e mobílias o serviço de arrumação de mesa, como colocar doces, bolo, lembrancinhas e personalizados feitos por terceiros. Para esse serviço favor consultar valores com a CONTRATADA.</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 6ª.</span> O recibo do depósito da transferência bancária, referente ao sinal, efetuada na conta informada pela CONTRATADA, servirá para a CONTRATANTE como comprovante de cumprimento da obrigação de pagar.</div>' +
-
-        '<div class="clausula-titulo">DA DEVOLUÇÃO</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 7ª.</span> Caso haja perda, danos, quebra ou não devolução dos itens, a CONTRATANTE arcará com 50% do valor de uma peça nova para reposição (caso haja recuperação). NÃO havendo recuperação, será cobrado o valor de mercado por cada item, em dinheiro ou outra forma que convier às PARTES. Em caso de quebra ou extravio de peças a CONTRATANTE assinará uma nota promissória se comprometendo com o pagamento que será devolvida após a quitação do débito.</div>' +
-        '<div class="paragrafo"><span class="negrito">Parágrafo Primeiro:</span> É de responsabilidade da CONTRATANTE que na retirada da decoração, todas as peças alugadas estejam sobre a mesa. Caso fique algum item, a CONTRATANTE se responsabilizará pela devolução. A recusa da devolução imediata acarretará em multa de R$ 20,00 por diária/peça.</div>' +
-        '<div class="paragrafo"><span class="negrito">Parágrafo Segundo:</span> É dever da CONTRATANTE devolver as peças como foi entregue. É proibido furar o bolo cenográfico, usar cola quente no painel, peças e mesas, usar confeitos coloridos, vela faísca — estes itens danificam e mancham peças e mobília (uso estará sujeito em caso de avarias a pagar pela recuperação ou peça nova caso não seja possível a recuperação).</div>' +
-        '<div class="clausula-texto">O tapete deverá ser devolvido como foi entregue, sem doces e bolos, caso contrário pagará multa de limpeza de R$ 40,00 (quarenta reais).</div>' +
-
-        '<div class="clausula-titulo">DO CANCELAMENTO</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 8ª.</span> Em caso de desistência a CONTRATANTE arcará com a multa de quebra de contrato de 50% do valor total do seu contrato.</div>' +
-        '<div class="paragrafo"><span class="negrito">Parágrafo primeiro:</span> Em caso de força maior, a CONTRATANTE poderá solicitar uma carta crédito na quantia paga, para utilização de até um ano a partir da data da notificação. Sendo que essa carta crédito não poderá ser transferida para outro titular, nem prorrogada. Cabendo a CONTRATADA confirmar disponibilidade de peças e data. A CONTRATANTE deverá comprovar o fato ocorrido com documentos oficiais.</div>' +
-        '<div class="paragrafo"><span class="negrito">Parágrafo Segundo.</span> A Parte impossibilitada de cumprir sua obrigação deverá notificar a outra, de imediato, acerca da extensão do problema e o prazo estimado para remarcação da nova data.</div>' +
-
-        '<div class="clausula-titulo">DAS CONDIÇÕES GERAIS</div>' +
-        '<div class="clausula-texto"><span class="negrito">Cláusula 9ª.</span> O orçamento ou aceite referente ao serviço contratado, enviado por e-mail, faz parte integrante deste contrato.</div>' +
-
-        '<div class="clausula-titulo">DO FORO</div>' +
-        '<div class="clausula-texto">As Partes elegem o foro da Circunscrição Judiciária de Brasília – DF para dirimir os conflitos que porventura venham a surgir em decorrência da execução do presente contrato, com renúncia de qualquer outro, por mais privilegiado que seja. E por assim estarem de acordo, o contrato será assinado de forma digitalizada, sendo as vias compartilhadas em meio eletrônico e permitida a assinatura híbrida (física e digital).</div>' +
-        '<div style="text-align:center; margin-top:8px;">Brasília-DF, ' + dataAtual + '.</div>' +
-
-        '<div class="assinatura"><div class="linha-assinatura"></div><div class="assinatura-nome">TRALALÁ DECORAÇÕES DE FESTA — CNPJ: 21.918.863/0001-12</div><div>Representante Legal: Aline Araújo do Valle</div></div>' +
-        '<div class="assinatura"><div class="linha-assinatura"></div><div class="assinatura-nome">CONTRATANTE: ' + (dados.nome || "_________________________") + '</div></div>' +
-        '<div class="rodape-loja">TRALALÁ DECORAÇÕES DE FESTAS — QN 508 CONJUNTO 03 LOJA 06, SAMAMBAIA SUL. (61) 9. 8191-9559</div>' +
-      '</div>';
-    }
-
-    // ============================================================
-    // CONTRATO — popular select de peças
-    // ============================================================
-    function carregarTemasNoContrato() {
-      var select = document.getElementById("c-pecas");
-      if (!select) return;
-      var temaSelecionado = (document.getElementById("contrato-tema-selecionado") || {}).value || "";
-      if (temaSelecionado) return;
-      select.innerHTML = "";
-      State.estoqueArray.forEach(function(item) {
-        var opt = document.createElement("option");
-        opt.value = item.nome || "";
-        opt.textContent = (item.nome || 'Sem nome') + (item.quantidade !== undefined ? ' (Qtd: ' + item.quantidade + ')' : '');
-        select.appendChild(opt);
-      });
-    }
-
-    function popularSelectPecasContrato(tema) {
-      var select = document.getElementById("c-pecas");
-      if (!select) return;
-      select.innerHTML = "";
-      if (!tema) { carregarTemasNoContrato(); return; }
-      var infoTema = State.estoqueArray.filter(function(i) { return (i.nome || "") === tema; })[0];
-      var categoriaTema = infoTema && infoTema.categoria ? infoTema.categoria : "";
-      var doTema = State.estoqueArray.filter(function(i) {
-        return (i.nome === tema) || (categoriaTema && i.categoria === categoriaTema);
-      });
-      var lista = doTema.length ? doTema : State.estoqueArray;
-      lista.forEach(function(item) {
-        var opt = document.createElement("option");
-        opt.value = item.nome || "";
-        opt.textContent = (item.nome || 'Sem nome') + (item.quantidade !== undefined ? ' (Qtd: ' + item.quantidade + ')' : '');
-        select.appendChild(opt);
-      });
-    }
-
-    function initContratoBusca() {
-      var input = document.getElementById("contrato-tema-busca");
-      var caixa = document.getElementById("contrato-tema-sugestoes");
-      var hidden = document.getElementById("contrato-tema-selecionado");
-      if (!input || !caixa) return;
-      if (input.__tralalaBound) return;
-      input.__tralalaBound = true;
-      input.oninput = function(e) {
-        var termo = e.target.value.trim();
-        if (!termo) { caixa.style.display = "none"; return; }
-        var tNorm = Utils.normalizar(termo);
-        var filtrados = State.estoqueArray.filter(function(i) {
-          return Utils.normalizar(i.nome || "").indexOf(tNorm) !== -1;
-        });
-        caixa.innerHTML = "";
-        filtrados.forEach(function(item) {
-          var div = document.createElement("div");
-          div.className = "sugestao-item";
-          div.innerText = item.nome;
-          div.onclick = function() {
-            input.value = item.nome;
-            if (hidden) hidden.value = item.nome;
-            caixa.style.display = "none";
-            popularSelectPecasContrato(item.nome);
-          };
-          caixa.appendChild(div);
-        });
-        caixa.style.display = filtrados.length ? "block" : "none";
-      };
-    }
-
-    // ============================================================
-    // MODAL DE PEÇAS
-    // ============================================================
-    function abrirModalPecas(contexto) {
-      // contexto = "kit" ou "contrato"
-      var modal = document.getElementById("modal-pecas");
-      if (!modal) return;
-      modal.setAttribute("data-contexto", contexto);
-      renderizarListaPecasModal(contexto);
-      modal.classList.add("ativo");
-      setTimeout(function() {
-        var f = document.getElementById("filtro-pecas");
-        if (f) f.value = "";
-      }, 100);
-    }
-
-    function renderizarListaPecasModal(contexto, filtro) {
-      var container = document.getElementById("lista-pecas-checkbox");
-      if (!container) return;
-      if (!filtro) filtro = "";
-
-      var selecionadasAtuais = [];
-      if (contexto === "kit" && State.kitAtual) {
-        selecionadasAtuais = State.pecasSelecionadasKit[State.kitAtual] || [];
-      } else if (contexto === "contrato") {
-        selecionadasAtuais = State.pecasSelecionadasContrato || [];
-      }
-
-      var fNorm = Utils.normalizar(filtro);
-      var pecasFiltradas = State.estoqueArray.filter(function(item) {
-        if (!filtro.trim()) return true;
-        return Utils.normalizar(item.nome || "").indexOf(fNorm) !== -1;
-      });
-
-      if (pecasFiltradas.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding: 20px; color: #999; font-size: 13px;">Nenhuma peça encontrada.</div>';
-        return;
-      }
-
-      var html = "";
-      pecasFiltradas.forEach(function(item) {
-        var nome = item.nome || "Sem nome";
-        var checked = selecionadasAtuais.indexOf(nome) !== -1 ? "checked" : "";
-        html += '<label class="peca-check-item">' +
-          '<input type="checkbox" value="' + nome.replace(/"/g, '&quot;') + '" ' + checked + '>' +
-          '<span class="nome-peca">' + nome + '</span>' +
-          '<span class="info-peca">' + (item.categoria || 'Geral') + ' | Qtd: ' + (item.quantidade || 1) + '</span>' +
-        '</label>';
-      });
-      container.innerHTML = html;
-
-      // Atualizar contador
-      var checkboxes = container.querySelectorAll('input[type="checkbox"]');
-      var contador = document.getElementById("contador-pecas-selecionadas");
-      if (contador) contador.textContent = selecionadasAtuais.length + " selecionadas";
-
-      checkboxes.forEach(function(cb) {
-        cb.onchange = function() {
-          var count = container.querySelectorAll('input[type="checkbox"]:checked').length;
-          if (contador) contador.textContent = count + " selecionadas";
-        };
-      });
-    }
-
-    function confirmarModalPecas() {
-      var modal = document.getElementById("modal-pecas");
-      if (!modal) return;
-      var contexto = modal.getAttribute("data-contexto") || "kit";
-      var container = document.getElementById("lista-pecas-checkbox");
-      var selecionadas = [];
-      if (container) {
-        container.querySelectorAll('input[type="checkbox"]:checked').forEach(function(cb) {
-          selecionadas.push(cb.value);
-        });
-      }
-
-      if (contexto === "kit" && State.kitAtual) {
-        State.pecasSelecionadasKit[State.kitAtual] = selecionadas;
-        atualizarInfoKit();
-        Utils.showToast("✅ " + selecionadas.length + " peça(s) salva(s) no " + State.kitAtual, "success");
-      } else if (contexto === "contrato") {
-        State.pecasSelecionadasContrato = selecionadas;
-        // Sincronizar com o select do contrato
-        var selectPecas = document.getElementById("c-pecas");
-        if (selectPecas) {
-          for (var i = 0; i < selectPecas.options.length; i++) {
-            selectPecas.options[i].selected = selecionadas.indexOf(selectPecas.options[i].value) !== -1;
-          }
-        }
-        var info = document.getElementById("c-pecas-info");
-        if (info) info.textContent = selecionadas.length + " peça(s) selecionada(s).";
-        Utils.showToast("✅ " + selecionadas.length + " peça(s) marcada(s) no contrato", "success");
-      }
-
-      modal.classList.remove("ativo");
-    }
-
-    function atualizarInfoKit() {
-      var info = document.getElementById("kit-acoes-info");
-      if (!info) return;
-      if (!State.kitAtual) {
-        info.textContent = "Nenhuma peça selecionada ainda";
-        return;
-      }
-      var pecas = State.pecasSelecionadasKit[State.kitAtual] || [];
-      var tema = State.temaSelecionadoKit[State.kitAtual] || "";
-      var partes = [];
-      if (pecas.length > 0) partes.push(pecas.length + " peça(s)");
-      if (tema) partes.push("Tema: " + tema);
-      info.textContent = partes.length > 0 ? partes.join(" | ") : "Nenhuma peça selecionada ainda";
-    }
-
-    // ============================================================
-    // MODAL DE TEMA
-    // ============================================================
-    function abrirModalTema() {
-      var modal = document.getElementById("modal-tema-reserva");
-      if (!modal) return;
-      renderizarListaTemasModal("");
-      modal.classList.add("ativo");
-      setTimeout(function() {
-        var f = document.getElementById("filtro-tema-modal");
-        if (f) f.value = "";
-      }, 100);
-    }
-
-    function renderizarListaTemasModal(filtro) {
-      var container = document.getElementById("lista-temas-modal");
-      if (!container) return;
-      if (!filtro) filtro = "";
-
-      var selecionadoAtual = State.kitAtual ? (State.temaSelecionadoKit[State.kitAtual] || "") : "";
-      var fNorm = Utils.normalizar(filtro);
-      var filtrados = State.estoqueArray.filter(function(item) {
-        if (!filtro.trim()) return true;
-        return Utils.normalizar(item.nome || "").indexOf(fNorm) !== -1;
-      });
-
-      if (filtrados.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding: 20px; color: #999; font-size: 13px;">Nenhum tema encontrado.</div>';
-        return;
-      }
-
-      var html = "";
-      filtrados.forEach(function(item) {
-        var nome = item.nome || "Sem nome";
-        var selClass = (selecionadoAtual === nome) ? " selecionado" : "";
-        html += '<div class="item-tema-selecionavel' + selClass + '" data-tema="' + nome.replace(/"/g, '&quot;') + '">' +
-          '⚙️ ' + nome + ' <span style="font-size:11px; color:var(--text-muted);">(' + (item.categoria || 'Geral') + ')</span>' +
-        '</div>';
-      });
-      container.innerHTML = html;
-
-      container.querySelectorAll('.item-tema-selecionavel').forEach(function(el) {
-        el.onclick = function() {
-          container.querySelectorAll('.item-tema-selecionavel').forEach(function(x) { x.classList.remove('selecionado'); });
-          el.classList.add('selecionado');
-          el.setAttribute("data-selecionado", "1");
-        };
-      });
-    }
-
-    function confirmarModalTema() {
-      var container = document.getElementById("lista-temas-modal");
-      if (!container) return;
-      var selecionado = container.querySelector('.item-tema-selecionavel.selecionado');
-      if (!selecionado) {
-        Utils.showToast("Clique em um tema da lista antes de confirmar.", "warning");
-        return;
-      }
-      var tema = selecionado.getAttribute("data-tema");
-
-      if (State.kitAtual) {
-        State.temaSelecionadoKit[State.kitAtual] = tema;
-        // Atualizar campo de busca principal
-        var filtro = document.getElementById("filtro-tema-input");
-        var hidden = document.getElementById("busca-tema-input");
-        if (filtro) filtro.value = tema;
-        if (hidden) hidden.value = tema;
-        State.temaAtual = tema;
-        atualizarInfoKit();
-        Utils.showToast("✅ Tema \"" + tema + "\" selecionado pra este kit", "success");
-      }
-
-      document.getElementById("modal-tema-reserva").classList.remove("ativo");
-    }
-
-    // ============================================================
-    // LOGIN / LOGOUT
-    // ============================================================
-    function handleLogin() {
-      var emailEl = document.getElementById("email");
-      var senhaEl = document.getElementById("senha");
-      var email = emailEl ? emailEl.value.trim() : "";
-      var senha = senhaEl ? senhaEl.value : "";
-      if (!email || !senha) { Utils.showToast("Preencha e-mail e senha.", "warning"); return; }
-      if (CONFIG.usuarios[email] === senha) {
-        State.usuarioLogadoEmail = email;
-        var sLogin = document.getElementById("secao-login");
-        var sVerif = document.getElementById("secao-verificador");
-        if (sLogin) sLogin.style.display = "none";
-        if (sVerif) sVerif.style.display = "block";
-        var nome = document.getElementById("nome-usuario");
-        if (nome) nome.innerHTML = "👤 <b>" + email.split('@')[0] + "</b>";
-        Utils.showToast("Login realizado!", "success");
-        try { Database.listenPontoUsuario(); } catch (e) { console.warn(e); }
-      } else {
-        Utils.showToast("E-mail ou senha incorretos.", "error");
-      }
-    }
-
-    function handleLogout() { window.location.reload(); }
-
-    // ============================================================
-    // SALVAR RESERVA / ORÇAMENTO
-    // ============================================================
-    function handleSalvarFesta() {
-      var elCliente = document.getElementById("nome-cliente");
-      var elData = document.getElementById("data");
-      var elTotal = document.getElementById("valor-total");
-      var elSinal = document.getElementById("valor-sinal");
-      var elObs = document.getElementById("adicionais-festa");
-      var elValorFesta = document.getElementById("valor-festa");
-      var elCpf = document.getElementById("cliente-cpf");
-      var elTelefone = document.getElementById("cliente-telefone");
-      var elEndereco = document.getElementById("cliente-endereco");
-      var elLocal = document.getElementById("local-evento");
-      var hidden = document.getElementById("busca-tema-input");
-      var filtro = document.getElementById("filtro-tema-input");
-
-      var cliente = elCliente ? elCliente.value.trim() : "";
-      var data = elData ? elData.value : "";
-      var total = elTotal ? elTotal.value || "0" : "0";
-      var sinal = elSinal ? elSinal.value || "0" : "0";
-      var obs = elObs ? elObs.value.trim() : "";
-      var valorFesta = elValorFesta ? (parseFloat(elValorFesta.value) || 0) : 0;
-
-      if (hidden && hidden.value.trim()) State.temaAtual = hidden.value.trim();
-      else if (filtro && filtro.value.trim()) State.temaAtual = filtro.value.trim();
-
-      if (!cliente || !data || !State.temaAtual || !State.kitAtual) {
-        Utils.showToast("Preencha cliente, data, tema e selecione o modelo do kit!", "warning");
-        return;
-      }
-
-      var f = FreteCalc.calcular();
-
-      // Pega peças e tema do kit selecionado
-      var pecasDoKit = State.pecasSelecionadasKit[State.kitAtual] || [];
-      var temaDoKit = State.temaSelecionadoKit[State.kitAtual] || State.temaAtual;
-      var modeloContrato = (document.getElementById("modelo-contrato") || {}).value || "pegue-monte";
-
-      var dadosReserva = {
-        cliente: cliente,
-        cpf: elCpf ? elCpf.value.trim() : "",
-        telefone: elTelefone ? elTelefone.value.trim() : "",
-        endereco: elEndereco ? elEndereco.value.trim() : "",
-        local: elLocal ? elLocal.value.trim() : "",
-        data: data,
-        tema: temaDoKit,
-        kit: State.kitAtual,
-        pecas: pecasDoKit,
-        montarNoLocal: !!State.montarNoLocal,
-        total: total,
-        sinal: sinal,
-        valorFesta: valorFesta,
-        frete: f.freteTotal,
-        freteKmIda: f.kmIda,
-        freteKmTotal: f.kmTotal,
-        freteSegundaViagem: f.segundaViagem,
-        fretePrecoCombustivel: f.precoCombustivel,
-        freteLitros: f.litros,
-        freteCustoCombustivel: f.custoCombustivel,
-        freteManutencao: f.manutencao,
-        freteTotal: f.freteTotal,
-        modeloContrato: modeloContrato,
-        obs: obs,
-        dataCriacao: Utils.getHojeDataString()
-      };
-
-      Database.salvarReservaNuvem(dadosReserva).then(function() {
-        Utils.showToast("Agendamento salvo com sucesso!", "success");
-
-        // Gerar contrato automaticamente
-        var dadosContrato = {
-          nome: cliente,
-          cpf: elCpf ? elCpf.value.trim() : "",
-          telefone: elTelefone ? elTelefone.value.trim() : "",
-          endereco: elEndereco ? elEndereco.value.trim() : "",
-          local: elLocal ? elLocal.value.trim() : "",
-          data: data,
-          horario: "",
-          dataRetirada: data,
-          dataDevolucao: data,
-          valor: total,
-          pecas: pecasDoKit,
-          tema: temaDoKit,
-          obs: obs
-        };
-
-        var htmlContrato;
-        if (modeloContrato === "com-frete") {
-          htmlContrato = gerarContratoComFrete(dadosContrato);
-        } else {
-          htmlContrato = gerarContratoPegueMonte(dadosContrato);
-        }
-
-        // Salvar contrato no Firebase
-        Database.salvarContratoNuvem({
-          nome: dadosContrato.nome, cpf: dadosContrato.cpf, data: dadosContrato.data,
-          valor: dadosContrato.valor, modelo: modeloContrato,
-          tema: dadosContrato.tema, pecas: dadosContrato.pecas,
-          obs: dadosContrato.obs, criadoEm: Date.now()
-        }).catch(function(err) { console.warn("Contrato não salvo:", err); });
-
-        // Abrir visualização
-        var preview = document.getElementById("contrato-preview-content");
-        if (preview) preview.innerHTML = htmlContrato;
-        var modalVis = document.getElementById("modal-visualizar-contrato");
-        if (modalVis) modalVis.classList.add("ativo");
-
-        // Limpar formulário
-        if (elCliente) elCliente.value = "";
-        if (elData) elData.value = "";
-        if (elTotal) elTotal.value = "";
-        if (elSinal) elSinal.value = "";
-        if (elObs) elObs.value = "";
-        if (elValorFesta) elValorFesta.value = "0.00";
-        if (elCpf) elCpf.value = "";
-        if (elTelefone) elTelefone.value = "";
-        if (elEndereco) elEndereco.value = "";
-        if (elLocal) elLocal.value = "";
-
-        State.temaAtual = "";
-        State.kitAtual = "";
-        State.montarNoLocal = false;
-        State.pecasSelecionadasKit = {};
-        State.temaSelecionadoKit = {};
-
-        if (hidden) hidden.value = "";
-        if (filtro) filtro.value = "";
-        document.querySelectorAll('.btn-kit-opcao').forEach(function(b) { b.classList.remove('ativo'); });
-        var kitAcoesBox = document.getElementById("kit-acoes-box");
-        if (kitAcoesBox) kitAcoesBox.classList.remove("ativo");
-        var painelMontagem = document.getElementById("painel-montagem-local");
-        if (painelMontagem) painelMontagem.style.display = "none";
-        var chk = document.getElementById("chk-montar-local");
-        if (chk) chk.checked = false;
-        FreteCalc.limpar();
-      }).catch(function() {
-        Utils.showToast("Erro ao salvar agendamento.", "error");
-      });
-    }
-
-    function handleSalvarOrcamento() {
-      var clienteEl = document.getElementById("nome-cliente");
-      var totalEl = document.getElementById("valor-total");
-      var dataEl = document.getElementById("data");
-      var obsEl = document.getElementById("adicionais-festa");
-      var valorFestaEl = document.getElementById("valor-festa");
-
-      var nomeCliente = clienteEl ? clienteEl.value.trim() : "";
-      var valorTotal = totalEl ? totalEl.value.trim() : "0";
-      var dataReserva = dataEl ? dataEl.value : "";
-      var obs = obsEl ? obsEl.value.trim() : "";
-      var valorFesta = valorFestaEl ? (parseFloat(valorFestaEl.value) || 0) : 0;
-
-      if (!nomeCliente) { Utils.showToast("Preencha o nome do cliente para salvar o orçamento.", "warning"); return; }
-
-      var f = FreteCalc.calcular();
-
-      Database.salvarOrcamentoNuvem({
-        cliente: nomeCliente,
-        tema: State.temaAtual || "Não selecionado",
-        kit: State.kitAtual || "",
-        pecas: State.pecasSelecionadasKit[State.kitAtual] || [],
-        montarNoLocal: !!State.montarNoLocal,
-        total: valorTotal,
-        valorFesta: valorFesta,
-        frete: f.freteTotal,
-        freteKmIda: f.kmIda,
-        freteKmTotal: f.kmTotal,
-        freteSegundaViagem: f.segundaViagem,
-        fretePrecoCombustivel: f.precoCombustivel,
-        freteLitros: f.litros,
-        freteCustoCombustivel: f.custoCombustivel,
-        freteManutencao: f.manutencao,
-        freteTotal: f.freteTotal,
-        dataFesta: dataReserva,
-        obs: obs,
-        dataCriacao: Utils.getHojeDataString(),
-        horaCriacao: Utils.getHoraString()
-      }).then(function() {
-        Utils.showToast("Orçamento gravado com sucesso!", "success");
-      }).catch(function() {
-        Utils.showToast("Erro ao salvar orçamento.", "error");
-      });
-    }
-
-    // ============================================================
-    // CONTRATO AVULSO (Gerador de Contrato)
-    // ============================================================
-    function gerarContratoAvulso(gerarPdf) {
-      var nome = (document.getElementById("c-nome") || {}).value || "";
-      var cpf = (document.getElementById("c-cpf") || {}).value || "";
-      var data = (document.getElementById("c-data") || {}).value || "";
-      var horario = (document.getElementById("c-horario") || {}).value || "";
-      var valor = parseFloat((document.getElementById("c-valor") || {}).value) || 0;
-      var endereco = (document.getElementById("c-endereco") || {}).value || "";
-      var telefone = (document.getElementById("c-telefone") || {}).value || "";
-      var local = (document.getElementById("c-local") || {}).value || "";
-      var modelo = (document.getElementById("c-modelo") || {}).value || "com-frete";
-      var obs = (document.getElementById("c-obs") || {}).value || "";
-      var tema = (document.getElementById("contrato-tema-selecionado") || {}).value || "";
-
-      var selectPecas = document.getElementById("c-pecas");
-      var pecas = [];
-      if (selectPecas) {
-        for (var i = 0; i < selectPecas.options.length; i++) {
-          if (selectPecas.options[i].selected) pecas.push(selectPecas.options[i].value);
-        }
-      }
-
-      if (!nome.trim()) { Utils.showToast("Preencha o nome do contratante!", "warning"); return; }
-
-      var dadosContrato = {
-        nome: nome, cpf: cpf, data: data, horario: horario, valor: valor,
-        endereco: endereco, telefone: telefone, local: local,
-        dataRetirada: data, dataDevolucao: data,
-        tema: tema, pecas: pecas, obs: obs
-      };
-
-      var html;
-      if (modelo === "com-frete") {
-        html = gerarContratoComFrete(dadosContrato);
-      } else {
-        html = gerarContratoPegueMonte(dadosContrato);
-      }
-
-      Database.salvarContratoNuvem({
-        nome: nome, cpf: cpf, data: data, horario: horario, valor: valor,
-        endereco: endereco, telefone: telefone, local: local, modelo: modelo,
-        tema: tema, pecas: pecas, obs: obs, criadoEm: Date.now()
-      }).catch(function(err) { console.warn("Contrato não salvo:", err); });
-
-      var preview = document.getElementById("contrato-preview-content");
-      if (preview) preview.innerHTML = html;
-      var modalVis = document.getElementById("modal-visualizar-contrato");
-      if (modalVis) modalVis.classList.add("ativo");
-
-      if (gerarPdf) {
-        setTimeout(function() { gerarContratoPDF(); }, 300);
-      } else {
-        Utils.showToast("Contrato gerado com sucesso!", "success");
-      }
-    }
-
-    function gerarContratoPDF() {
-      var elemento = document.getElementById("contrato-preview-content");
-      if (!elemento) return;
-      if (typeof html2pdf === 'undefined') { alert("Biblioteca de PDF não carregada."); return; }
-      var nome = (document.getElementById("c-nome") || {}).value || (document.getElementById("nome-cliente") || {}).value || "contrato";
-      html2pdf().from(elemento).set({
-        margin: 0,
-        filename: 'contrato-' + nome.replace(/\s+/g, '-').toLowerCase() + '.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }).save().then(function() {
-        Utils.showToast("PDF baixado!", "success");
-      }).catch(function(err) {
-        console.error("Erro PDF:", err);
-        Utils.showToast("Erro ao gerar PDF.", "error");
-      });
-    }
-
-    // ============================================================
-    // BIND DE TODOS OS BOTÕES
-    // ============================================================
-    function bindTudo() {
-      var b;
-      b = document.getElementById("btn-login-direto");
-      if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleLogin(); };
-      b = document.getElementById("btn-logout-direto");
-      if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleLogout(); };
-      var senhaEl = document.getElementById("senha");
-      if (senhaEl) senhaEl.onkeypress = function(e) {
-        if (e.key === "Enter") { var l = document.getElementById("btn-login-direto"); if (l) l.click(); }
-      };
-
-      b = document.getElementById("btn-ponto-entrada");
-      if (b) b.onclick = function(e) { if (e) e.preventDefault(); Database.registrarPonto('entrada'); };
-      b = document.getElementById("btn-ponto-saida");
-      if (b) b.onclick = function(e) { if (e) e.preventDefault(); Database.registrarPonto('saida'); };
-      b = document.getElementById("btn-abrir-relatorio-pontos");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var p = document.getElementById("painel-relatorio-pontos-geral");
-        if (p) p.style.display = (p.style.display === "none" || p.style.display === "") ? "block" : "none";
-      };
-
-      b = document.getElementById("btn-abrir-central-relatorios");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var p = document.getElementById("secao-central-relatorios");
-        if (!p) return;
-        var abrindo = (p.style.display === "none" || p.style.display === "");
-        p.style.display = abrindo ? "block" : "none";
-        if (abrindo) { renderPlanilhaVendas(); }
-      };
-      b = document.getElementById("btn-fechar-central-relatorios");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var p = document.getElementById("secao-central-relatorios");
-        if (p) p.style.display = "none";
-      };
-      b = document.getElementById("seletor-mes-planilha");
-      if (b) b.onchange = function() { renderPlanilhaVendas(); };
-      b = document.getElementById("btn-transformar-grafico");
-      if (b) b.onclick = function(e) { if (e) e.preventDefault(); renderGraficoAnual(); };
-      b = document.getElementById("btn-toggle-grafico");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var pg = document.getElementById("painel-grafico-faturamento");
-        if (pg) pg.style.display = pg.style.display === 'none' ? 'block' : 'none';
-      };
-      b = document.getElementById("btn-gerar-resumo-mensal");
-      if (b) b.onclick = function(e) { if (e) e.preventDefault(); renderPlanilhaVendas(); Utils.showToast("Relatório mensal atualizado.", "success"); };
-      b = document.getElementById("btn-adicionar-linha-planilha");
-      if (b) b.onclick = function(e) { if (e) e.preventDefault(); Utils.showToast("Crie uma Reserva para adicionar vendas.", "info"); };
-      b = document.getElementById("btn-salvar-dados-planilha");
-      if (b) b.onclick = function(e) { if (e) e.preventDefault(); Utils.showToast("A planilha é sincronizada pelas reservas.", "info"); };
-
-      b = document.getElementById("btn-abrir-orcamentos");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var p = document.getElementById("painel-orcamentos-salvos") || document.getElementById("card-orcamentos-integrado");
-        if (!p) { Utils.showToast("Painel de orçamentos não encontrado.", "error"); return; }
-        var abrindo = (p.style.display === "none" || p.style.display === "");
-        p.style.display = abrindo ? "block" : "none";
-        if (abrindo) renderOrcamentos();
-      };
-
-      b = document.getElementById("btn-abrir-reunioes-painel");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var p = document.getElementById("painel-reunioes-exclusivo");
-        if (!p) return;
-        var abrindo = (p.style.display === "none" || p.style.display === "");
-        p.style.display = abrindo ? "block" : "none";
-        if (abrindo) iniciarPainelReunioes();
-      };
-      b = document.getElementById("btn-fechar-reunioes");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var p = document.getElementById("painel-reunioes-exclusivo");
-        if (p) p.style.display = "none";
-      };
-      b = document.getElementById("btn-salvar-reuniao-avulsa");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var c = document.getElementById("reuniao-cliente");
-        var d = document.getElementById("reuniao-data-hora");
-        var pa = document.getElementById("reuniao-pauta");
-        var cliente = c ? c.value.trim() : "";
-        var dataHora = d ? d.value : "";
-        var pauta = pa ? pa.value.trim() : "";
-        if (!cliente || !dataHora) { Utils.showToast("Preencha cliente e data/hora.", "warning"); return; }
-        ModalStatus.exibir("AGENDANDO REUNIÃO...", "Cliente: " + cliente);
-        Database.salvarReuniaoNuvem({ cliente: cliente, dataHora: dataHora, pauta: pauta, criadoEm: Date.now() })
-          .then(function() {
-            ModalStatus.sucesso("✓ REUNIÃO AGENDADA");
-            if (c) c.value = "";
-            if (d) d.value = "";
-            if (pa) pa.value = "";
-          })
-          .catch(function() { ModalStatus.erro("Não foi possível agendar."); });
-      };
-
-      b = document.getElementById("btn-abrir-catalogo-temas");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var p = document.getElementById("painel-catalogo-temas");
-        if (!p) return;
-        var abrindo = (p.style.display === "none" || p.style.display === "");
-        p.style.display = abrindo ? "block" : "none";
-        if (abrindo) renderizarTemas();
-      };
-
-      // Gerador de contrato avulso
-      b = document.getElementById("btn-abrir-gerador-contrato");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var m = document.getElementById("modal-gerador-contrato");
-        if (m) m.classList.add("ativo");
-        carregarTemasNoContrato();
-        initContratoBusca();
-      };
-      b = document.getElementById("btn-fechar-modal-contrato");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var m = document.getElementById("modal-gerador-contrato");
-        if (m) m.classList.remove("ativo");
-      };
-      var modalContrato = document.getElementById("modal-gerador-contrato");
-      if (modalContrato) {
-        modalContrato.addEventListener('click', function(e) {
-          if (e.target === modalContrato) modalContrato.classList.remove("ativo");
-        });
-      }
-      b = document.getElementById("btn-gerar-salvar-contrato");
-      if (b) b.onclick = function(e) { if (e) e.preventDefault(); gerarContratoAvulso(false); };
-      b = document.getElementById("btn-gerar-pdf-contrato");
-      if (b) b.onclick = function(e) { if (e) e.preventDefault(); gerarContratoAvulso(true); };
-
-      // Botão pra abrir lista de peças no contrato
-      b = document.getElementById("btn-abrir-pecas-contrato");
-      if (b) b.onclick = function(e) { if (e) e.preventDefault(); abrirModalPecas("contrato"); };
-
-      // Modal de visualização
-      var modalVis = document.getElementById("modal-visualizar-contrato");
-      if (modalVis) {
-        var fv = document.getElementById("btn-fechar-visualizacao");
-        if (fv) fv.onclick = function() { modalVis.classList.remove("ativo"); };
-        modalVis.addEventListener('click', function(e) {
-          if (e.target === modalVis) modalVis.classList.remove("ativo");
-        });
-      }
-      b = document.getElementById("btn-baixar-pdf-contrato");
-      if (b) b.onclick = function() { gerarContratoPDF(); };
-      b = document.getElementById("btn-imprimir-contrato");
-      if (b) b.onclick = function() { window.print(); };
-
-      // Botões de KIT
-      var botoesKit = document.querySelectorAll('.btn-kit-opcao');
-      botoesKit.forEach(function(btn) {
-        btn.onclick = function(e) {
-          e.preventDefault();
-          botoesKit.forEach(function(x) { x.classList.remove('ativo'); });
-          btn.classList.add('ativo');
-          var nomeKit = btn.getAttribute('data-kit');
-          State.kitAtual = nomeKit;
-
-          // Mostrar caixa de ações do kit
-          var kitAcoesBox = document.getElementById("kit-acoes-box");
-          var kitAcoesNome = document.getElementById("kit-acoes-nome");
-          if (kitAcoesBox) kitAcoesBox.classList.add("ativo");
-          if (kitAcoesNome) kitAcoesNome.textContent = nomeKit;
-          atualizarInfoKit();
-
-          Utils.showToast('Kit "' + nomeKit + '" selecionado!', "success");
-        };
-      });
-
-      // Botões "Escolher Peças" e "Escolher Tema" do kit
-      b = document.getElementById("btn-esc-pecas");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        if (!State.kitAtual) { Utils.showToast("Selecione um kit primeiro.", "warning"); return; }
-        abrirModalPecas("kit");
-      };
-      b = document.getElementById("btn-esc-tema");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        if (!State.kitAtual) { Utils.showToast("Selecione um kit primeiro.", "warning"); return; }
-        abrirModalTema();
-      };
-
-      // Modal de peças
-      b = document.getElementById("btn-fechar-modal-pecas");
-      if (b) b.onclick = function() { document.getElementById("modal-pecas").classList.remove("ativo"); };
-      b = document.getElementById("btn-cancelar-pecas");
-      if (b) b.onclick = function() { document.getElementById("modal-pecas").classList.remove("ativo"); };
-      b = document.getElementById("btn-confirmar-pecas");
-      if (b) b.onclick = function() { confirmarModalPecas(); };
-      var filtroPecas = document.getElementById("filtro-pecas");
-      if (filtroPecas) filtroPecas.oninput = function(e) {
-        var ctx = document.getElementById("modal-pecas").getAttribute("data-contexto") || "kit";
-        renderizarListaPecasModal(ctx, e.target.value);
-      };
-
-      // Modal de tema
-      b = document.getElementById("btn-fechar-modal-tema");
-      if (b) b.onclick = function() { document.getElementById("modal-tema-reserva").classList.remove("ativo"); };
-      b = document.getElementById("btn-cancelar-tema");
-      if (b) b.onclick = function() { document.getElementById("modal-tema-reserva").classList.remove("ativo"); };
-      b = document.getElementById("btn-confirmar-tema");
-      if (b) b.onclick = function() { confirmarModalTema(); };
-      var filtroTemaModal = document.getElementById("filtro-tema-modal");
-      if (filtroTemaModal) filtroTemaModal.oninput = function(e) {
-        renderizarListaTemasModal(e.target.value);
-      };
-
-      // Montar no local + sugestão de modelo de contrato
-      var chkMontar = document.getElementById("chk-montar-local");
-      if (chkMontar) {
-        chkMontar.onchange = function() {
-          State.montarNoLocal = !!chkMontar.checked;
-          var painel = document.getElementById("painel-montagem-local");
-          if (painel) painel.style.display = chkMontar.checked ? "block" : "none";
-
-          // Sugerir modelo de contrato
-          var modeloContrato = document.getElementById("modelo-contrato");
-          if (modeloContrato) {
-            if (chkMontar.checked) {
-              modeloContrato.value = "com-frete";
-            } else {
-              modeloContrato.value = "pegue-monte";
-            }
-          }
-        };
-      }
-
-      // Frete
-      var kmEl = document.getElementById("calc-km");
-      var precoEl = document.getElementById("calc-valor-litro");
-      var chkSegunda = document.getElementById("chk-segunda-viagem");
-      if (kmEl) { kmEl.oninput = function() { FreteCalc.renderizar(); }; kmEl.onchange = function() { FreteCalc.renderizar(); }; }
-      if (precoEl) { precoEl.oninput = function() { FreteCalc.renderizar(); }; precoEl.onchange = function() { FreteCalc.renderizar(); }; }
-      if (chkSegunda) { chkSegunda.onchange = function() { FreteCalc.renderizar(); }; }
-
-      var vfEl = document.getElementById("valor-festa");
-      if (vfEl) vfEl.oninput = function() { FreteCalc.renderizar(); };
-      var sinalEl = document.getElementById("valor-sinal");
-      if (sinalEl) sinalEl.oninput = function() { FreteCalc.renderizar(); };
-
-      b = document.getElementById("busca-reserva");
-      if (b) b.oninput = function(e) { renderReservas(e.target.value); };
-
-      b = document.getElementById("btn-confirmar-agendamento");
-      if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleSalvarFesta(); };
-      b = document.getElementById("btn-salvar-como-orcamento");
-      if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleSalvarOrcamento(); };
-
-      b = document.getElementById("btn-adicionar-peca");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var nome = (document.getElementById("catalogo-peca-nome") || {}).value || "";
-        var qtd = parseInt((document.getElementById("catalogo-peca-qtd") || {}).value) || 1;
-        var categoria = (document.getElementById("catalogo-peca-categoria") || {}).value || "Outros";
-        var modelo = (document.getElementById("catalogo-peca-modelo") || {}).value || "";
-        var fileInput = document.getElementById("catalogo-peca-imagem");
-        nome = nome.trim();
-        if (!nome) { alert("Preencha o nome do tema/peça!"); return; }
-        var executar = function(img) {
-          Database.salvarPecaNuvem({ nome: nome, quantidade: qtd, categoria: categoria, modelo: modelo, imagem: img || "" });
-        };
-        if (fileInput && fileInput.files && fileInput.files[0]) {
-          reduzirImagem(fileInput.files[0], 900, 0.82).then(function(base64) {
-            executar(base64);
-          }).catch(function() {
-            executar("");
-          });
-        } else {
-          executar("");
-        }
-      };
-
-      b = document.getElementById("btn-adicionar-categoria");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var input = document.getElementById("input-nova-categoria");
-        var nome = input ? input.value.trim() : "";
-        if (!nome) { Utils.showToast("Digite um nome para a categoria.", "warning"); return; }
-        Database.salvarCategoriaNuvem(nome).then(function() {
-          Utils.showToast("Categoria adicionada!", "success");
-          if (input) input.value = "";
-        }).catch(function(err) {
-          Utils.showToast(String(err), "warning");
-        });
-      };
-      var inputCat = document.getElementById("input-nova-categoria");
-      if (inputCat) inputCat.onkeypress = function(e) {
-        if (e.key === "Enter") { var bt = document.getElementById("btn-adicionar-categoria"); if (bt) bt.click(); }
-      };
-      b = document.getElementById("btn-remover-categoria");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var s = document.getElementById("select-remover-categoria");
-        var cat = s ? s.value : "";
-        if (!cat) { Utils.showToast("Selecione uma categoria.", "warning"); return; }
-        Database.removerCategoriaNuvem(cat).then(function() {
-          Utils.showToast("Categoria removida!", "success");
-        }).catch(function(err) {
-          Utils.showToast(String(err), "warning");
-        });
-      };
-
-      b = document.getElementById("btn-remover-tema-admin");
-      if (b) b.onclick = function(e) {
-        if (e) e.preventDefault();
-        var s = document.getElementById("select-remover-tema");
-        var idx = s ? parseInt(s.value) : NaN;
-        if (isNaN(idx)) { alert("Selecione um tema válido!"); return; }
-        window.removerTema(idx);
-      };
-
-      initModalEditar();
-    }
-
-    // ============================================================
-    // INICIALIZAÇÃO
-    // ============================================================
-    document.addEventListener('DOMContentLoaded', function() {
-      carregarEstoqueIncremental();
-      carregarCategorias();
-      listenReservas();
-      listenOrcamentos();
-      bindTudo();
-      console.log("✅ Sistema Tralalá com contratos automáticos!");
-    });
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
