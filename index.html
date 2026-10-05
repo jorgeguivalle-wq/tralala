@@ -1,371 +1,934 @@
-// ============================================================
-// ASSISTENTE VIRTUAL LALÁ 🌸
-// ============================================================
-(function() {
-  'use strict';
-
-  var LALA = {
-    // ============================================================
-    // BASE DE CONHECIMENTO — Palavras-chave e respostas
-    // ============================================================
-    respostas: [
-      {
-        palavras: ['oi', 'ola', 'olá', 'bom dia', 'boa tarde', 'boa noite', 'e ai', 'e aí', 'tudo bem', 'hey', 'hi'],
-        resposta: 'Oi! 🌸 Que bom te ver por aqui!<br><br>Sou a <b>Lalá</b> e tô aqui pra te ajudar com o sistema da <b>Tralalá Festas</b>.<br><br>Pode perguntar sobre <b>agendamento, orçamento, kit, contrato, frete</b> e muito mais. 💬'
-      },
-      {
-        palavras: ['obrigado', 'obrigada', 'valeu', 'brigado', 'brigada', 'muito obrigado', 'thanks'],
-        resposta: 'Fico feliz em ajudar! 🥰<br><br>Se precisar de mais alguma coisa, é só chamar. Boas festas! 🎉'
-      },
-      {
-        palavras: ['tchau', 'ate mais', 'até mais', 'adeus', 'flw', 'falou', 'ate logo', 'até logo'],
-        resposta: 'Até logo! 🌸<br><br>Qualquer dúvida, é só clicar em mim de novo. Tenha um ótimo dia! 💕'
-      },
-      {
-        palavras: ['quem e voce', 'quem é você', 'seu nome', 'qual seu nome', 'o que voce e', 'o que você é'],
-        resposta: 'Sou a <b>Lalá</b> 🌸, a assistente virtual da <b>Tralalá Festas</b>!<br><br>Fui criada pra te ajudar com todas as dúvidas sobre o sistema: agendamentos, orçamentos, kits, contratos, frete, catálogo e muito mais. 💬'
-      },
-      {
-        palavras: ['ajuda', 'me ajuda', 'socorro', 'help', 'o que voce faz', 'o que você faz', 'como funciona'],
-        resposta: 'Posso te ajudar com várias coisas da loja! 🎉<br><br>Olha só o que sei fazer:<br><br>📅 <b>Agendar uma festa</b><br>📋 <b>Salvar orçamento</b><br>🎁 <b>Criar e gerenciar kits</b><br>✍️ <b>Gerar contratos</b><br>🚚 <b>Calcular frete</b><br>🎨 <b>Cadastrar temas e peças</b><br>🏷️ <b>Aplicar descontos</b><br>⏰ <b>Registrar ponto</b><br>📊 <b>Ver relatórios</b><br>📂 <b>Gerenciar categorias</b><br>💰 <b>Ver preços e valores</b><br><br>É só perguntar! 💬'
-      },
-
-      // ============ AGENDAMENTO ============
-      {
-        palavras: ['agendar', 'agendamento', 'marcar festa', 'nova festa', 'reserva', 'reservar', 'cadastrar festa', 'como agendar', 'fazer uma reserva'],
-        resposta: 'Pra agendar uma festa é facinho! 📅<br><br><b>Passo a passo:</b><br>1️⃣ Preencha o <b>Nome do Cliente</b>, <b>CPF</b> e <b>Telefone</b><br>2️⃣ Escolha a <b>Data do Evento</b><br>3️⃣ Digite o <b>Endereço</b> e o <b>Local do Evento</b><br>4️⃣ Busque e selecione um <b>Tema/Peça</b> no campo de busca<br>5️⃣ Escolha o <b>Modelo do Kit</b> (Só um Bolinho, Básico, Prata ou Ouro)<br>6️⃣ Escolha as <b>peças</b> e o <b>tema</b> se quiser personalizar<br>7️⃣ Calcule o <b>frete</b> e a <b>soma automática</b><br>8️⃣ Aplique <b>desconto</b> se precisar<br>9️⃣ Clique em <b>✅ Confirmar e Salvar Reserva</b><br><br>Pronto! O contrato já é gerado automaticamente. 🎉',
-        atalho: { texto: '📅 Ir para o agendamento', destino: 'titulo-form-reserva' }
-      },
-      {
-        palavras: ['montar no local', 'montagem', 'montar na festa', 'vai montar'],
-        resposta: 'O <b>Montar no Local</b> é quando a equipe da Tralalá vai até o evento montar a decoração. 🛠️<br><br>Pra ativar:<br>1️⃣ Marque a caixinha <b>🛠️ Montar no Local?</b><br>2️⃣ Informe quantas <b>peças</b> vão<br>3️⃣ Diga se vai <b>LED</b><br><br>Quando você marca essa opção, o sistema já entende que o contrato precisa ser <b>Com Frete</b> e adiciona o deslocamento. 🚚',
-        atalho: { texto: '🛠️ Ir para montagem', destino: 'chk-montar-local' }
-      },
-      {
-        palavras: ['segunda viagem', '2 viagem', 'duas viagens', '2a viagem', 'segunda vez'],
-        resposta: 'A <b>2ª viagem</b> é quando o cliente precisa que a gente vá <b>duas vezes</b> ao local (ex: entrega e retirada, ou montar e desmontar). 🔄<br><br>Quando você marca essa opção na calculadora de frete, o sistema <b>dobra o cálculo</b> automaticamente porque considera <b>4 trajetos</b> (ida + volta + ida + volta). 🚗',
-        atalho: { texto: '🔄 Ir para o frete', destino: 'chk-segunda-viagem' }
-      },
-      {
-        palavras: ['tema ja alugado', 'tema duplicado', 'nao consigo agendar', 'tema indisponivel', 'tema ja reservado', 'bloqueado'],
-        resposta: 'Ah, isso é uma proteção do sistema! 🔒<br><br>Quando você tenta agendar uma festa com um <b>tema que já está alugado</b> no mesmo dia, o sistema bloqueia pra evitar conflito.<br><br>Exemplo: se você tem só <b>1 maquete Star Wars</b> e já reservou ela pro dia 15/10, ninguém mais pode alugar no dia 15/10.<br><br><b>Soluções:</b><br>🔹 Escolher outra data<br>🔹 Escolher outro tema<br>🔹 Aumentar a quantidade do tema no catálogo (se você tiver mais de um)',
-        atalho: { texto: '🎨 Ir para o catálogo', destino: 'btn-abrir-catalogo-temas' }
-      },
-
-      // ============ ORÇAMENTO ============
-      {
-        palavras: ['orcamento', 'orçamento', 'salvar orcamento', 'salvar orçamento', 'cotacao', 'cotação', 'preco', 'orcar', 'orçar'],
-        resposta: 'O <b>orçamento</b> serve pra você guardar uma proposta pro cliente antes de fechar a festa. 📋<br><br><b>Como fazer:</b><br>1️⃣ Preencha os dados do cliente<br>2️⃣ Escolha o tema, kit e peças<br>3️⃣ Calcule o frete e valores<br>4️⃣ Clique em <b>📋 Ver Orçamentos</b> (no menu superior)<br>5️⃣ Depois é só salvar<br><br>Pra ver depois, clique no botão <b>📋 Ver Orçamentos</b>. Lá você pode <b>promover</b> um orçamento pra reserva de verdade. ✅',
-        atalho: { texto: '📋 Ver orçamentos', destino: 'btn-abrir-orcamentos' }
-      },
-      {
-        palavras: ['promover orcamento', 'promover orçamento', 'transformar orcamento', 'virar reserva'],
-        resposta: 'Pra <b>promover um orçamento</b> e transformar em reserva:<br><br>1️⃣ Clique em <b>📋 Ver Orçamentos</b><br>2️⃣ Encontre o orçamento desejado<br>3️⃣ Clique no <b>✅</b> verde ao lado<br><br>O sistema automaticamente preenche o formulário com os dados do orçamento e você só precisa confirmar! 🎉'
-      },
-
-      // ============ KIT ============
-      {
-        palavras: ['kit', 'kits', 'criar kit', 'novo kit', 'montar kit', 'gerar kit', 'gerador de kit'],
-        resposta: 'Os <b>Kits</b> são pacotes prontos de peças + tema que você cria pra agilizar o agendamento. 🎁<br><br><b>Como criar um kit:</b><br>1️⃣ Clique em <b>🎁 Gerar Kits</b> no menu<br>2️⃣ Dê um <b>nome</b> pro kit (ex: Kit Princesa)<br>3️⃣ Defina a <b>quantidade disponível</b><br>4️⃣ Clique em <b>🍽️ Selecionar Peças</b> e escolha as peças<br>5️⃣ Clique em <b>🎨 Selecionar Temas</b> e escolha o tema<br>6️⃣ Adicione uma <b>foto</b> (opcional)<br>7️⃣ Clique em <b>💾 Salvar Kit no Acervo</b><br><br>Depois, quando for agendar, você pode usar o kit direto! 🚀',
-        atalho: { texto: '🎁 Abrir gerador de kits', destino: 'btn-abrir-gerador-kits' }
-      },
-      {
-        palavras: ['promover kit', 'usar kit', 'kit pronto', 'kit customizado', 'kit personalizado'],
-        resposta: 'Pra <b>usar um kit pronto</b> numa festa:<br><br>1️⃣ Abra <b>🎁 Gerar Kits</b><br>2️⃣ Encontre o kit desejado<br>3️⃣ Clique em <b>✅ Promover p/ Festa</b><br><br>O sistema automaticamente preenche as peças e o tema no formulário! Depois é só preencher os dados do cliente. 🎉',
-        atalho: { texto: '🎁 Ver kits', destino: 'btn-abrir-gerador-kits' }
-      },
-      {
-        palavras: ['so um bolinho', 'só um bolinho', 'kit basico', 'kit básico', 'kit prata', 'kit ouro', 'modelo do kit', 'tipos de kit'],
-        resposta: 'Temos <b>4 modelos de kit</b> principais pra escolher: 🧁<br><br>🧁 <b>Só um Bolinho</b> — pra festas simples<br>📦 <b>Kit Básico</b> — itens essenciais<br>🥈 <b>Kit Prata</b> — decoração completa<br>🥇 <b>Kit Ouro</b> — pacote premium<br><br>Você escolhe no formulário de agendamento. Cada um pode ser <b>personalizado</b> com peças e tema. 🎨'
-      },
-
-      // ============ CONTRATO ============
-      {
-        palavras: ['contrato', 'gerar contrato', 'fazer contrato', 'contratos', 'modelo de contrato', 'imprimir contrato', 'pdf contrato'],
-        resposta: 'O <b>contrato</b> é gerado automaticamente quando você salva uma reserva! ✍️<br><br>Mas você também pode gerar um <b>contrato avulso</b>:<br>1️⃣ Clique em <b>✍️ Gerar Contrato</b><br>2️⃣ Preencha os dados do cliente<br>3️⃣ Escolha o <b>modelo</b> (Com Frete, Pegue e Monte ou Loja)<br>4️⃣ Selecione o <b>tema</b> e as <b>peças</b><br>5️⃣ Clique em <b>💾 Salvar Contrato</b><br>6️⃣ Clique em <b>📄 Gerar PDF</b><br><br>O PDF sai prontinho pra você enviar pro cliente. 📥',
-        atalho: { texto: '✍️ Gerar contrato', destino: 'btn-abrir-gerador-contrato' }
-      },
-      {
-        palavras: ['modelo de contrato', 'tipos de contrato', 'qual contrato', '3 contratos', 'pegue e monte', 'com frete', 'contrato loja'],
-        resposta: 'Temos <b>3 modelos de contrato</b>: 📄<br><br>🏠 <b>Pegue e Monte</b> — o cliente retira e devolve as peças na loja<br>📦 <b>Com Frete</b> — a Tralalá entrega, monta e retira no local<br>🏬 <b>Pegue e Monte (Loja)</b> — versão com tabela preenchida automaticamente (ideal pra mostrar pro cliente)<br><br>Você escolhe na hora de gerar o contrato. 📝',
-        atalho: { texto: '✍️ Ver contratos', destino: 'btn-abrir-gerador-contrato' }
-      },
-      {
-        palavras: ['gerar contrato reserva', 'contrato da reserva', 'contrato de agendamento'],
-        resposta: 'Você pode gerar o contrato direto de uma <b>reserva já existente</b>:<br><br>1️⃣ Desça até <b>📋 Relatório de Agendamentos Ativos</b><br>2️⃣ Encontre a reserva desejada<br>3️⃣ Clique em <b>✍️ Gerar Contrato</b><br>4️⃣ Escolha o modelo (1, 2 ou 3)<br><br>O contrato abre automaticamente preenchido! 🎉'
-      },
-
-      // ============ FRETE ============
-      {
-        palavras: ['frete', 'calcular frete', 'calculadora de frete', 'combustivel', 'combustível', 'km', 'kilometro', 'distancia', 'distância'],
-        resposta: 'O <b>frete</b> é calculado automaticamente com base em 3 coisas: 🚚<br><br>1️⃣ <b>KM só IDA</b> — distância até o local<br>2️⃣ <b>Preço do combustível</b> (padrão R$ 8,00)<br>3️⃣ Se precisa de <b>2ª viagem</b> ou não<br><br><b>Cálculo:</b> o carro faz <b>9 km/L</b> e é somado <b>20% de manutenção</b> em cima do combustível.<br><br><b>Exemplo:</b> 45 km de ida + volta = 90 km<br>90 ÷ 9 = 10 litros × R$ 8,00 = R$ 80,00<br>+ 20% manutenção = <b>R$ 96,00 de frete</b>',
-        atalho: { texto: '🚚 Ir pra calculadora', destino: 'calc-km' }
-      },
-      {
-        palavras: ['valor do frete', 'quanto cobrar', 'quanto e o frete', 'quanto é o frete'],
-        resposta: 'O valor do frete aparece automaticamente na calculadora, dentro de <b>💰 Acerto Financeiro & Frete</b>. 💰<br><br>É só preencher os <b>KM de ida</b> e o <b>preço do combustível</b> que o sistema calcula sozinho. O valor aparece em <b>verde</b> no campo "Frete". 🚚',
-        atalho: { texto: '🚚 Ir pra calculadora', destino: 'calc-km' }
-      },
-
-      // ============ DESCONTO ============
-      {
-        palavras: ['desconto', 'aplicar desconto', 'dar desconto', 'descontar', 'abaixar preco', 'abaixar preço'],
-        resposta: 'Pra <b>aplicar desconto</b>: 🏷️<br><br>1️⃣ Vá até <b>🏷️ Aplicar Desconto</b><br>2️⃣ Escolha o tipo: <b>% Percentual</b> ou <b>R$ Reais</b><br>3️⃣ Digite o valor<br>4️⃣ Clique em <b>Aplicar</b><br><br>O sistema mostra o <b>valor original</b>, o <b>valor do desconto</b> e o <b>valor final</b>. 💰',
-        atalho: { texto: '🏷️ Aplicar desconto', destino: 'desconto-tipo' }
-      },
-
-      // ============ CATÁLOGO ============
-      {
-        palavras: ['catalogo', 'catálogo', 'cadastrar tema', 'novo tema', 'nova peca', 'nova peça', 'cadastrar peca', 'cadastrar peça', 'adicionar tema', 'adicionar peca'],
-        resposta: 'O <b>Catálogo</b> é onde você guarda todos os temas e peças da loja. 🎨<br><br><b>Como cadastrar:</b><br>1️⃣ Clique em <b>🎨 Ver Catálogo</b><br>2️⃣ Preencha:<br>&nbsp;&nbsp;• Nome da peça/tema<br>&nbsp;&nbsp;• Quantidade<br>&nbsp;&nbsp;• Categoria (Maquete, Infantil, etc.)<br>&nbsp;&nbsp;• Modelo/Estilo<br>&nbsp;&nbsp;• Preço de locação<br>&nbsp;&nbsp;• Preço de reposição<br>&nbsp;&nbsp;• Foto (opcional)<br>3️⃣ Clique em <b>Salvar Peça no Acervo</b><br><br>Pronto! Já aparece na lista. ✅',
-        atalho: { texto: '🎨 Abrir catálogo', destino: 'btn-abrir-catalogo-temas' }
-      },
-      {
-        palavras: ['categoria', 'categorias', 'criar categoria', 'nova categoria', 'gerenciar categoria'],
-        resposta: 'As <b>categorias</b> servem pra organizar o catálogo (Maquete, Infantil, Casamento, etc.). 📂<br><br><b>Como criar:</b><br>1️⃣ Abra o <b>🎨 Ver Catálogo</b><br>2️⃣ Vá em <b>📂 Gerenciar Categorias</b><br>3️⃣ Digite o nome da nova categoria<br>4️⃣ Clique em <b>➕ Adicionar</b><br><br>Pra remover, escolha na lista e clique em <b>🗑️ Remover</b>.',
-        atalho: { texto: '📂 Ver categorias', destino: 'input-nova-categoria' }
-      },
-      {
-        palavras: ['editar tema', 'editar peca', 'editar peça', 'mudar preco', 'alterar preco', 'alterar preço', 'mudar tema'],
-        resposta: 'Pra <b>editar</b> um tema ou peça:<br><br>1️⃣ Abra o <b>🎨 Ver Catálogo</b><br>2️⃣ Encontre o item na lista<br>3️⃣ Clique no <b>✏️ lápis</b> pra editar tudo<br>4️⃣ Ou no <b>💰 cifrão</b> pra editar só o preço<br><br>Depois é só salvar! ✅',
-        atalho: { texto: '🎨 Abrir catálogo', destino: 'btn-abrir-catalogo-temas' }
-      },
-      {
-        palavras: ['preco de locacao', 'preço de locação', 'preco locacao', 'preco de aluguel', 'valor da locacao'],
-        resposta: 'O <b>preço de locação</b> é quanto você cobra pra alugar aquela peça/tema. 💰<br><br>É diferente do <b>preço de reposição</b>, que é o valor cobrado se o cliente danificar ou perder a peça. 🔧<br><br>Você cadastra os dois no catálogo. 📝'
-      },
-      {
-        palavras: ['preco de reposicao', 'preço de reposição', 'reposicao', 'reposição', 'valor de reposicao'],
-        resposta: 'O <b>preço de reposição</b> é quanto custa <b>repor</b> a peça caso o cliente danifique ou perca. 🔧<br><br>No contrato, fica definido que a CONTRATANTE paga <b>50% do valor de reposição</b> caso haja dano com recuperação. Se não tiver recuperação, paga o valor de mercado. 💰'
-      },
-
-      // ============ REUNIÕES ============
-      {
-        palavras: ['reuniao', 'reunião', 'agendar reuniao', 'agendar reunião', 'marcar reuniao', 'marcar reunião', 'reunioes', 'reuniões'],
-        resposta: 'Pra agendar uma <b>reunião com cliente</b>: 📅<br><br>1️⃣ Clique em <b>📅 Agendar Reuniões</b><br>2️⃣ Preencha:<br>&nbsp;&nbsp;• Nome do cliente<br>&nbsp;&nbsp;• Data e hora<br>&nbsp;&nbsp;• Pauta/objetivo<br>3️⃣ Clique em <b>Agendar Reunião</b><br><br>Todas as reuniões aparecem na lista logo abaixo. 📋',
-        atalho: { texto: '📅 Agendar reunião', destino: 'btn-abrir-reunioes-painel' }
-      },
-
-      // ============ PONTO ============
-      {
-        palavras: ['ponto', 'ponto eletronico', 'ponto eletrônico', 'registrar ponto', 'bater ponto', 'entrada', 'saida', 'saída', 'horario', 'horário'],
-        resposta: 'O <b>Ponto Eletrônico</b> serve pra registrar a entrada e saída dos funcionários. ⏰<br><br><b>Como usar:</b><br>🟢 Clique em <b>Registrar Entrada</b> quando chegar<br>🔴 Clique em <b>Registrar Saída</b> quando for embora<br><br>Pra ver o histórico completo, clique em <b>📋 Histórico</b>. 📊',
-        atalho: { texto: '⏰ Ir pro ponto', destino: 'btn-ponto-entrada' }
-      },
-
-      // ============ RELATÓRIOS ============
-      {
-        palavras: ['relatorio', 'relatório', 'relatorios', 'relatórios', 'ver vendas', 'faturamento', 'quanto vendi', 'grafico', 'gráfico'],
-        resposta: 'Pra ver os <b>relatórios de venda</b>: 📊<br><br>1️⃣ Clique em <b>📊 Venda Mensal & Anual</b><br>2️⃣ Escolha o <b>mês</b> no seletor<br>3️⃣ Veja a lista de vendas do mês<br><br>Pra ver o <b>gráfico anual</b>, clique em <b>📈 Anual</b>.<br><br>Pra ver o gráfico do mês atual, clique em <b>📈 Gráfico</b>. 📈',
-        atalho: { texto: '📊 Ver relatórios', destino: 'btn-abrir-central-relatorios' }
-      },
-      {
-        palavras: ['grafico anual', 'gráfico anual', 'faturamento anual', 'vendas do ano'],
-        resposta: 'O <b>gráfico anual</b> mostra o faturamento mês a mês do ano todo. 📈<br><br>É só clicar em <b>📈 Anual</b> dentro de <b>📊 Venda Mensal & Anual</b>. O sistema soma automaticamente todas as reservas do ano. 📊',
-        atalho: { texto: '📈 Ver gráfico anual', destino: 'btn-toggle-grafico' }
-      },
-
-      // ============ LOGIN ============
-      {
-        palavras: ['login', 'entrar', 'acesso', 'senha', 'email', 'e-mail', 'esqueci a senha', 'nao consigo entrar', 'não consigo entrar'],
-        resposta: 'Pra <b>entrar no sistema</b>: 🔐<br><br>1️⃣ Digite seu <b>e-mail</b> de acesso<br>2️⃣ Digite sua <b>senha</b><br>3️⃣ Clique em <b>Entrar no Painel</b><br><br>Se esqueceu a senha, entre em contato com o administrador do sistema. 📧'
-      },
-      {
-        palavras: ['sair', 'logout', 'deslogar', 'fechar sistema', 'encerrar sessao', 'encerrar sessão'],
-        resposta: 'Pra <b>sair do sistema</b>, é só clicar em <b>Sair</b> no topo da página, do lado do seu nome. 👤<br><br>Pronto, você volta pra tela de login. 🔐',
-        atalho: { texto: '🚪 Sair', destino: 'btn-logout-direto' }
-      },
-
-      // ============ VALORES ============
-      {
-        palavras: ['sinal', 'valor do sinal', 'entrada do cliente', 'quanto de sinal', 'adiantamento'],
-        resposta: 'O <b>sinal</b> é o valor que o cliente paga adiantado pra garantir a reserva. 💵<br><br>Você preenche no campo <b>Sinal Pago (R$)</b> e o sistema calcula automaticamente o <b>Resta Pagar</b>. 💰<br><br>Exemplo: Festa de R$ 500, sinal de R$ 200 → resta pagar R$ 300. ✅',
-        atalho: { texto: '💵 Ir pro sinal', destino: 'valor-sinal' }
-      },
-      {
-        palavras: ['total', 'valor total', 'quanto ficou', 'valor final', 'preco total', 'preço total'],
-        resposta: 'O <b>valor total</b> é a soma de tudo: 💰<br><br>➕ Valor da festa (peças + tema)<br>➕ Valor do frete<br>➖ Desconto (se tiver)<br>➖ Sinal pago<br>= <b>Resta Pagar</b><br><br>O sistema calcula automaticamente conforme você preenche. 📊',
-        atalho: { texto: '💰 Ver valores', destino: 'valor-total' }
-      },
-      {
-        palavras: ['soma automatica', 'soma automática', 'calcular soma', 'somar pecas', 'somar peças', 'somar valores'],
-        resposta: 'A <b>Soma Automática</b> calcula sozinha o valor total das peças e do tema que você escolheu. 🧮<br><br>É só clicar no botão <b>🧮 Calcular Soma Automática</b> dentro de <b>💰 Acerto Financeiro & Frete</b>.<br><br>O sistema soma tudo e coloca no campo <b>Valor da Festa</b>. 🎉',
-        atalho: { texto: '🧮 Calcular soma', destino: 'btn-soma-automatica' }
-      },
-
-      // ============ ERROS ============
-      {
-        palavras: ['erro', 'nao funciona', 'não funciona', 'bug', 'problema', 'nao abre', 'não abre', 'travou', 'deu erro'],
-        resposta: 'Poxa, sinto muito que algo não esteja funcionando! 😥<br><br>Tenta essas coisinhas primeiro:<br><br>1️⃣ <b>Recarregue a página</b> (aperte F5 ou Ctrl+F5)<br>2️⃣ Verifique se você está <b>logado</b><br>3️⃣ Confira se preencheu todos os campos <b>obrigatórios</b><br>4️⃣ Se estiver no celular, tente girar a tela ou usar o computador<br><br>Se o problema continuar, avisa o suporte. 🔧'
-      },
-      {
-        palavras: ['sumiu', 'desapareceu', 'nao aparece', 'não aparece', 'nao mostra', 'não mostra', 'sumiu os dados'],
-        resposta: 'Se alguma coisa sumiu, calma! 🌸<br><br>Tenta essas opções:<br><br>1️⃣ <b>Recarregue a página</b> — pode ser só lentidão da internet<br>2️⃣ Verifique se está <b>logado</b> com o e-mail correto<br>3️⃣ Confira se o item foi <b>salvo</b> mesmo (aparece uma mensagem verde de confirmação)<br><br>Se realmente sumiu, me avisa que eu repasso pro suporte. 🔧'
-      },
-
-      // ============ INFORMAÇÕES DA LOJA ============
-      {
-        palavras: ['tralala', 'tralalá', 'loja', 'endereco da loja', 'endereço da loja', 'onde fica', 'telefone da loja', 'contato'],
-        resposta: 'A <b>Tralalá Decorações de Festas</b> fica em:<br><br>📍 <b>QN 508 Conjunto 03 Loja 06, Samambaia Sul</b><br>📞 Telefone: <b>(61) 9 8191-9559</b><br>📧 E-mail: <b>tralaladecoracoes@gmail.com</b><br>📋 CNPJ: <b>21.918.863/0001-12</b><br><br>Qualquer dúvida é só chamar! 💕'
-      },
-
-      // ============ NOME/IDENTIDADE ============
-      {
-        palavras: ['bom trabalho', 'parabens', 'parabéns', 'legal', 'muito bom', 'otimo', 'ótimo', 'top', 'show', 'gostei'],
-        resposta: 'Aaah, muito obrigada! 🥰🌸<br><br>Fico muito feliz que gostou! Se precisar de mais alguma coisa, é só chamar. 💕'
-      }
-    ],
-
-    // ============================================================
-    // RESPOSTA PADRÃO — quando não encontra nada
-    // ============================================================
-    respostaPadrao: 'Infelizmente não posso ajudar com essa informação. 🌸<br><br>Fui programada para ajudar apenas com coisas da <b>Tralalá Festas</b>: <b>agendamentos, orçamentos, kits, contratos, frete, catálogo, ponto, descontos</b> e <b>relatórios</b>.<br><br>Tenta reformular sua pergunta ou clica em um dos atalhos abaixo. 💬',
-
-    // ============================================================
-    // Busca resposta por palavra-chave
-    // ============================================================
-    buscar: function(texto) {
-      if (!texto) return null;
-      var t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-
-      // Ordena por tamanho da palavra (maior primeiro) pra match mais específico
-      var candidatos = [];
-      this.respostas.forEach(function(item) {
-        item.palavras.forEach(function(p) {
-          var pNorm = p.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-          if (t.indexOf(pNorm) !== -1) {
-            candidatos.push({ item: item, tamanho: pNorm.length });
-          }
-        });
-      });
-
-      if (candidatos.length === 0) return null;
-
-      // Pega o de maior tamanho (mais específico)
-      candidatos.sort(function(a, b) { return b.tamanho - a.tamanho; });
-      return candidatos[0].item;
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tralalá Festas - Sistema Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ============ ASSISTENTE VIRTUAL LALÁ ============ */
+    .lala-fab {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      width: 65px;
+      height: 65px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #a3536a, #c26e85);
+      color: #fff;
+      border: none;
+      font-size: 32px;
+      cursor: pointer;
+      box-shadow: 0 8px 25px rgba(163, 83, 106, 0.5);
+      z-index: 99999;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-  };
-
-  // ============================================================
-  // LÓGICA DO CHAT
-  // ============================================================
-  var fab = document.getElementById('lala-fab');
-  var janela = document.getElementById('lala-janela');
-  var body = document.getElementById('lala-body');
-  var input = document.getElementById('lala-input');
-  var enviar = document.getElementById('lala-enviar');
-  var fechar = document.getElementById('lala-fechar');
-  var atalhos = document.getElementById('lala-atalhos');
-
-  if (!fab || !janela) return;
-
-  // Abrir/fechar
-  fab.addEventListener('click', function() {
-    janela.classList.toggle('ativo');
-    fab.classList.remove('pulso');
-    if (janela.classList.contains('ativo')) {
-      setTimeout(function() { input.focus(); }, 200);
+    .lala-fab:hover { transform: scale(1.1) rotate(-8deg); box-shadow: 0 10px 30px rgba(163, 83, 106, 0.7); }
+    .lala-fab.pulso { animation: lalaPulso 1.8s infinite; }
+    @keyframes lalaPulso {
+      0%, 100% { box-shadow: 0 8px 25px rgba(163, 83, 106, 0.5); }
+      50% { box-shadow: 0 8px 35px rgba(163, 83, 106, 0.95), 0 0 0 10px rgba(163, 83, 106, 0.15); }
     }
-  });
-
-  fechar.addEventListener('click', function() {
-    janela.classList.remove('ativo');
-  });
-
-  // Adicionar mensagem no chat
-  function addMsg(texto, tipo) {
-    var div = document.createElement('div');
-    div.className = 'lala-msg ' + tipo;
-
-    // Se tiver botões de atalho (objeto com atalho)
-    if (tipo === 'bot' && typeof texto === 'object') {
-      div.innerHTML = texto.texto;
-      if (texto.atalho) {
-        var btn = document.createElement('button');
-        btn.className = 'lala-link-btn';
-        btn.textContent = texto.atalho.texto;
-        btn.onclick = function() {
-          var el = document.getElementById(texto.atalho.destino);
-          if (el) {
-            // Se for um botão, clica nele; senão, rola até ele
-            if (el.tagName === 'BUTTON') {
-              el.click();
-            } else {
-              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              if (el.focus) {
-                setTimeout(function() { el.focus(); el.style.transition = 'box-shadow 0.3s'; el.style.boxShadow = '0 0 0 4px rgba(163,83,106,0.4)'; setTimeout(function(){ el.style.boxShadow = ''; }, 1500); }, 500);
-              }
-            }
-          } else {
-            // Fallback: rola pro topo
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }
-          // Fecha o chat no mobile pra ver a seção
-          if (window.innerWidth <= 500) {
-            janela.classList.remove('ativo');
-          }
-        };
-        div.appendChild(document.createElement('br'));
-        div.appendChild(btn);
-      }
-    } else {
-      div.innerHTML = texto;
+    .lala-janela {
+      position: fixed;
+      bottom: 100px;
+      right: 25px;
+      width: 360px;
+      max-width: calc(100vw - 40px);
+      height: 500px;
+      max-height: calc(100vh - 130px);
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+      z-index: 99998;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      border: 2px solid var(--primary-light);
     }
-
-    body.appendChild(div);
-    body.scrollTop = body.scrollHeight;
-  }
-
-  // Mostrar "digitando..."
-  function addDigitando() {
-    var div = document.createElement('div');
-    div.className = 'lala-msg bot lala-digitando';
-    div.id = 'lala-digitando';
-    div.innerHTML = '<span></span><span></span><span></span>';
-    body.appendChild(div);
-    body.scrollTop = body.scrollHeight;
-    return div;
-  }
-
-  // Processar mensagem
-  function responder(texto) {
-    if (!texto || !texto.trim()) return;
-    addMsg(texto, 'user');
-    var digitando = addDigitando();
-
-    setTimeout(function() {
-      if (digitando && digitando.parentNode) digitando.parentNode.removeChild(digitando);
-
-      var resposta = LALA.buscar(texto);
-      if (resposta) {
-        addMsg({ texto: resposta.resposta, atalho: resposta.atalho }, 'bot');
-      } else {
-        addMsg(LALA.respostaPadrao, 'bot');
-      }
-    }, 700 + Math.random() * 400);
-  }
-
-  // Enviar
-  enviar.addEventListener('click', function() {
-    var t = input.value.trim();
-    if (!t) return;
-    responder(t);
-    input.value = '';
-  });
-
-  input.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      enviar.click();
+    .lala-janela.ativo { display: flex; animation: lalaSubir 0.3s ease; }
+    @keyframes lalaSubir {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-  });
-
-  // Atalhos
-  atalhos.addEventListener('click', function(e) {
-    if (e.target.classList.contains('lala-atalho')) {
-      var pergunta = e.target.getAttribute('data-pergunta');
-      responder(pergunta);
+    .lala-header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
     }
-  });
+    .lala-header-info { display: flex; align-items: center; gap: 10px; }
+    .lala-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: #fff; display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .lala-titulo { font-weight: 700; font-size: 15px; line-height: 1.2; }
+    .lala-status { font-size: 11px; opacity: 0.85; display: flex; align-items: center; gap: 4px; }
+    .lala-status::before {
+      content: ''; width: 7px; height: 7px; border-radius: 50%; background: #4cd964;
+      box-shadow: 0 0 6px #4cd964;
+    }
+    .lala-fechar {
+      background: rgba(255,255,255,0.2); border: none; color: #fff; cursor: pointer;
+      width: 30px; height: 30px; border-radius: 50%; font-size: 16px; line-height: 1;
+      transition: background 0.2s;
+    }
+    .lala-fechar:hover { background: rgba(255,255,255,0.35); }
+    .lala-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      background: #fdfbfc;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .lala-msg {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      animation: lalaMsg 0.3s ease;
+    }
+    @keyframes lalaMsg { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .lala-msg.bot {
+      background: #fff;
+      color: var(--text-main);
+      border: 1px solid #f1e6f5;
+      border-bottom-left-radius: 4px;
+      align-self: flex-start;
+      box-shadow: 0 2px 6px rgba(163,83,106,0.06);
+    }
+    .lala-msg.user {
+      background: var(--primary);
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+    .lala-msg.bot strong, .lala-msg.bot b { color: var(--primary); }
+    .lala-msg.bot ul { margin: 6px 0 6px 18px; padding: 0; }
+    .lala-msg.bot li { margin-bottom: 4px; }
+    .lala-msg .lala-link-btn {
+      display: inline-block; margin-top: 6px; margin-right: 4px;
+      background: var(--primary-light); color: #fff; border: none;
+      padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .lala-msg .lala-link-btn:hover { background: var(--primary-dark); }
+    .lala-digitando {
+      display: flex; gap: 4px; align-items: center; padding: 12px 16px;
+    }
+    .lala-digitando span {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--primary-light);
+      animation: lalaBounce 1.2s infinite;
+    }
+    .lala-digitando span:nth-child(2) { animation-delay: 0.2s; }
+    .lala-digitando span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes lalaBounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-6px); opacity: 1; }
+    }
+    .lala-atalhos {
+      padding: 10px 12px; background: #fff; border-top: 1px solid #f1e6f5;
+      display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; max-height: 90px; overflow-y: auto;
+    }
+    .lala-atalho {
+      padding: 6px 12px; background: #f8f0f2; color: var(--primary-dark);
+      border: 1px solid #e1cbd4; border-radius: 20px; font-size: 11px;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .lala-atalho:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .lala-footer {
+      padding: 10px 12px; background: #fff; border-top: 1px solid #f1e6f5;
+      display: flex; gap: 8px; flex-shrink: 0;
+    }
+    .lala-input {
+      flex: 1; padding: 10px 14px; border: 1.5px solid var(--border-color);
+      border-radius: 22px; font-size: 13px; font-family: inherit;
+      outline: none; transition: border-color 0.2s;
+    }
+    .lala-input:focus { border-color: var(--primary); }
+    .lala-enviar {
+      width: 42px; height: 42px; border-radius: 50%; border: none;
+      background: var(--primary); color: #fff; cursor: pointer; font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0;
+    }
+    .lala-enviar:hover { background: var(--primary-dark); transform: scale(1.05); }
+    @media (max-width: 500px) {
+      .lala-janela { width: calc(100vw - 30px); right: 15px; bottom: 90px; height: 70vh; }
+      .lala-fab { bottom: 15px; right: 15px; width: 58px; height: 58px; font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-container">
+    <header class="fachada">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" alt="Logo Tralalá" class="logo-imagem">
+    </header>
 
-})();
+    <!-- ================= LOGIN ================= -->
+    <section id="secao-login">
+      <h2 style="text-align: center;">Acesso ao Sistema</h2>
+      <p class="instrucao">Faça login para gerenciar reservas e estoque.</p>
+      <div class="input-group">
+        <label for="email">E-mail de Acesso:</label>
+        <input type="email" id="email" value="contato@tralala.com.br" autocomplete="off">
+      </div>
+      <div class="input-group">
+        <label for="senha">Senha Segura:</label>
+        <input type="password" id="senha" value="123456" placeholder="••••••••">
+      </div>
+      <button type="button" id="btn-login-direto" class="btn btn-primary">Entrar no Painel</button>
+    </section>
+
+    <!-- ================= PAINEL PRINCIPAL ================= -->
+    <section id="secao-verificador" style="display: none;">
+      <div class="usuario-logado">
+        <span id="nome-usuario"> 👤 Administrador (Tralalá)</span>
+        <button type="button" id="btn-logout-direto" class="btn btn-outline">Sair</button>
+      </div>
+
+      <!-- PONTO ELETRÔNICO -->
+      <div id="painel-ponto-eletronico" class="painel-ponto">
+        <div class="ponto-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h3>⏰ Ponto Eletrônico</h3>
+          <button type="button" id="btn-abrir-relatorio-pontos" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;">📋 Histórico</button>
+        </div>
+        <div class="grid-2">
+          <button type="button" id="btn-ponto-entrada" class="btn btn-primary" style="background-color: var(--success);">🟢 Registrar Entrada</button>
+          <button type="button" id="btn-ponto-saida" class="btn btn-primary" style="background-color: var(--error);">🔴 Registrar Saída</button>
+        </div>
+        <div id="ponto-status-hoje" class="ponto-status" style="font-size: 13px; color: var(--text-muted); text-align: center; margin-top: 12px; padding: 8px; background: #ffffff; border-radius: 8px; border: 1px dashed var(--border-color);">
+          Buscando registros do servidor...
+        </div>
+      </div>
+
+      <div id="painel-relatorio-pontos-geral" class="painel-relatorio-pontos">
+        <h3 style="margin-top: 0; border-bottom: 2px solid var(--primary-light); padding-bottom: 5px;">📊 Histórico de Pontos</h3>
+        <div style="overflow-x: auto; max-height: 200px;">
+          <table class="tabela-pontos">
+            <thead>
+              <tr><th>Funcionário</th><th>Data</th><th>Entrada</th><th>Saída</th></tr>
+            </thead>
+            <tbody id="lista-pontos-geral-corpo">
+              <tr><td colspan="4" style="text-align:center; color:#999;">Nenhum ponto registrado.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BOTÕES DE NAVEGAÇÃO -->
+      <div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">
+        <button type="button" id="btn-abrir-central-relatorios" class="btn btn-primary" style="flex: 1; min-width: 140px; background-color: #3498db;">📊 Venda Mensal & Anual</button>
+        <button type="button" id="btn-abrir-reunioes-painel" class="btn btn-primary" style="flex: 1; min-width: 140px; background-color: #27ae60;">📅 Agendar Reuniões</button>
+        <button type="button" id="btn-abrir-orcamentos" class="btn btn-outline" style="flex: 1; min-width: 140px; background-color: #a3536a; color: white; border: none;">📋 Ver Orçamentos</button>
+        <button type="button" id="btn-abrir-catalogo-temas" class="btn btn-outline" style="flex: 1; min-width: 110px;">🎨 Ver Catálogo</button>
+        <button type="button" id="btn-abrir-gerador-kits" class="btn btn-outline" style="flex: 1; min-width: 110px; border-color: #9b59b6; color: #9b59b6;">🎁 Gerar Kits</button>
+        <button type="button" id="btn-abrir-gerador-contrato" class="btn btn-outline" style="flex: 1; min-width: 130px; border-color: #e67e22; color: #e67e22;">✍️ Gerar Contrato</button>
+      </div>
+
+      <!-- ========== PAINEL DE REUNIÕES ========== -->
+      <div id="painel-reunioes-exclusivo" class="painel-central-relatorios" style="display: none; border-color: #27ae60;">
+        <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center; color: #27ae60;">
+          <span>📅 Painel de Reuniões com Clientes</span>
+          <button type="button" id="btn-fechar-reunioes" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px; border-color: #27ae60; color: #27ae60;">✕ Fechar</button>
+        </h3>
+        <div style="background: #f4faf6; border: 1px solid #d4efdf; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 10px 0; color: #27ae60;">➕ Marcar Nova Reunião</h4>
+          <div class="grid-2">
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 12px;">Cliente / Noiva:</label>
+              <input type="text" id="reuniao-cliente" placeholder="Nome da Contratante">
+            </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 12px;">Data & Hora:</label>
+              <input type="datetime-local" id="reuniao-data-hora">
+            </div>
+          </div>
+          <div class="input-group" style="margin-bottom: 10px;">
+            <label style="font-size: 12px;">Pauta / Objetivo:</label>
+            <input type="text" id="reuniao-pauta" placeholder="Ex: Escolha das flores">
+          </div>
+          <button type="button" id="btn-salvar-reuniao-avulsa" class="btn btn-primary" style="background-color: #27ae60;">Agendar Reunião</button>
+        </div>
+        <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px;">📍 Reuniões Agendadas:</h4>
+        <div id="lista-reunioes-container" style="max-height: 250px; overflow-y: auto;">
+          <p style="color: #999; text-align: center;">Buscando reuniões da nuvem...</p>
+        </div>
+      </div>
+
+      <!-- ========== PAINEL CATÁLOGO ========== -->
+      <div id="painel-catalogo-temas" class="painel-relatorio-pontos" style="border-color: var(--primary); background: #ffffff; display: none;">
+        <h3 style="margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 5px; color: var(--primary); display: flex; justify-content: space-between; align-items: center;">
+          <span>🎨 Catálogo de Temas & Peças</span>
+          <span id="contador-catalogo-total" style="font-size: 13px; font-weight: normal; background: var(--primary); color: white; padding: 2px 8px; border-radius: 20px;">0 itens</span>
+        </h3>
+
+        <div style="background: #ffffff; border: 1.5px solid var(--primary-light); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+          <h4 style="margin: 0 0 10px 0; color: var(--primary); font-size: 14px;">➕ Adicionar Peça / Tema</h4>
+          <div class="grid-3">
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">Nome da Peça/Tema:</label>
+              <input type="text" id="catalogo-peca-nome" placeholder="Ex: Mesa Provençal">
+            </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">Quantidade:</label>
+              <input type="number" id="catalogo-peca-qtd" value="1" min="0">
+            </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">Categoria:</label>
+              <select id="catalogo-peca-categoria">
+                <option value="Maquete">Maquete</option>
+                <option value="Louças de porcelana">Louças de porcelana</option>
+                <option value="Infantil">Infantil</option>
+                <option value="Casamento">Casamento</option>
+                <option value="15 Anos">15 Anos</option>
+                <option value="Outros">Outros</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">Modelo/Estilo:</label>
+              <input type="text" id="catalogo-peca-modelo" placeholder="Ex: Rústico">
+            </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">💰 Preço da Locação (R$):</label>
+              <input type="number" id="catalogo-peca-preco" placeholder="0.00" step="0.01" value="0">
+            </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">🔧 Preço de Reposição (R$):</label>
+              <input type="number" id="catalogo-peca-preco-reposicao" placeholder="0.00" step="0.01" value="0">
+            </div>
+          </div>
+          <div class="input-group" style="margin-bottom: 10px;">
+            <label style="font-size: 11px;">Foto da Peça / Upload:</label>
+            <input type="file" id="catalogo-peca-imagem" accept="image/*" capture="environment" style="padding: 10px;">
+          </div>
+          <button type="button" id="btn-adicionar-peca" class="btn btn-primary" style="margin-top: 5px;">Salvar Peça no Acervo</button>
+        </div>
+
+        <div style="background: #f5f0f0; border: 1.5px solid #e1cbd4; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 12px 0; color: var(--primary-dark); display: flex; justify-content: space-between; align-items: center;">
+            <span>📂 Gerenciar Categorias</span>
+            <span id="contador-categorias" style="font-size:12px; background:var(--primary); color:#fff; padding:2px 10px; border-radius:12px;">0</span>
+          </h4>
+          <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px; display: flex; gap: 8px;">
+              <input type="text" id="input-nova-categoria" placeholder="Nome da nova categoria" style="flex:1; padding:8px 12px; border:1.5px solid var(--border-color); border-radius:8px;">
+              <button type="button" id="btn-adicionar-categoria" class="btn btn-primary" style="padding:8px 16px; width:auto; font-size:13px;">➕ Adicionar</button>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <select id="select-remover-categoria" style="padding:8px 12px; border:1.5px solid var(--border-color); border-radius:8px; min-width:150px;">
+                <option value="">Selecione...</option>
+              </select>
+              <button type="button" id="btn-remover-categoria" class="btn btn-danger" style="padding:8px 16px; width:auto; font-size:13px;">🗑️ Remover</button>
+            </div>
+          </div>
+          <div id="lista-categorias-admin" style="display:flex; flex-wrap:wrap; gap:6px; padding:8px; background:#fff; border-radius:8px; min-height:40px; border:1px solid var(--border-color);"></div>
+        </div>
+
+        <div style="background: #fff5f5; border: 1.5px solid #f5c6c6; padding: 15px; border-radius: 10px;">
+          <h4 style="margin: 0 0 12px 0; color: var(--error);">🗑️ Remover Tema/Peça</h4>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <select id="select-remover-tema" style="flex:1; min-width:200px; padding:10px 14px; border:1.5px solid var(--border-color); border-radius:8px;">
+              <option value="">Selecione um tema para remover...</option>
+            </select>
+            <button type="button" id="btn-remover-tema-admin" class="btn btn-danger" style="padding:10px 20px; width:auto; font-size:14px;">🗑️ Remover</button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto; max-height: 500px; margin-top: 15px;">
+          <table class="tabela-pontos">
+            <thead>
+              <tr style="background: var(--primary);">
+                <th style="background: var(--primary); width: 60px;">Imagem</th>
+                <th style="background: var(--primary);">Item / Preços</th>
+                <th style="background: var(--primary); width: 180px; text-align: center;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="lista-temas-gerenciados-corpo">
+              <tr><td colspan="3" style="text-align:center; color:#999; padding: 10px;">Buscando catálogo...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ========== PAINEL GERADOR DE KITS ========== -->
+      <div id="painel-gerador-kits" class="painel-central-relatorios" style="display: none; border-color: #9b59b6;">
+        <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center; color: #9b59b6;">
+          <span>🎁 Gerador de Kits Personalizados</span>
+          <button type="button" id="btn-fechar-gerador-kits" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px; border-color: #9b59b6; color: #9b59b6;">✕ Fechar</button>
+        </h3>
+
+        <div style="background: #f9f4fb; border: 1.5px solid #d8b4e2; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+          <h4 style="margin: 0 0 10px 0; color: #9b59b6; font-size: 14px;">➕ Criar Novo Kit</h4>
+          <div class="grid-2">
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">Nome do Kit:</label>
+              <input type="text" id="kit-nome" placeholder="Ex: Kit Princesa Encantada">
+            </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+              <label style="font-size: 11px;">Quantidade Disponível:</label>
+              <input type="number" id="kit-quantidade" value="1" min="0">
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-bottom: 10px;">
+            <button type="button" id="btn-kit-selecionar-pecas" class="btn-pecas-tema" style="padding:12px;">🍽️ Selecionar Peças</button>
+            <button type="button" id="btn-kit-selecionar-temas" class="btn-pecas-tema" style="padding:12px;">🎨 Selecionar Temas</button>
+          </div>
+
+          <div id="kit-info-selecao" style="background:#fff; padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px; color:var(--text-muted); border:1px dashed #d8b4e2; min-height:40px;">
+            Nenhuma peça ou tema selecionado ainda.
+          </div>
+
+          <div class="input-group" style="margin-bottom: 10px;">
+            <label style="font-size: 11px;">Foto do Kit / Upload:</label>
+            <input type="file" id="kit-imagem" accept="image/*" capture="environment" style="padding: 10px;">
+          </div>
+
+          <button type="button" id="btn-salvar-kit" class="btn btn-primary" style="background-color: #9b59b6;">💾 Salvar Kit no Acervo</button>
+        </div>
+
+        <h4 style="color: #9b59b6; border-bottom: 1px solid #d8b4e2; padding-bottom: 5px;">📦 Kits Cadastrados:</h4>
+        <div id="lista-kits-render" style="max-height: 400px; overflow-y: auto;">
+          <p style="text-align:center; color:#999;">Carregando kits...</p>
+        </div>
+      </div>
+
+      <!-- ========== PAINEL RELATÓRIOS ========== -->
+      <div id="secao-central-relatorios" class="painel-central-relatorios" style="display: none;">
+        <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center;">
+          <span>📊 Relatório de Vendas & Faturamento</span>
+          <button type="button" id="btn-fechar-central-relatorios" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;">✕ Fechar</button>
+        </h3>
+        <div class="grid-2" style="margin-bottom: 15px; align-items: flex-end;">
+          <div class="input-group" style="margin-bottom: 0;">
+            <label>Mês:</label>
+            <select id="seletor-mes-planilha">
+              <option value="Janeiro">Janeiro</option>
+              <option value="Fevereiro">Fevereiro</option>
+              <option value="Março">Março</option>
+              <option value="Abril">Abril</option>
+              <option value="Maio">Maio</option>
+              <option value="Junho">Junho</option>
+              <option value="Julho" selected>Julho</option>
+              <option value="Agosto">Agosto</option>
+              <option value="Setembro">Setembro</option>
+              <option value="Outubro">Outubro</option>
+              <option value="Novembro">Novembro</option>
+              <option value="Dezembro">Dezembro</option>
+            </select>
+          </div>
+          <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+            <button type="button" id="btn-transformar-grafico" class="btn btn-primary" style="background-color: #e74c3c; font-size: 11px; padding: 8px;">📈 Gráfico</button>
+            <button type="button" id="btn-toggle-grafico" class="btn btn-outline" style="border-color: #3498db; color: #3498db; font-size: 11px; padding: 8px;">📈 Anual</button>
+          </div>
+        </div>
+        <div id="painel-grafico-faturamento" class="grafico-wrapper" style="display: none;">
+          <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📈 Desempenho Anual</h4>
+          <canvas id="graficoAnual" style="max-height: 250px; width: 100%;"></canvas>
+        </div>
+        <div style="overflow-x: auto; margin-top: 15px;">
+          <table class="planilha-festa-simulada" id="tabela-planilha-corpo">
+            <thead>
+              <tr>
+                <th style="width: 35%;">Cliente</th>
+                <th style="width: 25%;">Kit</th>
+                <th style="width: 25%;">Valor (R$)</th>
+                <th style="width: 15%;">Ação</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ========== FORMULÁRIO DE RESERVA ========== -->
+      <h2 id="titulo-form-reserva">Agendar Nova Festa</h2>
+
+      <div class="grid-2">
+        <div class="input-group">
+          <label>Nome do Cliente:</label>
+          <input type="text" id="nome-cliente" placeholder="Ex: Maria Flor">
+        </div>
+        <div class="input-group">
+          <label>CPF do Cliente:</label>
+          <input type="text" id="cliente-cpf" placeholder="000.000.000-00">
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="input-group">
+          <label>Telefone:</label>
+          <input type="text" id="cliente-telefone" placeholder="(61) 9XXXX-XXXX">
+        </div>
+        <div class="input-group">
+          <label>Data do Evento:</label>
+          <input type="date" id="data">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Endereço do Cliente:</label>
+        <input type="text" id="cliente-endereco" placeholder="Endereço completo">
+      </div>
+
+      <div class="input-group">
+        <label>Local do Evento:</label>
+        <input type="text" id="local-evento" placeholder="Local do evento">
+      </div>
+
+      <div class="input-group">
+        <label>Buscar e Selecionar Tema/Peça:</label>
+        <div class="sugestoes-wrapper">
+          <div class="busca-container">
+            <input type="text" id="filtro-tema-input" placeholder="Digite para buscar..." autocomplete="off">
+          </div>
+          <div id="wrapper-lista-sugestoes" class="lista-sugestoes"></div>
+        </div>
+        <input type="hidden" id="busca-tema-input" value="">
+      </div>
+
+      <div class="painel-kits">
+        <label style="font-weight: 600; display: block; margin-bottom: 12px; color: var(--primary);">🛍️ Modelo do Kit:</label>
+        <div id="grupo-kits-dinamico" class="grid-kits">
+          <button type="button" class="btn-kit-opcao" data-kit="Só um Bolinho">🧁 Só um Bolinho</button>
+          <button type="button" class="btn-kit-opcao" data-kit="Kit Básico">📦 Kit Básico</button>
+          <button type="button" class="btn-kit-opcao" data-kit="Kit Prata">🥈 Kit Prata</button>
+          <button type="button" class="btn-kit-opcao" data-kit="Kit Ouro">🥇 Kit Ouro</button>
+        </div>
+
+        <div id="kit-acoes-box" class="kit-acoes-box">
+          <div class="kit-acoes-titulo">📋 Personalizar <span id="kit-acoes-nome">Kit</span></div>
+          <button type="button" id="btn-esc-pecas" class="btn-pecas-tema">🍽️ Escolher Peças</button>
+          <button type="button" id="btn-esc-tema" class="btn-pecas-tema">🎨 Escolher Tema</button>
+          <div class="kit-acoes-info" id="kit-acoes-info">Nenhuma peça selecionada</div>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <label class="check-container">
+            <input type="checkbox" id="chk-montar-local">
+            <span>🛠️ Montar no Local?</span>
+          </label>
+          <div id="painel-montagem-local" class="montagem-local-container">
+            <div class="grid-2">
+              <div class="input-group" style="margin-bottom: 10px;">
+                <label style="font-size:12px;">Quantas peças vão?</label>
+                <input type="number" id="ml-qtd-pecas" value="0" min="0">
+              </div>
+              <div class="input-group" style="margin-bottom: 10px;">
+                <label style="font-size:12px;">Vai LED?</label>
+                <select id="ml-led"><option value="Não">Não</option><option value="Sim">Sim</option></select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group" style="margin-top: 15px;">
+          <label style="font-weight: 600; color: var(--primary);">📄 Modelo do Contrato:</label>
+          <select id="modelo-contrato">
+            <option value="pegue-monte">🏠 Pegue e Monte</option>
+            <option value="com-frete">📦 Com Frete</option>
+          </select>
+        </div>
+
+        <!-- RESUMO DE SELEÇÃO -->
+        <div id="resumo-selecao" style="background: #f8f4ff; border: 1.5px solid #d8b4e2; padding: 15px; border-radius: 10px; margin-top: 20px; display: none;">
+          <h4 style="margin: 0 0 10px 0; color: #9b59b6; font-size: 14px;">📋 Itens Selecionados</h4>
+          <div id="resumo-temas-pecas" style="font-size: 13px; line-height: 1.6;"></div>
+        </div>
+
+        <!-- FRETE + SOMA + DESCONTO -->
+        <div class="input-group" style="margin-top: 15px;">
+          <label style="font-weight: 600; color: var(--primary);">💰 Acerto Financeiro & Frete</label>
+
+          <div class="calc-frete-box">
+            <span style="font-size: 12px; font-weight: 600; color: var(--primary-dark);">🚗 Calculadora de Frete (9 km/L):</span>
+            <div class="grid-2" style="margin-top: 10px;">
+              <div>
+                <label style="font-size: 11px;">KM só IDA:</label>
+                <input type="number" id="calc-km" placeholder="Ex: 45" style="padding: 8px;">
+              </div>
+              <div>
+                <label style="font-size: 11px;">Preço Combustível (R$):</label>
+                <input type="number" id="calc-valor-litro" value="8.00" step="0.01" style="padding: 8px;">
+              </div>
+            </div>
+            <div style="margin-top: 10px;">
+              <label class="check-container" style="font-size: 12px;">
+                <input type="checkbox" id="chk-segunda-viagem" style="width: 16px; height: 16px;">
+                <span>🔄 Cliente pediu 2ª viagem?</span>
+              </label>
+            </div>
+            <div style="font-size: 12px; margin-top: 12px; line-height: 1.6;">
+              🚗 KM total: <span id="calc-km-total">0</span> km<br>
+              Combustível: <span id="calc-total-combustivel">R$ 0.00</span> | Manutenção: <span id="calc-manutencao">R$ 0.00</span><br>
+              <strong>Frete: <span id="calc-cobrar-cliente" style="color: var(--success);">R$ 0.00</span></strong>
+            </div>
+          </div>
+
+          <!-- SOMA AUTOMÁTICA -->
+          <div style="background: #e8f8f5; border: 1.5px solid #27ae60; padding: 15px; border-radius: 10px; margin-top: 15px;">
+            <h4 style="margin: 0 0 10px 0; color: #27ae60; font-size: 14px;">🧮 Soma Automática</h4>
+            <button type="button" id="btn-soma-automatica" class="btn btn-success" style="margin-bottom: 10px;">🧮 Calcular Soma Automática</button>
+            <div id="detalhes-soma" style="font-size: 12px; line-height: 1.6; color: var(--text-main);"></div>
+          </div>
+
+          <!-- DESCONTO -->
+          <div style="background: #fff3e0; border: 1.5px solid #ff9800; padding: 15px; border-radius: 10px; margin-top: 15px;">
+            <h4 style="margin: 0 0 10px 0; color: #e65100; font-size: 14px;">🏷️ Aplicar Desconto</h4>
+            <div class="grid-3">
+              <div>
+                <label style="font-size: 11px;">Tipo:</label>
+                <select id="desconto-tipo" style="padding: 8px;">
+                  <option value="percent">% Percentual</option>
+                  <option value="reais">R$ Reais</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size: 11px;">Valor do Desconto:</label>
+                <input type="number" id="desconto-valor" placeholder="0" step="0.01" style="padding: 8px;">
+              </div>
+              <div style="display:flex; align-items:flex-end;">
+                <button type="button" id="btn-aplicar-desconto" class="btn btn-primary" style="background-color:#ff9800;">Aplicar</button>
+              </div>
+            </div>
+            <div id="resultado-desconto" style="margin-top:12px; font-size:13px; line-height:1.6;"></div>
+          </div>
+
+          <!-- VALORES FINAIS -->
+          <div class="grid-3" style="margin-top: 15px;">
+            <div>
+              <label style="font-size: 12px;">Valor da Festa (R$):</label>
+              <input type="number" id="valor-festa" placeholder="0.00" step="0.01" value="0.00">
+            </div>
+            <div>
+              <label style="font-size: 12px;">Frete (R$):</label>
+              <input type="number" id="valor-frete" placeholder="0.00" step="0.01" readonly style="background:#fdf5f6; font-weight:bold; color:var(--primary);">
+            </div>
+            <div>
+              <label style="font-size: 12px;">Total (Festa + Frete):</label>
+              <input type="number" id="valor-total" placeholder="0.00" step="0.01" readonly style="font-weight:bold; background:#ebfbf2;">
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-top: 15px;">
+            <div>
+              <label style="font-size: 12px;">Sinal Pago (R$):</label>
+              <input type="number" id="valor-sinal" placeholder="0.00" step="0.01" value="0.00">
+            </div>
+            <div>
+              <label style="font-size: 12px; color: var(--error); font-weight:600;">Resta Pagar (R$):</label>
+              <input type="number" id="valor-restante" placeholder="0.00" step="0.01" readonly style="background:#fff5f6; font-weight:bold; color:var(--error);">
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group" style="margin-bottom: 0;">
+          <label>➕ Observações / Local da Festa:</label>
+          <input type="text" id="adicionais-festa" placeholder="Ex: Salão de Festas">
+        </div>
+      </div>
+
+      <button type="button" id="btn-confirmar-agendamento" class="btn btn-primary" style="padding: 18px; font-size: 16px;">✅ Confirmar e Salvar Reserva</button>
+
+      <div style="margin-top: 40px; border-top: 2px solid var(--border-color); padding-top: 30px;">
+        <h3 style="margin-bottom: 20px;">📋 Relatório de Agendamentos Ativos</h3>
+        <div id="lista-reservas-render">
+          <p style="text-align: center; color: #999;">Carregando agendamentos...</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= MODAL GERADOR DE CONTRATO ================= -->
+  <div id="modal-gerador-contrato" class="modal-contrato">
+    <div class="modal-conteudo">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
+        <h3 style="margin:0; color:var(--primary);">✍️ Gerador de Contrato</h3>
+        <button type="button" id="btn-fechar-modal-contrato" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
+      </div>
+
+      <form id="form-contrato-avulso">
+        <div class="grid-2">
+          <div class="input-group">
+            <label>Nome do Contratante:</label>
+            <input type="text" id="c-nome" placeholder="Ex: Lenira Ribeiro">
+          </div>
+          <div class="input-group">
+            <label>CPF:</label>
+            <input type="text" id="c-cpf" placeholder="000.000.000-00">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="input-group">
+            <label>Data da Festa:</label>
+            <input type="date" id="c-data">
+          </div>
+          <div class="input-group">
+            <label>Horário:</label>
+            <input type="time" id="c-horario">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="input-group">
+            <label>Valor Total (R$):</label>
+            <input type="number" id="c-valor" placeholder="600.00" step="0.01">
+          </div>
+          <div class="input-group">
+            <label>Endereço do Cliente:</label>
+            <input type="text" id="c-endereco" placeholder="Endereço completo">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="input-group">
+            <label>Telefone:</label>
+            <input type="text" id="c-telefone" placeholder="(61) 9XXXX-XXXX">
+          </div>
+          <div class="input-group">
+            <label>Modelo do Contrato:</label>
+            <select id="c-modelo">
+              <option value="com-frete">📦 Com Frete</option>
+              <option value="pegue-monte">🏠 Pegue e Monte</option>
+              <option value="pegue-monte-loja">🏬 Pegue e Monte (Loja)</option>
+            </select>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Local do Evento:</label>
+          <input type="text" id="c-local" placeholder="Endereço do evento">
+        </div>
+
+        <div class="input-group">
+          <label>🔍 Tema do Contrato:</label>
+          <div class="sugestoes-wrapper">
+            <div class="busca-container">
+              <input type="text" id="contrato-tema-busca" placeholder="Digite o nome do tema..." autocomplete="off">
+            </div>
+            <div id="contrato-tema-sugestoes" class="lista-sugestoes"></div>
+          </div>
+          <input type="hidden" id="contrato-tema-selecionado" value="">
+        </div>
+
+        <div class="input-group">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <label style="margin:0;">Peças (do Catálogo):</label>
+            <button type="button" id="btn-abrir-pecas-contrato" class="btn-pecas-tema" style="width:auto; padding:6px 12px; font-size:12px;">🍽️ Abrir Lista de Peças</button>
+          </div>
+          <select id="c-pecas" multiple style="height:90px; padding:5px;"></select>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:5px;" id="c-pecas-info">Clique em "Abrir Lista de Peças" pra escolher.</div>
+        </div>
+
+        <div class="input-group">
+          <label>Observações:</label>
+          <input type="text" id="c-obs" placeholder="Ex: Fazer entrega às 13h">
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
+          <button type="button" id="btn-gerar-salvar-contrato" class="btn btn-primary" style="background-color:#e67e22; flex:1;">💾 Salvar Contrato</button>
+          <button type="button" id="btn-gerar-pdf-contrato" class="btn btn-success" style="flex:1;">📄 Gerar PDF</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL VISUALIZAR CONTRATO ================= -->
+  <div id="modal-visualizar-contrato" class="modal-visualizar-contrato">
+    <div class="modal-visualizar-conteudo">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
+        <h3 style="margin:0; color:var(--primary);">📄 Visualização do Contrato</h3>
+        <button type="button" id="btn-fechar-visualizacao" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
+      </div>
+      <div class="visualizador-contrato-scroll" id="visualizador-scroll">
+        <div id="contrato-preview-content"></div>
+      </div>
+      <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;" class="no-print">
+        <button type="button" id="btn-baixar-pdf-contrato" class="btn btn-pdf" style="width:auto; padding:12px 24px;">📥 Baixar PDF</button>
+        <button type="button" id="btn-imprimir-contrato" class="btn btn-outline" style="width:auto; padding:12px 24px;">🖨️ Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL DE PEÇAS ================= -->
+  <div id="modal-pecas" class="modal-pecas">
+    <div class="modal-pecas-conteudo">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #3498db; padding-bottom:10px; margin-bottom:20px;">
+        <h3 style="margin:0; color:#3498db;" id="titulo-modal-pecas">🍽️ Escolher Peças</h3>
+        <button type="button" id="btn-fechar-modal-pecas" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
+      </div>
+
+      <div class="input-group" style="margin-bottom: 12px;">
+        <label style="font-size: 13px;">🔍 Filtrar peças:</label>
+        <input type="text" id="filtro-pecas" placeholder="Digite o nome..." style="padding: 10px;">
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:13px; color:var(--text-muted);">Marque as peças:</span>
+        <span class="badge-contador" id="contador-pecas-selecionadas">0 selecionadas</span>
+      </div>
+
+      <div class="lista-pecas-checkbox" id="lista-pecas-checkbox">
+        <div style="text-align:center; padding: 20px; color: #999; font-size: 13px;">Carregando peças...</div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button type="button" id="btn-cancelar-pecas" class="btn btn-outline" style="flex:1;">Cancelar</button>
+        <button type="button" id="btn-confirmar-pecas" class="btn btn-success" style="flex:2;">✅ Confirmar Peças</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL DE TEMA ================= -->
+  <div id="modal-tema-reserva" class="modal-tema-reserva">
+    <div class="modal-tema-reserva-conteudo">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
+        <h3 style="margin:0; color:var(--primary);">🎨 Escolher Tema</h3>
+        <button type="button" id="btn-fechar-modal-tema" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
+      </div>
+
+      <div class="input-group" style="margin-bottom: 12px;">
+        <label style="font-size: 13px;">🔍 Buscar tema:</label>
+        <input type="text" id="filtro-tema-modal" placeholder="Digite o nome..." style="padding: 10px;">
+      </div>
+
+      <div style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Clique em um tema pra selecionar:</div>
+
+      <div class="lista-pecas-checkbox" id="lista-temas-modal">
+        <div style="text-align:center; padding:20px; color:#999; font-size:13px;">Carregando temas...</div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button type="button" id="btn-cancelar-tema" class="btn btn-outline" style="flex:1;">Cancelar</button>
+        <button type="button" id="btn-confirmar-tema" class="btn btn-success" style="flex:2;">✅ Confirmar Tema</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL EDITAR TEMA ================= -->
+  <div id="modal-editar-tema" class="modal-editar-tema">
+    <div class="modal-editar-conteudo">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
+        <h3 style="margin:0; color:var(--primary);">✏️ Editar Peça / Tema</h3>
+        <button type="button" id="btn-fechar-editar-tema" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
+      </div>
+
+      <input type="hidden" id="editar-tema-id" value="">
+
+      <div class="preview-box-editar">
+        <img id="editar-tema-preview" class="preview-foto-editar" src="https://placehold.co/200x200?text=Sem+Foto" alt="Preview">
+        <div style="font-size:12px; color:var(--text-muted); margin-top:5px;">Pré-visualização</div>
+      </div>
+
+      <div class="input-group">
+        <label>📷 Trocar Foto (opcional):</label>
+        <input type="file" id="editar-tema-imagem" class="input-file-editar" accept="image/*">
+      </div>
+
+      <div class="input-group">
+        <label>📝 Nome:</label>
+        <input type="text" id="editar-tema-nome" placeholder="Ex: Fundo do Mar">
+      </div>
+
+      <div class="grid-2">
+        <div class="input-group">
+          <label>📦 Quantidade:</label>
+          <input type="number" id="editar-tema-qtd" value="1" min="0">
+        </div>
+        <div class="input-group">
+          <label>🏷️ Categoria:</label>
+          <input type="text" id="editar-tema-categoria" placeholder="Ex: Maquete">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>✨ Modelo / Estilo:</label>
+        <input type="text" id="editar-tema-modelo" placeholder="Ex: Rústico">
+      </div>
+
+      <div class="grid-2">
+        <div class="input-group">
+          <label>💰 Preço Locação (R$):</label>
+          <input type="number" id="editar-tema-preco" value="0" step="0.01">
+        </div>
+        <div class="input-group">
+          <label>🔧 Preço Reposição (R$):</label>
+          <input type="number" id="editar-tema-preco-reposicao" value="0" step="0.01">
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button type="button" id="btn-cancelar-editar-tema" class="btn btn-outline" style="flex:1;">Cancelar</button>
+        <button type="button" id="btn-salvar-editar-tema" class="btn btn-success" style="flex:2;">💾 Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL DE LOADING ================= -->
+  <div id="modal-status-operacao" class="modal-loading-overlay">
+    <div class="modal-loading-box">
+      <div id="spinner-status" class="spinner-loading"></div>
+      <div id="titulo-status-operacao" class="modal-loading-titulo">PROCESSANDO...</div>
+      <p id="subtitulo-status-operacao" class="modal-loading-subtitulo">Aguarde um momento.</p>
+    </div>
+  </div>
+
+  <!-- ================= ASSISTENTE VIRTUAL LALÁ ================= -->
+  <button type="button" id="lala-fab" class="lala-fab pulso" title="Fale com a Lalá 🌸">🌸</button>
+
+  <div id="lala-janela" class="lala-janela">
+    <div class="lala-header">
+      <div class="lala-header-info">
+        <div class="lala-avatar">🌸</div>
+        <div>
+          <div class="lala-titulo">Lalá</div>
+          <div class="lala-status">Online agora</div>
+        </div>
+      </div>
+      <button type="button" class="lala-fechar" id="lala-fechar">✕</button>
+    </div>
+    <div class="lala-body" id="lala-body">
+      <div class="lala-msg bot">
+        Oi! 🌸 Sou a <b>Lalá</b>, sua assistente da <b>Tralalá Festas</b>!<br><br>
+        Posso te ajudar com dúvidas sobre <b>agendamentos, orçamentos, kits, contratos, frete, catálogo</b> e muito mais.<br><br>
+        É só digitar sua pergunta ou clicar em um dos atalhos abaixo. 💬
+      </div>
+    </div>
+    <div class="lala-atalhos" id="lala-atalhos">
+      <button type="button" class="lala-atalho" data-pergunta="Como agendar uma festa?">📅 Agendar festa</button>
+      <button type="button" class="lala-atalho" data-pergunta="Como salvar um orçamento?">📋 Orçamento</button>
+      <button type="button" class="lala-atalho" data-pergunta="Como criar um kit?">🎁 Criar kit</button>
+      <button type="button" class="lala-atalho" data-pergunta="Como gerar um contrato?">✍️ Contrato</button>
+      <button type="button" class="lala-atalho" data-pergunta="Como funciona o frete?">🚚 Frete</button>
+      <button type="button" class="lala-atalho" data-pergunta="Como cadastrar um tema?">🎨 Cadastrar tema</button>
+      <button type="button" class="lala-atalho" data-pergunta="Como aplicar desconto?">🏷️ Desconto</button>
+      <button type="button" class="lala-atalho" data-pergunta="Como registrar ponto?">⏰ Ponto</button>
+    </div>
+    <div class="lala-footer">
+      <input type="text" id="lala-input" class="lala-input" placeholder="Digite sua dúvida..." autocomplete="off">
+      <button type="button" id="lala-enviar" class="lala-enviar" title="Enviar">➤</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="lala.js"></script>
+</body>
+</html>
