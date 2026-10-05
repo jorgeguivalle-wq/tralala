@@ -1620,41 +1620,51 @@ function gerarContratoPegueMonte(dados) {
 
 // ============================================================
 // CONTRATO — PEGUE E MONTE (LOJA) — MODELO 3
+// Tabela em branco, só dados do cliente preenchidos
 // ============================================================
 function gerarContratoPegueMonteLoja(dados) {
   var dataFmt = dados.data ? String(dados.data).split("-").reverse().join("/") : "____/____/______";
-  var valorNum = parseFloat(dados.valor) || 0;
-  var valorFmt = valorNum ? valorNum.toFixed(2).replace('.', ',') : "______,____";
   var dataAtual = new Date().toLocaleDateString('pt-BR');
 
-  var nome = dados.nome || "_________________________";
+  var nome = dados.nome || "_______________________________________";
   var cpf = dados.cpf || "_________________________";
-  var endereco = dados.endereco || "_________________________";
+  var endereco = dados.endereco || "_______________________________________";
   var telefone = dados.telefone || "(61) ________________";
 
-  var pecasTexto = (dados.pecas && dados.pecas.length > 0)
-    ? dados.pecas.join(", ")
-    : "__________________________________";
+  // 8 linhas em branco na tabela pra preencher à mão
+  var linhasTabela = "";
+  for (var i = 0; i < 8; i++) {
+    linhasTabela += '<tr>' +
+      '<td style="text-align:center; height:24px;">&nbsp;</td>' +
+      '<td>&nbsp;</td>' +
+      '<td style="text-align:center;">&nbsp;</td>' +
+      '<td style="text-align:center;">&nbsp;</td>' +
+    '</tr>';
+  }
 
   return '<div class="pagina-contrato">' +
     '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
     '<div class="titulo-contrato">CONTRATO DE LOCAÇÃO PEGUE & MONTE</div>' +
 
-    '<div class="dados-contratada"><span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS CNPJ: 21.918.863/0001-12 E-MAIL: tralaladecoracoes@gmail.com</div>' +
-    '<div class="dados-contratante"><span class="negrito">CONTRATANTE:</span> ' + nome + ' CPF: ' + cpf + '</div>' +
+    '<div class="dados-contratada"><span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS</div>' +
+    '<div class="dados-contratada"><span class="negrito">CNPJ:</span> 21.918.863/0001-12</div>' +
+    '<div class="dados-contratada"><span class="negrito">E-MAIL:</span> tralaladecoracoes@gmail.com</div>' +
+    '<br>' +
+    '<div class="dados-contratante"><span class="negrito">CONTRATANTE:</span> ' + nome + '</div>' +
+    '<div class="dados-contratante"><span class="negrito">CPF:</span> ' + cpf + '</div>' +
     '<div class="dados-contratante"><span class="negrito">ENDEREÇO CLIENTE:</span> ' + endereco + '</div>' +
     '<div class="dados-contratante"><span class="negrito">TELEFONE:</span> ' + telefone + '</div>' +
     '<div class="dados-contratante"><span class="negrito">DATA DA FESTA:</span> ' + dataFmt + '</div>' +
     '<div class="dados-contratante"><span class="negrito">RETIRADA DOS ITENS:</span> ____/____/______, ATÉ AS ____:____</div>' +
     '<div class="dados-contratante"><span class="negrito">DEVOLUÇÃO DOS ITENS:</span> ____/____/______, ATÉ AS 11H00 (caso não seja entregue na data e horário combinado será cobrado o valor de uma locação para cada dia de atraso).</div>' +
 
-    '<p style="margin-top:4px;">As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.</p>' +
+    '<p style="margin-top:6px;">As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.</p>' +
 
     '<div class="clausula-titulo">DO OBJETO DO CONTRATO</div>' +
     '<div class="clausula-texto"><span class="negrito">Clausula 1ª.</span> É objeto do presente contrato a prestação de serviço de Locação de:</div>' +
 
-    '<table class="tabela-itens"><thead><tr><th>QTDE.</th><th>DESCRIÇÃO DO PRODUTO</th><th>VALOR UNITÁRIO</th><th>VALOR TOTAL</th></tr></thead><tbody>' +
-    '<tr><td style="text-align:center;">1</td><td>' + pecasTexto + '</td><td style="text-align:center;">R$ ' + valorFmt + '</td><td style="text-align:center;">R$ ' + valorFmt + '</td></tr>' +
+    '<table class="tabela-itens"><thead><tr><th style="width:60px;">QTDE.</th><th>DESCRIÇÃO DO PRODUTO</th><th style="width:110px;">VALOR UNITÁRIO</th><th style="width:110px;">VALOR TOTAL</th></tr></thead><tbody>' +
+    linhasTabela +
     '</tbody></table>' +
 
     '<div class="paragrafo">Parágrafo primeiro. A CONTRATANTE não poderá, sem prévia autorização da CONTRATADA, sublocar, emprestar, ou ceder os móveis locados.</div>' +
