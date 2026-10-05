@@ -141,30 +141,34 @@ const Utils = {
 
 function safe(v) { return (v === undefined || v === null) ? "" : v; }
 
+// Monta descrição detalhada das peças para o contrato
+// Ex: "Lego (Maquete — 1 unidade, modelo X); Painel Redondo (Maquete — 1 unidade)"
+function descricaoPecasDetalhada(pecas) {
+  if (!pecas || pecas.length === 0) return "__________________________________";
+  return pecas.map(function(nomePeca) {
+    var item = State.estoqueMap[nomePeca];
+    if (item) {
+      var qtd = parseInt(item.quantidade) || 1;
+      var partes = [];
+      if (item.categoria) partes.push(item.categoria);
+      partes.push(qtd + " unidade" + (qtd > 1 ? "s" : ""));
+      if (item.modelo) partes.push(item.modelo);
+      return nomePeca + " (" + partes.join(", ") + ")";
+    }
+    return nomePeca;
+  }).join("; ");
+}
+
 // ============================================================
-// VERIFICA DISPONIBILIDADE — bloqueia tema já alugado no mesmo dia
+// VERIFICA DISPONIBILIDADE
 // ============================================================
 function verificarDisponibilidadeTema(dataReserva, temaNome) {
   if (!dataReserva || !temaNome) return { livre: true };
-
-  var reservasNoDia = State.reservas.filter(function(r) {
-    return r.data === dataReserva;
-  });
-
-  var jaUsado = reservasNoDia.filter(function(r) {
-    return (r.tema || "") === temaNome;
-  }).length;
-
+  var reservasNoDia = State.reservas.filter(function(r) { return r.data === dataReserva; });
+  var jaUsado = reservasNoDia.filter(function(r) { return (r.tema || "") === temaNome; }).length;
   var itemTema = State.estoqueMap[temaNome];
   var disponivel = itemTema ? (parseInt(itemTema.quantidade) || 1) : 1;
-
-  return {
-    livre: jaUsado < disponivel,
-    jaUsado: jaUsado,
-    disponivel: disponivel,
-    tema: temaNome,
-    data: dataReserva
-  };
+  return { livre: jaUsado < disponivel, jaUsado: jaUsado, disponivel: disponivel, tema: temaNome, data: dataReserva };
 }
 
 // ============================================================
@@ -224,8 +228,7 @@ const FreteCalc = {
     if (!isFinite(freteTotal)) freteTotal = 0;
     State.frete = {
       kmIda: e.kmIda, kmTotal: kmTotal, precoCombustivel: e.preco,
-      segundaViagem: e.segundaViagem,
-      litros: litros, custoCombustivel: custoCombustivel,
+      segundaViagem: e.segundaViagem, litros: litros, custoCombustivel: custoCombustivel,
       manutencao: manutencao, freteTotal: freteTotal
     };
     return State.frete;
@@ -240,10 +243,8 @@ const FreteCalc = {
     if (txtCombustivel) txtCombustivel.textContent = "R$ " + f.custoCombustivel.toFixed(2);
     if (txtManutencao) txtManutencao.textContent = "R$ " + f.manutencao.toFixed(2);
     if (txtTotal) txtTotal.textContent = "R$ " + f.freteTotal.toFixed(2);
-
     var inputFrete = document.getElementById('valor-frete');
     if (inputFrete) inputFrete.value = f.freteTotal.toFixed(2);
-
     recalcularTotais();
     return f;
   },
@@ -266,17 +267,13 @@ function recalcularTotais() {
   var inputValorFesta = document.getElementById('valor-festa');
   var valorFesta = inputValorFesta ? (parseFloat(inputValorFesta.value) || 0) : 0;
   if (isNaN(valorFesta)) valorFesta = 0;
-
   var frete = State.frete.freteTotal || 0;
   var total = valorFesta + frete;
-
   var inputTotal = document.getElementById('valor-total');
   if (inputTotal) inputTotal.value = total.toFixed(2);
-
   var inputSinal = document.getElementById('valor-sinal');
   var sinal = inputSinal ? (parseFloat(inputSinal.value) || 0) : 0;
   if (isNaN(sinal)) sinal = 0;
-
   var inputRestante = document.getElementById('valor-restante');
   if (inputRestante) {
     var restante = total - sinal;
@@ -294,9 +291,7 @@ try {
     db = firebase.database();
     State.db = db;
   }
-} catch (err) {
-  console.error("Erro no Firebase:", err);
-}
+} catch (err) { console.error("Erro no Firebase:", err); }
 
 // ============================================================
 // DATABASE
@@ -314,15 +309,13 @@ const Database = {
         const newRef = peca.idFirebase ? db.ref("estoque/" + peca.idFirebase) : refEstoque.push();
         const pecaId = peca.idFirebase || newRef.key;
         const payload = {
-          idFirebase: pecaId,
-          nome: safe(peca.nome),
+          idFirebase: pecaId, nome: safe(peca.nome),
           quantidade: parseInt(peca.quantidade) || 1,
           categoria: safe(peca.categoria) || "Outros",
           modelo: safe(peca.modelo),
           preco: parseFloat(peca.preco) || 0,
           precoReposicao: parseFloat(peca.precoReposicao) || 0,
-          imagem: safe(peca.imagem),
-          atualizadoEm: Date.now()
+          imagem: safe(peca.imagem), atualizadoEm: Date.now()
         };
         await newRef.set(payload);
       }
@@ -335,30 +328,22 @@ const Database = {
       if (btnSalvar) btnSalvar.disabled = false;
     }
   },
-
   atualizarPecaNuvem: async function(idFirebase, dados) {
     if (!db) return false;
-    try {
-      await db.ref("estoque/" + idFirebase).update(dados);
-      return true;
-    } catch (e) { console.error(e); return false; }
+    try { await db.ref("estoque/" + idFirebase).update(dados); return true; }
+    catch (e) { console.error(e); return false; }
   },
-
   removerPecaNuvem: async function(idFirebase) {
     if (!db) return false;
-    try {
-      await db.ref("estoque/" + idFirebase).remove();
-      return true;
-    } catch (e) { console.error(e); return false; }
+    try { await db.ref("estoque/" + idFirebase).remove(); return true; }
+    catch (e) { console.error(e); return false; }
   },
-
   salvarCategoriaNuvem: function(nome) {
     if (!db) return Promise.reject("Sem conexão");
     nome = (nome || "").trim();
     if (!nome) return Promise.reject("Nome vazio");
     return db.ref('categorias').once('value').then(function(snapshot) {
-      var data = snapshot.val();
-      var existe = false;
+      var data = snapshot.val(); var existe = false;
       if (data && typeof data === 'object') {
         Object.keys(data).forEach(function(key) {
           var val = data[key];
@@ -370,13 +355,11 @@ const Database = {
       return db.ref('categorias').push().set({ nome: nome, criadoEm: Date.now() });
     });
   },
-
   removerCategoriaNuvem: function(nome) {
     if (!db) return Promise.reject("Sem conexão");
     if (!nome) return Promise.reject("Nome vazio");
     return db.ref('categorias').once('value').then(function(snapshot) {
-      var data = snapshot.val();
-      var chaveRemover = null;
+      var data = snapshot.val(); var chaveRemover = null;
       if (data && typeof data === 'object') {
         Object.keys(data).forEach(function(key) {
           var val = data[key];
@@ -389,7 +372,6 @@ const Database = {
       return db.ref('categorias/' + chaveRemover).remove();
     });
   },
-
   salvarReservaNuvem: function(dados) {
     if (!db) return Promise.reject("Sem conexão");
     return db.ref('reservas').push().set(dados);
@@ -398,7 +380,6 @@ const Database = {
     if (!db) return Promise.reject("Sem conexão");
     return db.ref("reservas/" + id).remove();
   },
-
   salvarOrcamentoNuvem: function(dados) {
     if (!db) return Promise.reject("Sem conexão");
     return db.ref('orcamentos').push().set(dados);
@@ -407,7 +388,6 @@ const Database = {
     if (!db) return Promise.reject("Sem conexão");
     return db.ref("orcamentos/" + id).remove();
   },
-
   salvarReuniaoNuvem: function(dados) {
     if (!db) return Promise.reject("Sem conexão");
     return db.ref('reunioes').push().set(dados);
@@ -416,7 +396,6 @@ const Database = {
     if (!db) return Promise.reject("Sem conexão");
     return db.ref("reunioes/" + id).remove();
   },
-
   salvarContratoNuvem: function(dados) {
     if (!db) return Promise.reject("Sem conexão");
     var limpo = {};
@@ -426,7 +405,6 @@ const Database = {
     });
     return db.ref('contratos').push().set(limpo);
   },
-
   salvarKitNuvem: function(dados) {
     if (!db) return Promise.reject("Sem conexão");
     return db.ref('kits').push().set(dados);
@@ -435,7 +413,6 @@ const Database = {
     if (!db) return Promise.reject("Sem conexão");
     return db.ref("kits/" + id).remove();
   },
-
   registrarPonto: function(tipo) {
     if (!db || !State.usuarioLogadoEmail) return Utils.showToast("Erro de identificação.", "error");
     var chaveUsuario = State.usuarioLogadoEmail.replace(/[.#$[\]]/g, "_");
@@ -447,7 +424,6 @@ const Database = {
       .then(function() { Utils.showToast("Ponto de " + (tipo === 'entrada' ? 'Entrada' : 'Saída') + " marcado!", "success"); })
       .catch(function() { Utils.showToast("Erro ao salvar ponto.", "error"); });
   },
-
   listenPontoUsuario: function() {
     if (!db || !State.usuarioLogadoEmail) return;
     var chaveUsuario = State.usuarioLogadoEmail.replace(/[.#$[\]]/g, "_");
@@ -464,12 +440,9 @@ const Database = {
       }
     });
   },
-
   listenPontosGeral: function() {
     if (!db) return;
-    db.ref('pontos').on('value', function(snap) {
-      renderRelatorioGeralPontos(snap.val() || {});
-    });
+    db.ref('pontos').on('value', function(snap) { renderRelatorioGeralPontos(snap.val() || {}); });
   }
 };
 
@@ -477,7 +450,7 @@ window.adicionarCategoria = function(nome) { return Database.salvarCategoriaNuve
 window.removerCategoria = function(nome) { return Database.removerCategoriaNuvem(nome); };
 
 // ============================================================
-// ESTOQUE — LISTEN
+// ESTOQUE
 // ============================================================
 function carregarEstoque() {
   if (!db) return;
@@ -488,9 +461,7 @@ function carregarEstoque() {
     State.estoqueMap = {};
     if (val && typeof val === 'object') {
       if (Array.isArray(val)) {
-        val.forEach((item, idx) => {
-          if (item) State.estoqueArray.push({ idFirebase: String(idx), ...item });
-        });
+        val.forEach((item, idx) => { if (item) State.estoqueArray.push({ idFirebase: String(idx), ...item }); });
       } else {
         Object.keys(val).forEach(k => {
           if (val[k]) {
@@ -515,8 +486,7 @@ function listenReservas() {
   if (!db) return;
   db.ref('reservas').on('value', function(snap) {
     State.carregando = false;
-    var val = snap.val();
-    var arr = [];
+    var val = snap.val(); var arr = [];
     if (val && typeof val === 'object') {
       Object.keys(val).forEach(function(id) {
         if (val[id]) {
@@ -537,8 +507,7 @@ function listenReservas() {
 function listenOrcamentos() {
   if (!db) return;
   db.ref('orcamentos').on('value', function(snap) {
-    var val = snap.val();
-    var arr = [];
+    var val = snap.val(); var arr = [];
     if (val && typeof val === 'object') {
       Object.keys(val).forEach(function(id) {
         if (val[id]) {
@@ -559,8 +528,7 @@ function listenOrcamentos() {
 function listenKits() {
   if (!db) return;
   db.ref('kits').on('value', function(snap) {
-    var val = snap.val();
-    var arr = [];
+    var val = snap.val(); var arr = [];
     if (val && typeof val === 'object') {
       Object.keys(val).forEach(function(id) {
         if (val[id]) {
@@ -581,8 +549,7 @@ function listenKits() {
 function listenCategorias() {
   if (!db) return;
   db.ref('categorias').on('value', function(snapshot) {
-    var data = snapshot.val();
-    var nomes = [];
+    var data = snapshot.val(); var nomes = [];
     if (data && typeof data === 'object') {
       Object.keys(data).forEach(function(key) {
         var val = data[key];
@@ -603,43 +570,33 @@ function renderizarTemas() {
   const contador = document.getElementById("contador-catalogo-total");
   if (contador) contador.textContent = State.estoqueArray.length + " itens";
   if (!corpo) return;
-
   if (State.estoqueArray.length === 0) {
     corpo.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999; padding:15px;">Nenhum tema ou peça cadastrada.</td></tr>';
     return;
   }
-
   const grupos = {};
   State.estoqueArray.forEach(function(item) {
     var cat = (item.categoria && String(item.categoria).trim()) || "Sem Categoria";
     if (!grupos[cat]) grupos[cat] = [];
     grupos[cat].push(item);
   });
-
   var ordemPreferida = ["Maquete", "Louças de porcelana"];
   var categoriasOrdenadas = Object.keys(grupos).sort(function(a, b) {
-    var ia = ordemPreferida.indexOf(a);
-    var ib = ordemPreferida.indexOf(b);
+    var ia = ordemPreferida.indexOf(a); var ib = ordemPreferida.indexOf(b);
     if (ia !== -1 && ib !== -1) return ia - ib;
-    if (ia !== -1) return -1;
-    if (ib !== -1) return 1;
+    if (ia !== -1) return -1; if (ib !== -1) return 1;
     return a.localeCompare(b, 'pt-BR');
   });
-
   var html = "";
   categoriasOrdenadas.forEach(function(cat) {
     var itens = grupos[cat];
     html += '<tr class="categoria-header-linha" style="background:linear-gradient(90deg,var(--primary),var(--primary-dark));color:#fff;font-weight:700;">' +
       '<td colspan="3" style="padding:10px;">📁 ' + cat + ' <span style="float:right;background:rgba(255,255,255,0.25);padding:2px 10px;border-radius:12px;font-size:12px;">' + itens.length + '</span></td></tr>';
-
     itens.forEach(function(tema) {
       var idxOriginal = State.estoqueArray.indexOf(tema);
-      var img = tema.imagem
-        ? '<img src="' + tema.imagem + '" class="catalogo-foto">'
-        : '<div style="width:50px;height:50px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#888;">Sem Foto</div>';
+      var img = tema.imagem ? '<img src="' + tema.imagem + '" class="catalogo-foto">' : '<div style="width:50px;height:50px;background:#eee;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#888;">Sem Foto</div>';
       var precoFmt = Utils.formatCurrency(tema.preco || 0);
       var precoRepFmt = Utils.formatCurrency(tema.precoReposicao || 0);
-
       html += '<tr>' +
         '<td style="text-align:center;">' + img + '</td>' +
         '<td><strong>' + (tema.nome || "Sem Nome") + '</strong><br>' +
@@ -656,9 +613,7 @@ function renderizarTemas() {
         '</td></tr>';
     });
   });
-
   corpo.innerHTML = html;
-
   const selectRemover = document.getElementById("select-remover-tema");
   if (selectRemover) {
     const va = selectRemover.value;
@@ -735,10 +690,7 @@ function initModalEditar() {
   if (btnFechar) btnFechar.onclick = fecharModalEditar;
   const btnCancelar = document.getElementById("btn-cancelar-editar-tema");
   if (btnCancelar) btnCancelar.onclick = fecharModalEditar;
-  modal.addEventListener('click', function(e) {
-    if (e.target === modal) fecharModalEditar();
-  });
-
+  modal.addEventListener('click', function(e) { if (e.target === modal) fecharModalEditar(); });
   const inputImagem = document.getElementById("editar-tema-imagem");
   if (inputImagem) {
     inputImagem.onchange = function(e) {
@@ -750,7 +702,6 @@ function initModalEditar() {
       reader.readAsDataURL(file);
     };
   }
-
   const btnSalvar = document.getElementById("btn-salvar-editar-tema");
   if (btnSalvar) {
     btnSalvar.onclick = async function() {
@@ -762,12 +713,9 @@ function initModalEditar() {
       const preco = parseFloat(document.getElementById("editar-tema-preco").value) || 0;
       const precoRep = parseFloat(document.getElementById("editar-tema-preco-reposicao").value) || 0;
       const fileInput = document.getElementById("editar-tema-imagem");
-
       if (!idFirebase) return Utils.showToast("Erro: ID não encontrado.", "error");
       if (!nome) return Utils.showToast("Preencha o nome.", "warning");
-
-      btnSalvar.disabled = true;
-      btnSalvar.innerText = "⏳ Salvando...";
+      btnSalvar.disabled = true; btnSalvar.innerText = "⏳ Salvando...";
       try {
         let imagemBase64 = null;
         if (fileInput && fileInput.files && fileInput.files[0]) {
@@ -776,18 +724,10 @@ function initModalEditar() {
         const dados = { nome, quantidade: qtd, categoria, modelo, preco, precoReposicao: precoRep, atualizadoEm: Date.now() };
         if (imagemBase64) dados.imagem = imagemBase64;
         const ok = await Database.atualizarPecaNuvem(idFirebase, dados);
-        if (ok) {
-          Utils.showToast("✅ Atualizado com sucesso!", "success");
-          fecharModalEditar();
-        } else {
-          Utils.showToast("❌ Erro ao atualizar.", "error");
-        }
-      } catch (err) {
-        Utils.showToast("❌ Erro: " + (err.message || err), "error");
-      } finally {
-        btnSalvar.disabled = false;
-        btnSalvar.innerText = "💾 Salvar Alterações";
-      }
+        if (ok) { Utils.showToast("✅ Atualizado com sucesso!", "success"); fecharModalEditar(); }
+        else { Utils.showToast("❌ Erro ao atualizar.", "error"); }
+      } catch (err) { Utils.showToast("❌ Erro: " + (err.message || err), "error"); }
+      finally { btnSalvar.disabled = false; btnSalvar.innerText = "💾 Salvar Alterações"; }
     };
   }
 }
@@ -799,7 +739,6 @@ function atualizarSeletoresCategoria() {
   var cats = State.categorias || [];
   const contador = document.getElementById("contador-categorias");
   if (contador) contador.textContent = cats.length;
-
   const container = document.getElementById("lista-categorias-admin");
   if (container) {
     container.innerHTML = '';
@@ -811,11 +750,9 @@ function atualizarSeletoresCategoria() {
       container.appendChild(div);
     });
   }
-
   const selectCat = document.getElementById("catalogo-peca-categoria");
   if (selectCat) {
-    const va = selectCat.value;
-    selectCat.innerHTML = '';
+    const va = selectCat.value; selectCat.innerHTML = '';
     cats.forEach(cat => {
       const opt = document.createElement("option");
       opt.value = cat; opt.textContent = cat;
@@ -823,7 +760,6 @@ function atualizarSeletoresCategoria() {
     });
     if (cats.indexOf(va) !== -1) selectCat.value = va;
   }
-
   const selectRemover = document.getElementById("select-remover-categoria");
   if (selectRemover) {
     const va2 = selectRemover.value;
@@ -901,23 +837,19 @@ function renderizarListaPecasModal(contexto, filtro) {
   var container = document.getElementById("lista-pecas-checkbox");
   if (!container) return;
   if (!filtro) filtro = "";
-
   var selecionadasAtuais = [];
   if (contexto === "kit") selecionadasAtuais = State.kitCriando.pecas || [];
   else if (contexto === "contrato") selecionadasAtuais = State.pecasSelecionadasContrato || [];
   else if (contexto === "kit-festa" && State.kitAtual) selecionadasAtuais = State.pecasSelecionadasKit[State.kitAtual] || [];
-
   var fNorm = Utils.normalizar(filtro);
   var pecas = State.estoqueArray.filter(function(item) {
     if (!filtro.trim()) return true;
     return Utils.normalizar(item.nome || "").indexOf(fNorm) !== -1;
   });
-
   if (pecas.length === 0) {
     container.innerHTML = '<div style="text-align:center; padding:20px; color:#999; font-size:13px;">Nenhuma peça encontrada.</div>';
     return;
   }
-
   var html = "";
   pecas.forEach(function(item) {
     var nome = item.nome || "Sem nome";
@@ -934,12 +866,9 @@ function renderizarListaPecasModal(contexto, filtro) {
       '<div class="nome-peca" style="font-weight:600;">' + nome + '</div>' +
       '<div style="font-size:11px; color:var(--text-muted); margin-top:2px;">' +
       '🏷️ ' + categoria + ' &nbsp;|&nbsp; 💰 ' + preco + ' &nbsp;|&nbsp; Qtd: ' + (item.quantidade || 1) +
-      '</div>' +
-      '</div>' +
-      '</label>';
+      '</div></div></label>';
   });
   container.innerHTML = html;
-
   var checkboxes = container.querySelectorAll('input[type="checkbox"]');
   var contador = document.getElementById("contador-pecas-selecionadas");
   if (contador) contador.textContent = selecionadasAtuais.length + " selecionadas";
@@ -959,7 +888,6 @@ function confirmarModalPecas() {
       selecionadas.push(cb.value);
     });
   }
-
   if (modalPecasContexto === "kit") {
     State.kitCriando.pecas = selecionadas;
     atualizarInfoKitCriando();
@@ -981,7 +909,6 @@ function confirmarModalPecas() {
     atualizarResumoSelecao();
     Utils.showToast("✅ " + selecionadas.length + " peça(s) salva(s) no " + State.kitAtual, "success");
   }
-
   document.getElementById("modal-pecas").classList.remove("ativo");
 }
 
@@ -1002,32 +929,26 @@ function renderizarListaTemasModal(filtro) {
   var container = document.getElementById("lista-temas-modal");
   if (!container) return;
   if (!filtro) filtro = "";
-
   var selecionadoAtual = "";
   if (modalTemaContexto === "kit-festa" && State.kitAtual) selecionadoAtual = State.temasSelecionadosKit[State.kitAtual] || "";
   else if (modalTemaContexto === "kit") selecionadoAtual = (State.kitCriando.temas && State.kitCriando.temas[0]) || "";
-
   var fNorm = Utils.normalizar(filtro);
   var filtrados = State.estoqueArray.filter(function(item) {
     if (!filtro.trim()) return true;
     return Utils.normalizar(item.nome || "").indexOf(fNorm) !== -1;
   });
-
   if (filtrados.length === 0) {
     container.innerHTML = '<div style="text-align:center; padding:20px; color:#999; font-size:13px;">Nenhum tema encontrado.</div>';
     return;
   }
-
   var html = "";
   filtrados.forEach(function(item) {
     var nome = item.nome || "Sem nome";
     var selClass = (selecionadoAtual === nome) ? " selecionado" : "";
     html += '<div class="item-tema-selecionavel' + selClass + '" data-tema="' + nome.replace(/"/g, '&quot;') + '">' +
-      '⚙️ ' + nome + ' <span style="font-size:11px;color:var(--text-muted);">(' + (item.categoria || 'Geral') + ') ' + Utils.formatCurrency(item.preco||0) + '</span>' +
-      '</div>';
+      '⚙️ ' + nome + ' <span style="font-size:11px;color:var(--text-muted);">(' + (item.categoria || 'Geral') + ') ' + Utils.formatCurrency(item.preco||0) + '</span></div>';
   });
   container.innerHTML = html;
-
   container.querySelectorAll('.item-tema-selecionavel').forEach(function(el) {
     el.onclick = function() {
       container.querySelectorAll('.item-tema-selecionavel').forEach(function(x) { x.classList.remove('selecionado'); });
@@ -1042,7 +963,6 @@ function confirmarModalTema() {
   var selecionado = container.querySelector('.item-tema-selecionavel.selecionado');
   if (!selecionado) return Utils.showToast("Clique em um tema antes de confirmar.", "warning");
   var tema = selecionado.getAttribute("data-tema");
-
   if (modalTemaContexto === "kit-festa" && State.kitAtual) {
     State.temasSelecionadosKit[State.kitAtual] = tema;
     var filtro = document.getElementById("filtro-tema-input");
@@ -1059,7 +979,6 @@ function confirmarModalTema() {
     atualizarInfoKitCriando();
     Utils.showToast("✅ Tema \"" + tema + "\"", "success");
   }
-
   document.getElementById("modal-tema-reserva").classList.remove("ativo");
 }
 
@@ -1093,17 +1012,13 @@ function atualizarResumoSelecao() {
   var box = document.getElementById("resumo-selecao");
   var content = document.getElementById("resumo-temas-pecas");
   if (!box || !content) return;
-
-  var html = "";
-  var temAlgo = false;
-
+  var html = ""; var temAlgo = false;
   if (State.temaAtual) {
     temAlgo = true;
     var itemT = State.estoqueMap[State.temaAtual];
     var precoT = itemT ? (itemT.preco || 0) : 0;
     html += '<div style="margin-bottom:6px;">🎨 <b>Tema:</b> ' + State.temaAtual + ' — ' + Utils.formatCurrency(precoT) + '</div>';
   }
-
   if (State.kitAtual && State.pecasSelecionadasKit[State.kitAtual]) {
     var pecas = State.pecasSelecionadasKit[State.kitAtual];
     if (pecas.length > 0) {
@@ -1117,7 +1032,6 @@ function atualizarResumoSelecao() {
       html += '</div>';
     }
   }
-
   if (!temAlgo) { box.style.display = "none"; return; }
   content.innerHTML = html;
   box.style.display = "block";
@@ -1127,9 +1041,7 @@ function atualizarResumoSelecao() {
 // SOMA AUTOMÁTICA
 // ============================================================
 function calcularSomaAutomatica() {
-  var total = 0;
-  var detalhes = "";
-
+  var total = 0; var detalhes = "";
   if (State.temaAtual) {
     var itemT = State.estoqueMap[State.temaAtual];
     if (itemT) {
@@ -1138,7 +1050,6 @@ function calcularSomaAutomatica() {
       detalhes += "🎨 Tema " + itemT.nome + ": " + Utils.formatCurrency(precoT) + "<br>";
     }
   }
-
   if (State.kitAtual && State.pecasSelecionadasKit[State.kitAtual]) {
     var pecas = State.pecasSelecionadasKit[State.kitAtual];
     pecas.forEach(function(nome) {
@@ -1150,18 +1061,11 @@ function calcularSomaAutomatica() {
       }
     });
   }
-
   State.somaAutomatica = total;
-
   var div = document.getElementById("detalhes-soma");
   if (div) div.innerHTML = detalhes + '<div style="margin-top:8px; padding-top:8px; border-top:1px solid #ccc;"><b>Subtotal: ' + Utils.formatCurrency(total) + '</b></div>';
-
   var inputValorFesta = document.getElementById("valor-festa");
-  if (inputValorFesta) {
-    inputValorFesta.value = total.toFixed(2);
-    recalcularTotais();
-  }
-
+  if (inputValorFesta) { inputValorFesta.value = total.toFixed(2); recalcularTotais(); }
   Utils.showToast("Soma calculada: " + Utils.formatCurrency(total), "success");
 }
 
@@ -1172,21 +1076,17 @@ function aplicarDesconto() {
   var tipoEl = document.getElementById("desconto-tipo");
   var valorEl = document.getElementById("desconto-valor");
   if (!tipoEl || !valorEl) return;
-
   var tipo = tipoEl.value;
   var valor = parseFloat(valorEl.value) || 0;
   var inputValorFesta = document.getElementById("valor-festa");
   var original = inputValorFesta ? (parseFloat(inputValorFesta.value) || 0) : 0;
-
   var desconto = 0;
   if (tipo === "percent") desconto = original * (valor / 100);
   else desconto = valor;
   if (desconto > original) desconto = original;
   if (desconto < 0) desconto = 0;
-
   var final = original - desconto;
   State.descontoAplicado = { tipo: tipo, valor: valor, totalOriginal: original, totalFinal: final };
-
   var resultado = document.getElementById("resultado-desconto");
   if (resultado) {
     resultado.innerHTML =
@@ -1194,12 +1094,7 @@ function aplicarDesconto() {
       '<div>🏷️ Desconto: <b style="color:#e74c3c;">- ' + Utils.formatCurrency(desconto) + '</b></div>' +
       '<div style="margin-top:5px;">✅ Valor com desconto: <b style="color:#27ae60; font-size:15px;">' + Utils.formatCurrency(final) + '</b></div>';
   }
-
-  if (inputValorFesta) {
-    inputValorFesta.value = final.toFixed(2);
-    recalcularTotais();
-  }
-
+  if (inputValorFesta) { inputValorFesta.value = final.toFixed(2); recalcularTotais(); }
   Utils.showToast("Desconto aplicado!", "success");
 }
 
@@ -1232,7 +1127,6 @@ function renderReservas(filtro) {
     var totGeral = total + frete;
     var devedor = totGeral - sinal;
     var quitado = devedor <= 0;
-
     var pecas = Array.isArray(res.pecas) ? res.pecas : [];
     var pecasHtml = "";
     if (pecas.length > 0) {
@@ -1248,7 +1142,6 @@ function renderReservas(filtro) {
       });
       pecasHtml += '</div></div>';
     }
-
     card.innerHTML = '<div class="reserva-header"><strong>👶 ' + (res.cliente || '') + '</strong>' +
       '<span class="reserva-badge" style="background:' + (quitado ? '#27ae60' : '#e67e22') + ';">' +
       (quitado ? 'PAGO 100%' : 'PENDENTE') + '</span></div>' +
@@ -1262,8 +1155,7 @@ function renderReservas(filtro) {
       '<p>💰 Total: <b>' + Utils.formatCurrency(totGeral) + '</b></p>' +
       '<p>💵 Sinal: <b>' + Utils.formatCurrency(sinal) + '</b></p>' +
       '<p style="color:' + (quitado ? 'green' : 'red') + '">⚠️ Falta: <b>' + Utils.formatCurrency(devedor) + '</b></p>' +
-      pecasHtml +
-      '</div>' +
+      pecasHtml + '</div>' +
       '<div style="display:flex; gap:8px; margin-top:12px;">' +
       '<button type="button" style="flex:2; padding:11px; background:#e67e22; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.GerarContratoReserva(\'' + res.id + '\')">✍️ Gerar Contrato</button>' +
       '<button type="button" style="flex:1; padding:11px; background:var(--error); color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600;" onclick="window.DeletarReserva(\'' + res.id + '\')">🗑️</button>' +
@@ -1286,7 +1178,6 @@ window.DeletarReserva = function(idReserva) {
 window.GerarContratoReserva = function(idReserva) {
   var res = State.reservas.filter(function(r) { return r.id === idReserva; })[0];
   if (!res) return Utils.showToast("Reserva não encontrada.", "error");
-
   var resposta = prompt(
     "Qual o modelo do contrato?\n\n" +
     "Digite 1 para: 🏠 PEGUE E MONTE\n" +
@@ -1296,51 +1187,32 @@ window.GerarContratoReserva = function(idReserva) {
     "1"
   );
   if (resposta === null) return;
-
   var r = resposta.trim();
   var tipoModelo = "pegue-monte";
   if (r === "2") tipoModelo = "com-frete";
   else if (r === "3") tipoModelo = "pegue-monte-loja";
-
   var dadosContrato = {
-    nome: safe(res.cliente),
-    cpf: safe(res.cpf),
-    telefone: safe(res.telefone),
-    endereco: safe(res.endereco),
-    local: safe(res.local),
-    data: safe(res.data),
-    horario: "",
-    valor: parseFloat(res.total) || 0,
+    nome: safe(res.cliente), cpf: safe(res.cpf), telefone: safe(res.telefone),
+    endereco: safe(res.endereco), local: safe(res.local), data: safe(res.data),
+    horario: "", valor: parseFloat(res.total) || 0,
     pecas: Array.isArray(res.pecas) ? res.pecas : [],
-    tema: safe(res.tema),
-    obs: safe(res.obs)
+    tema: safe(res.tema), obs: safe(res.obs)
   };
-
   var htmlContrato;
   if (tipoModelo === "com-frete") htmlContrato = gerarContratoComFrete(dadosContrato);
   else if (tipoModelo === "pegue-monte-loja") htmlContrato = gerarContratoPegueMonteLoja(dadosContrato);
   else htmlContrato = gerarContratoPegueMonte(dadosContrato);
-
   Database.salvarContratoNuvem({
-    nome: safe(res.cliente),
-    cpf: safe(res.cpf),
-    telefone: safe(res.telefone),
-    endereco: safe(res.endereco),
-    local: safe(res.local),
-    data: safe(res.data),
-    valor: parseFloat(res.total) || 0,
-    modelo: tipoModelo,
-    tema: safe(res.tema),
-    pecas: Array.isArray(res.pecas) ? res.pecas : [],
-    obs: safe(res.obs),
-    criadoEm: Date.now()
+    nome: safe(res.cliente), cpf: safe(res.cpf), telefone: safe(res.telefone),
+    endereco: safe(res.endereco), local: safe(res.local), data: safe(res.data),
+    valor: parseFloat(res.total) || 0, modelo: tipoModelo,
+    tema: safe(res.tema), pecas: Array.isArray(res.pecas) ? res.pecas : [],
+    obs: safe(res.obs), criadoEm: Date.now()
   }).catch(function(err) { console.warn("Contrato não salvo na nuvem:", err); });
-
   var preview = document.getElementById("contrato-preview-content");
   if (preview) preview.innerHTML = htmlContrato;
   var modalVis = document.getElementById("modal-visualizar-contrato");
   if (modalVis) modalVis.classList.add("ativo");
-
   Utils.showToast("Contrato gerado!", "success");
 };
 
@@ -1452,8 +1324,7 @@ window.PromoverOrcamento = function(idOrcamento) {
 function iniciarPainelReunioes() {
   if (!db) return;
   db.ref('reunioes').on('value', function(snap) {
-    var val = snap.val();
-    var arr = [];
+    var val = snap.val(); var arr = [];
     if (val && typeof val === 'object') {
       Object.keys(val).forEach(function(id) {
         if (val[id]) {
@@ -1551,8 +1422,7 @@ function renderGraficoAnual() {
 function renderRelatorioGeralPontos(dadosPontos) {
   var container = document.querySelector("#lista-pontos-geral-corpo");
   if (!container) return;
-  var html = "";
-  var tem = false;
+  var html = ""; var tem = false;
   for (var usuario in dadosPontos) {
     if (dadosPontos.hasOwnProperty(usuario)) {
       var dias = dadosPontos[usuario];
@@ -1572,7 +1442,7 @@ function renderRelatorioGeralPontos(dadosPontos) {
 }
 
 // ============================================================
-// CONTRATO — PEGUE E MONTE (MODELO 1)
+// CONTRATO — PEGUE E MONTE (MODELO 1) — COM DESCRIÇÃO DETALHADA
 // ============================================================
 function gerarContratoPegueMonte(dados) {
   var dataFmt = dados.data ? String(dados.data).split("-").reverse().join("/") : "____/____/______";
@@ -1582,7 +1452,7 @@ function gerarContratoPegueMonte(dados) {
   var nome = dados.nome || "_________________________";
   var cpf = dados.cpf || "_________________________";
   var endereco = dados.endereco || "_________________________";
-  var pecasLista = (dados.pecas && dados.pecas.length > 0) ? dados.pecas.join(", ") : "__________________________________";
+  var pecasDetalhadas = descricaoPecasDetalhada(dados.pecas);
 
   return '<div class="pagina-contrato">' +
     '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
@@ -1594,7 +1464,7 @@ function gerarContratoPegueMonte(dados) {
     '<div class="dados-contratante"><span class="negrito">DATA DA FESTA:</span> ' + dataFmt + '</div>' +
     '<p style="margin-top:4px;">As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.</p>' +
     '<div class="clausula-titulo">DO OBJETO DO CONTRATO</div>' +
-    '<div class="clausula-texto"><span class="negrito">Clausula 1ª.</span> É objeto do presente contrato a prestação de serviço de Aluguel de ' + pecasLista + ' à CONTRATANTE (especificado na Clausula 5ª), que a CONTRATADA declara ser de sua propriedade, para o evento que se realizará no dia ' + dataFmt + ', conforme endereço especificado abaixo:</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 1ª.</span> É objeto do presente contrato a prestação de serviço de Aluguel de ' + pecasDetalhadas + ' à CONTRATANTE (especificado na Clausula 5ª), que a CONTRATADA declara ser de sua propriedade, para o evento que se realizará no dia ' + dataFmt + ', conforme endereço especificado abaixo:</div>' +
     '<div class="clausula-texto"><span class="negrito">Clausula 2ª.</span> A CONTRATANTE não poderá, sem prévia autorização da CONTRATADA, sublocar, emprestar, ou ceder os móveis locados.</div>' +
     '<div class="clausula-texto"><span class="negrito">Clausula 3ª.</span> A CONTRATANTE deverá retirar os itens no seguinte endereço QR 308 CONJUNTO 11 lote 20 - Samambaia sul, no dia anterior ao evento, munido de cópia do comprovante de residência em seu nome, cópia do CPF e RG, documentos necessários para locação.</div>' +
     '<div class="clausula-texto"><span class="negrito">Clausula 4ª.</span> É dever da CONTRATADA oferecer o serviço de acordo com as especificações do contrato. É dever da CONTRATANTE entregar os itens conforme descrito na clausula 1ª no dia seguinte ao evento, até as 12h00 no mesmo local de retirada.</div>' +
@@ -1619,33 +1489,51 @@ function gerarContratoPegueMonte(dados) {
 }
 
 // ============================================================
-// CONTRATO — PEGUE E MONTE (LOJA) — MODELO 3
-// Tabela em branco, só dados do cliente preenchidos
+// CONTRATO — PEGUE E MONTE (LOJA) — MODELO 3 — AUTOMATIZADO
 // ============================================================
 function gerarContratoPegueMonteLoja(dados) {
   var dataFmt = dados.data ? String(dados.data).split("-").reverse().join("/") : "____/____/______";
+  var valorNum = parseFloat(dados.valor) || 0;
+  var valorFmt = valorNum ? valorNum.toFixed(2).replace('.', ',') : "______,____";
   var dataAtual = new Date().toLocaleDateString('pt-BR');
-
-  var nome = dados.nome || "_______________________________________";
+  var nome = dados.nome || "_________________________";
   var cpf = dados.cpf || "_________________________";
-  var endereco = dados.endereco || "_______________________________________";
+  var endereco = dados.endereco || "_________________________";
   var telefone = dados.telefone || "(61) ________________";
 
-  // 8 linhas em branco na tabela pra preencher à mão
+  // Tabela preenchida automaticamente
   var linhasTabela = "";
-  for (var i = 0; i < 8; i++) {
-    linhasTabela += '<tr>' +
-      '<td style="text-align:center; height:24px;">&nbsp;</td>' +
-      '<td>&nbsp;</td>' +
-      '<td style="text-align:center;">&nbsp;</td>' +
-      '<td style="text-align:center;">&nbsp;</td>' +
-    '</tr>';
+  if (dados.pecas && dados.pecas.length > 0) {
+    dados.pecas.forEach(function(nomePeca) {
+      var item = State.estoqueMap[nomePeca];
+      var qtd = item ? (parseInt(item.quantidade) || 1) : 1;
+      var preco = item ? (parseFloat(item.preco) || 0) : 0;
+      var descricao = nomePeca;
+      if (item) {
+        var partes = [];
+        if (item.categoria) partes.push(item.categoria);
+        if (item.modelo) partes.push(item.modelo);
+        if (partes.length > 0) descricao += " (" + partes.join(" — ") + ")";
+      }
+      linhasTabela += '<tr>' +
+        '<td style="text-align:center;">' + qtd + '</td>' +
+        '<td>' + descricao + '</td>' +
+        '<td style="text-align:center;">R$ ' + preco.toFixed(2).replace('.', ',') + '</td>' +
+        '<td style="text-align:center;">R$ ' + (preco * qtd).toFixed(2).replace('.', ',') + '</td>' +
+      '</tr>';
+    });
+  } else {
+    for (var i = 0; i < 3; i++) {
+      linhasTabela += '<tr>' +
+        '<td style="text-align:center; height:24px;">&nbsp;</td>' +
+        '<td>&nbsp;</td><td style="text-align:center;">&nbsp;</td><td style="text-align:center;">&nbsp;</td>' +
+      '</tr>';
+    }
   }
 
   return '<div class="pagina-contrato">' +
     '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
     '<div class="titulo-contrato">CONTRATO DE LOCAÇÃO PEGUE & MONTE</div>' +
-
     '<div class="dados-contratada"><span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS</div>' +
     '<div class="dados-contratada"><span class="negrito">CNPJ:</span> 21.918.863/0001-12</div>' +
     '<div class="dados-contratada"><span class="negrito">E-MAIL:</span> tralaladecoracoes@gmail.com</div>' +
@@ -1657,18 +1545,12 @@ function gerarContratoPegueMonteLoja(dados) {
     '<div class="dados-contratante"><span class="negrito">DATA DA FESTA:</span> ' + dataFmt + '</div>' +
     '<div class="dados-contratante"><span class="negrito">RETIRADA DOS ITENS:</span> ____/____/______, ATÉ AS ____:____</div>' +
     '<div class="dados-contratante"><span class="negrito">DEVOLUÇÃO DOS ITENS:</span> ____/____/______, ATÉ AS 11H00 (caso não seja entregue na data e horário combinado será cobrado o valor de uma locação para cada dia de atraso).</div>' +
-
     '<p style="margin-top:6px;">As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.</p>' +
-
     '<div class="clausula-titulo">DO OBJETO DO CONTRATO</div>' +
     '<div class="clausula-texto"><span class="negrito">Clausula 1ª.</span> É objeto do presente contrato a prestação de serviço de Locação de:</div>' +
-
     '<table class="tabela-itens"><thead><tr><th style="width:60px;">QTDE.</th><th>DESCRIÇÃO DO PRODUTO</th><th style="width:110px;">VALOR UNITÁRIO</th><th style="width:110px;">VALOR TOTAL</th></tr></thead><tbody>' +
-    linhasTabela +
-    '</tbody></table>' +
-
+    linhasTabela + '</tbody></table>' +
     '<div class="paragrafo">Parágrafo primeiro. A CONTRATANTE não poderá, sem prévia autorização da CONTRATADA, sublocar, emprestar, ou ceder os móveis locados.</div>' +
-
     '<div class="clausula-titulo">OBRIGAÇÃO DA CONTRATADA</div>' +
     '<div class="clausula-texto"><span class="negrito">Clausula 2ª.</span> O serviço contratado no presente instrumento deverá ser pago no ato da reserva.</div>' +
     '<div class="clausula-texto"><span class="negrito">Clausula 3ª.</span> É dever da CONTRATADA oferecer os itens de acordo com as especificações do contrato.</div>' +
@@ -1677,25 +1559,20 @@ function gerarContratoPegueMonteLoja(dados) {
     '<div class="clausula-texto"><span class="negrito">Cláusula 4ª.</span> O recibo do depósito da transferência bancária ou pix, referente ao valor, efetuada na conta informada pela CONTRATADA, servirá para a CONTRATANTE como comprovante de cumprimento da obrigação de pagar.</div>' +
     '<div class="clausula-texto"><span class="negrito">Clausula 5ª.</span> É dever da CONTRATANTE devolver o(s) produto(s) de acordo com o que foi locado no dia informado neste contrato.</div>' +
     '<div class="paragrafo">Parágrafo único. A CONTRATANTE deverá retirar e entregar os itens no endereço no seguinte endereço Qn 508 CONJUNTO 03 Loja 06, Samambaia Sul, munido de cópia do comprovante de residência em seu nome, cópia ou foto CPF e RG documentos necessários para a retiradas das peças.</div>' +
-
     '<div class="clausula-titulo">DA DEVOLUÇÃO</div>' +
     '<div class="clausula-texto"><span class="negrito">Cláusula 6ª.</span> Caso Haja perda, Danos, Quebra ou não devolução dos itens, a CONTRATANTE arcará com 50% do valor de uma peça nova para reposição (caso haja recuperação) NÃO Havendo recuperação, será cobrado o valor de mercado por cada item, em dinheiro ou outra forma que convier às PARTES. Em caso de quebra ou extravio de peças a CONTRATANTE assinará uma nota promissória se comprometendo-se com o pagamento que será devolvida após a quitação do debito.</div>' +
     '<div class="paragrafo">Parágrafo primeiro: É dever da CONTRATANTE devolver as peças como foi entregue, no dia e horário marcado, será cobrado multa de uma diária dos itens alocados com cada dia de atraso da devolução.</div>' +
     '<div class="paragrafo">OBS: É proibido, furar o bolo cenográfico, usar cola quente no painel, peças e mesas, usar confeitos coloridos, vela faísca estes itens danificam e mancham peças e mobília (uso estará sujeito em caso de avarias, pagar pela recuperação ou peça nova caso não seja possível recuperação).</div>' +
     '<div class="paragrafo">O tapete deverá ser devolvido com foi entregue sem doces e bolos, caso contrário pagará multa de limpeza de R$ 40,00 (quarenta reais).</div>' +
     '<div class="paragrafo">Parágrafo Segundo: É dever da CONTRATANTE devolver o kit ou itens na data informada neste contrato, caso contrato será cobrado o valor de uma locação por cada dia de atraso.</div>' +
-
     '<div class="clausula-titulo">DO CANCELAMENTO</div>' +
     '<div class="clausula-texto"><span class="negrito">Clausula 7ª.</span> Em caso de desistência a CONTRATANTE arcará com a multa de quebra de contrato, 50% do valor total do seu contrato. Parágrafo primeiro: Em caso de força maior, a CONTRATANTE, poderá solicitar uma carta credito na quantia paga, para utilização de até um ano a partir da data da notificação. Sendo que essa carta crédito não poderá ser transferida para outro titular, nem prorrogada. Cabendo a CONTRATADA confirmar disponibilidade de peças e data. A CONTRATANTE deverá comprovar o fato ocorrido com documentos oficiais.</div>' +
     '<div class="paragrafo">Parágrafo Segundo. A Parte impossibilitada de cumprir sua obrigação deverá notificar a outra, de imediato, acerca da extensão do problema e o prazo estimado para remarcação da nova data.</div>' +
-
     '<div class="clausula-titulo">DAS CONDIÇÕES GERAIS</div>' +
     '<div class="clausula-titulo">DO FORO</div>' +
     '<div class="clausula-texto">As Partes elegem o foro da Circunscrição Judiciária de Brasília – DF para dirimir os conflitos que porventura venham a surgir em decorrência da execução do presente contrato, com renúncia de qualquer outro, por mais privilegiado que seja.</div>' +
     '<div class="clausula-texto">E por assim estarem de acordo, o contrato será sendo assinado de forma digitalizada, sendo as vias compartilhadas em meio eletrônico e permitida a assinatura híbrida (física e digital).</div>' +
-
     '<div style="text-align:center; margin-top:8px;">Brasília-DF, ' + dataAtual + '.</div>' +
-
     '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div><div class="linha-assinatura"></div><div class="assinatura-nome">TRALALÁ DECORAÇÕES DE FESTA — CNPJ: 21.918.863/0001-12</div><div class="assinatura-nome" style="font-size:9pt; margin-top:4px;">REPRESENTANTE LEGAL: ALINE ARAUJO DO VALLE</div></div>' +
     '<div class="assinatura"><div class="assinatura-nome">CONTRATANTE:</div><div class="linha-assinatura"></div><div class="assinatura-nome">' + nome + ' — CPF: ' + cpf + '</div></div>' +
     '<div class="rodape-loja">TRALALÁ DECORAÇÕES DE FESTAS — QN 508 CONJUNTO 03 LOJA 06, SAMAMBAIA SUL. (61) 9. 8191-9559</div>' +
@@ -1703,7 +1580,7 @@ function gerarContratoPegueMonteLoja(dados) {
 }
 
 // ============================================================
-// CONTRATO — COM FRETE (MODELO 2)
+// CONTRATO — COM FRETE (MODELO 2) — COM DESCRIÇÃO DETALHADA
 // ============================================================
 function gerarContratoComFrete(dados) {
   var dataFmt = dados.data ? String(dados.data).split("-").reverse().join("/") : "____/____/______";
@@ -1711,15 +1588,13 @@ function gerarContratoComFrete(dados) {
   var valorFmt = valorNum ? valorNum.toFixed(2).replace('.', ',') : "______,____";
   var valorMetade = valorNum ? (valorNum/2).toFixed(2).replace('.', ',') : "______,____";
   var dataAtual = new Date().toLocaleDateString('pt-BR');
-
   var nome = dados.nome || "_________________________";
   var cpf = dados.cpf || "_________________________";
   var endereco = dados.endereco || "_________________________";
   var telefone = dados.telefone || "(61) ________________";
   var local = dados.local || "_________________________";
   var horario = dados.horario || "____:____";
-
-  var pecasTexto = (dados.pecas && dados.pecas.length > 0) ? dados.pecas.join(", ") : "__________________________________";
+  var pecasTexto = descricaoPecasDetalhada(dados.pecas);
 
   return '<div class="pagina-contrato">' +
     '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
@@ -1852,7 +1727,6 @@ function gerarContratoAvulso(gerarPdf) {
   var modelo = (document.getElementById("c-modelo") || {}).value || "com-frete";
   var obs = (document.getElementById("c-obs") || {}).value || "";
   var tema = (document.getElementById("contrato-tema-selecionado") || {}).value || "";
-
   var selectPecas = document.getElementById("c-pecas");
   var pecas = [];
   if (selectPecas) {
@@ -1860,19 +1734,15 @@ function gerarContratoAvulso(gerarPdf) {
       if (selectPecas.options[i].selected) pecas.push(selectPecas.options[i].value);
     }
   }
-
   if (!nome.trim()) { Utils.showToast("Preencha o nome do contratante!", "warning"); return; }
-
   var dados = {
     nome, cpf, data, horario, valor, endereco, telefone, local,
     dataRetirada: data, dataDevolucao: data, tema, pecas, obs
   };
-
   var html;
   if (modelo === "com-frete") html = gerarContratoComFrete(dados);
   else if (modelo === "pegue-monte-loja") html = gerarContratoPegueMonteLoja(dados);
   else html = gerarContratoPegueMonte(dados);
-
   Database.salvarContratoNuvem({
     nome, cpf, data, horario, valor, endereco, telefone, local, modelo,
     tema, pecas, obs, criadoEm: Date.now()
@@ -1882,12 +1752,10 @@ function gerarContratoAvulso(gerarPdf) {
     console.warn("Erro ao salvar contrato (não bloqueia):", err);
     Utils.showToast("⚠️ Contrato gerado, mas não foi salvo na nuvem.", "warning");
   });
-
   var preview = document.getElementById("contrato-preview-content");
   if (preview) preview.innerHTML = html;
   var modalVis = document.getElementById("modal-visualizar-contrato");
   if (modalVis) modalVis.classList.add("ativo");
-
   if (gerarPdf) setTimeout(function() { gerarContratoPDF(); }, 300);
 }
 
@@ -1898,15 +1766,12 @@ function gerarContratoPDF() {
   var elemento = document.getElementById("contrato-preview-content");
   if (!elemento) return;
   if (typeof html2pdf === 'undefined') { alert("Biblioteca PDF não carregada."); return; }
-
   var pagina = elemento.querySelector('.pagina-contrato');
   if (!pagina) {
     Utils.showToast("Nenhum contrato gerado ainda.", "warning");
     return;
   }
-
   var nome = (document.getElementById("c-nome") || {}).value || (document.getElementById("nome-cliente") || {}).value || "contrato";
-
   var clone = pagina.cloneNode(true);
   clone.style.width = "210mm";
   clone.style.minHeight = "297mm";
@@ -1915,7 +1780,6 @@ function gerarContratoPDF() {
   clone.style.margin = "0";
   clone.style.background = "white";
   clone.style.boxSizing = "border-box";
-
   var temp = document.createElement("div");
   temp.style.position = "fixed";
   temp.style.left = "-9999px";
@@ -1924,7 +1788,6 @@ function gerarContratoPDF() {
   temp.style.width = "210mm";
   temp.appendChild(clone);
   document.body.appendChild(temp);
-
   html2pdf().from(clone).set({
     margin: 0,
     filename: 'contrato-' + nome.replace(/\s+/g, '-').toLowerCase() + '.pdf',
@@ -1957,33 +1820,22 @@ function renderKits() {
     var pecas = kit.pecas || [];
     var temas = kit.temas || [];
     var total = 0;
-    pecas.forEach(function(nome) {
-      var it = State.estoqueMap[nome];
-      if (it) total += (parseFloat(it.preco) || 0);
-    });
-    temas.forEach(function(nome) {
-      var it = State.estoqueMap[nome];
-      if (it) total += (parseFloat(it.preco) || 0);
-    });
+    pecas.forEach(function(nome) { var it = State.estoqueMap[nome]; if (it) total += (parseFloat(it.preco) || 0); });
+    temas.forEach(function(nome) { var it = State.estoqueMap[nome]; if (it) total += (parseFloat(it.preco) || 0); });
     var img = kit.imagem ? '<img src="' + kit.imagem + '" style="width:70px;height:70px;object-fit:cover;border-radius:8px;margin-right:10px;">' : '';
     html += '<div class="card-kit">' +
-      '<div class="kit-header">' +
-        '<strong>🎁 ' + (kit.nome || 'Sem Nome') + '</strong>' +
-        '<span class="badge-contador">Qtd: ' + (kit.quantidade || 1) + '</span>' +
-      '</div>' +
-      '<div class="kit-body" style="display:flex;">' +
-        img +
-        '<div style="flex:1;">' +
-          '<div>🎨 <b>Temas:</b> ' + (temas.length ? temas.join(", ") : "—") + '</div>' +
-          '<div>📦 <b>Peças (' + pecas.length + '):</b> ' + (pecas.length ? pecas.slice(0,5).join(", ") + (pecas.length > 5 ? '...' : '') : "—") + '</div>' +
-          '<div>💰 <b>Valor sugerido:</b> ' + Utils.formatCurrency(total) + '</div>' +
-        '</div>' +
-      '</div>' +
+      '<div class="kit-header"><strong>🎁 ' + (kit.nome || 'Sem Nome') + '</strong>' +
+      '<span class="badge-contador">Qtd: ' + (kit.quantidade || 1) + '</span></div>' +
+      '<div class="kit-body" style="display:flex;">' + img +
+      '<div style="flex:1;">' +
+      '<div>🎨 <b>Temas:</b> ' + (temas.length ? temas.join(", ") : "—") + '</div>' +
+      '<div>📦 <b>Peças (' + pecas.length + '):</b> ' + (pecas.length ? pecas.slice(0,5).join(", ") + (pecas.length > 5 ? '...' : '') : "—") + '</div>' +
+      '<div>💰 <b>Valor sugerido:</b> ' + Utils.formatCurrency(total) + '</div>' +
+      '</div></div>' +
       '<div class="kit-actions">' +
-        '<button class="btn-promover-kit" onclick="window.promoverKitParaFesta(\'' + kit.id + '\')">✅ Promover p/ Festa</button>' +
-        '<button class="btn-remover-kit" onclick="window.removerKit(\'' + kit.id + '\')">🗑️ Remover</button>' +
-      '</div>' +
-    '</div>';
+      '<button class="btn-promover-kit" onclick="window.promoverKitParaFesta(\'' + kit.id + '\')">✅ Promover p/ Festa</button>' +
+      '<button class="btn-remover-kit" onclick="window.removerKit(\'' + kit.id + '\')">🗑️ Remover</button>' +
+      '</div></div>';
   });
   container.innerHTML = html;
 }
@@ -2031,14 +1883,12 @@ function salvarKit() {
   var imgInput = document.getElementById("kit-imagem");
   var nome = nomeEl ? nomeEl.value.trim() : "";
   var qtd = qtdEl ? (parseInt(qtdEl.value) || 1) : 1;
-
   if (!nome) return Utils.showToast("Preencha o nome do kit.", "warning");
   if (!State.kitCriando.pecas || State.kitCriando.pecas.length === 0) {
     if (!State.kitCriando.temas || State.kitCriando.temas.length === 0) {
       return Utils.showToast("Selecione pelo menos uma peça ou tema.", "warning");
     }
   }
-
   var processar = function(img) {
     ModalStatus.exibir("SALVANDO KIT...", nome);
     Database.salvarKitNuvem({
@@ -2055,7 +1905,6 @@ function salvarKit() {
       atualizarInfoKitCriando();
     }).catch(function() { ModalStatus.erro("Erro ao salvar kit."); });
   };
-
   if (imgInput && imgInput.files && imgInput.files[0]) {
     reduzirImagem(imgInput.files[0], 600, 0.85).then(processar).catch(function() { processar(""); });
   } else {
@@ -2108,7 +1957,6 @@ function handleSalvarFesta() {
   var elValorFesta = document.getElementById("valor-festa");
   var hidden = document.getElementById("busca-tema-input");
   var filtro = document.getElementById("filtro-tema-input");
-
   var cliente = elCliente ? elCliente.value.trim() : "";
   var cpf = elCpf ? elCpf.value.trim() : "";
   var telefone = elTelefone ? elTelefone.value.trim() : "";
@@ -2119,15 +1967,11 @@ function handleSalvarFesta() {
   var sinal = elSinal ? elSinal.value || "0" : "0";
   var obs = elObs ? elObs.value.trim() : "";
   var valorFesta = elValorFesta ? (parseFloat(elValorFesta.value) || 0) : 0;
-
   if (hidden && hidden.value.trim()) State.temaAtual = hidden.value.trim();
   else if (filtro && filtro.value.trim()) State.temaAtual = filtro.value.trim();
-
   if (!cliente || !data || !State.temaAtual || !State.kitAtual) {
     return Utils.showToast("Preencha cliente, data, tema e selecione o kit!", "warning");
   }
-
-  // ===== VERIFICA DISPONIBILIDADE DO TEMA NO MESMO DIA =====
   var disp = verificarDisponibilidadeTema(data, State.temaAtual);
   if (!disp.livre) {
     return Utils.showToast(
@@ -2136,12 +1980,10 @@ function handleSalvarFesta() {
       "error"
     );
   }
-
   var f = FreteCalc.calcular();
   var pecasDoKit = State.pecasSelecionadasKit[State.kitAtual] || [];
   var temaDoKit = State.temasSelecionadosKit[State.kitAtual] || State.temaAtual;
   var modeloContrato = State.montarNoLocal ? "com-frete" : "pegue-monte";
-
   var dadosReserva = {
     cliente: safe(cliente), cpf: safe(cpf), telefone: safe(telefone),
     endereco: safe(endereco), local: safe(local), data: safe(data),
@@ -2159,11 +2001,9 @@ function handleSalvarFesta() {
     desconto: State.descontoAplicado || { tipo: "percent", valor: 0, totalOriginal: 0, totalFinal: 0 },
     dataCriacao: Utils.getHojeDataString()
   };
-
   ModalStatus.exibir("SALVANDO RESERVA...", cliente);
   Database.salvarReservaNuvem(dadosReserva).then(function() {
     ModalStatus.sucesso("✓ RESERVA SALVA");
-
     var dadosContrato = {
       nome: safe(cliente), cpf: safe(cpf), telefone: safe(telefone),
       endereco: safe(endereco), local: safe(local), data: safe(data),
@@ -2172,11 +2012,9 @@ function handleSalvarFesta() {
       pecas: Array.isArray(pecasDoKit) ? pecasDoKit : [],
       tema: safe(temaDoKit), obs: safe(obs)
     };
-
     var htmlContrato = modeloContrato === "com-frete"
       ? gerarContratoComFrete(dadosContrato)
       : gerarContratoPegueMonte(dadosContrato);
-
     Database.salvarContratoNuvem({
       nome: safe(cliente), cpf: safe(cpf), data: safe(data),
       valor: parseFloat(total) || 0, modelo: safe(modeloContrato),
@@ -2184,12 +2022,10 @@ function handleSalvarFesta() {
       pecas: Array.isArray(pecasDoKit) ? pecasDoKit : [],
       obs: safe(obs), criadoEm: Date.now()
     }).catch(function(err) { console.warn("Contrato não salvo:", err); });
-
     var preview = document.getElementById("contrato-preview-content");
     if (preview) preview.innerHTML = htmlContrato;
     var modalVis = document.getElementById("modal-visualizar-contrato");
     if (modalVis) modalVis.classList.add("ativo");
-
     if (elCliente) elCliente.value = "";
     if (elCpf) elCpf.value = "";
     if (elTelefone) elTelefone.value = "";
@@ -2271,7 +2107,6 @@ function handleSalvarOrcamento() {
 // ============================================================
 function bindTudo() {
   var b;
-
   b = document.getElementById("btn-login-direto");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleLogin(); };
   b = document.getElementById("btn-logout-direto");
@@ -2280,7 +2115,6 @@ function bindTudo() {
   if (senhaEl) senhaEl.onkeypress = function(e) {
     if (e.key === "Enter") { var l = document.getElementById("btn-login-direto"); if (l) l.click(); }
   };
-
   b = document.getElementById("btn-ponto-entrada");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); Database.registrarPonto('entrada'); };
   b = document.getElementById("btn-ponto-saida");
@@ -2291,7 +2125,6 @@ function bindTudo() {
     var p = document.getElementById("painel-relatorio-pontos-geral");
     if (p) p.style.display = (p.style.display === "none" || p.style.display === "") ? "block" : "none";
   };
-
   b = document.getElementById("btn-abrir-central-relatorios");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2317,7 +2150,6 @@ function bindTudo() {
     var pg = document.getElementById("painel-grafico-faturamento");
     if (pg) pg.style.display = pg.style.display === 'none' ? 'block' : 'none';
   };
-
   b = document.getElementById("btn-abrir-orcamentos");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2327,7 +2159,6 @@ function bindTudo() {
     p.style.display = abrindo ? "block" : "none";
     if (abrindo) renderOrcamentos();
   };
-
   b = document.getElementById("btn-abrir-reunioes-painel");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2361,7 +2192,6 @@ function bindTudo() {
       })
       .catch(function() { ModalStatus.erro("Erro ao agendar."); });
   };
-
   b = document.getElementById("btn-abrir-catalogo-temas");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2371,7 +2201,6 @@ function bindTudo() {
     p.style.display = abrindo ? "block" : "none";
     if (abrindo) renderizarTemas();
   };
-
   b = document.getElementById("btn-abrir-gerador-kits");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2393,7 +2222,6 @@ function bindTudo() {
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); abrirModalTema("kit"); };
   b = document.getElementById("btn-salvar-kit");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); salvarKit(); };
-
   b = document.getElementById("btn-abrir-gerador-contrato");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2420,7 +2248,6 @@ function bindTudo() {
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); gerarContratoAvulso(true); };
   b = document.getElementById("btn-abrir-pecas-contrato");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); abrirModalPecas("contrato"); };
-
   var modalVis = document.getElementById("modal-visualizar-contrato");
   if (modalVis) {
     var fv = document.getElementById("btn-fechar-visualizacao");
@@ -2433,7 +2260,6 @@ function bindTudo() {
   if (b) b.onclick = function() { gerarContratoPDF(); };
   b = document.getElementById("btn-imprimir-contrato");
   if (b) b.onclick = function() { window.print(); };
-
   var botoesKit = document.querySelectorAll('.btn-kit-opcao');
   botoesKit.forEach(function(btn) {
     btn.onclick = function(e) {
@@ -2451,12 +2277,10 @@ function bindTudo() {
       Utils.showToast('Kit "' + nomeKit + '" selecionado!', "success");
     };
   });
-
   b = document.getElementById("btn-esc-pecas");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); if (!State.kitAtual) return Utils.showToast("Selecione um kit.", "warning"); abrirModalPecas("kit-festa"); };
   b = document.getElementById("btn-esc-tema");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); if (!State.kitAtual) return Utils.showToast("Selecione um kit.", "warning"); abrirModalTema("kit-festa"); };
-
   b = document.getElementById("btn-fechar-modal-pecas");
   if (b) b.onclick = function() { document.getElementById("modal-pecas").classList.remove("ativo"); };
   b = document.getElementById("btn-cancelar-pecas");
@@ -2467,7 +2291,6 @@ function bindTudo() {
   if (filtroPecas) filtroPecas.oninput = function(e) {
     renderizarListaPecasModal(modalPecasContexto, e.target.value);
   };
-
   b = document.getElementById("btn-fechar-modal-tema");
   if (b) b.onclick = function() { document.getElementById("modal-tema-reserva").classList.remove("ativo"); };
   b = document.getElementById("btn-cancelar-tema");
@@ -2478,7 +2301,6 @@ function bindTudo() {
   if (filtroTemaModal) filtroTemaModal.oninput = function(e) {
     renderizarListaTemasModal(e.target.value);
   };
-
   var chkMontar = document.getElementById("chk-montar-local");
   if (chkMontar) {
     chkMontar.onchange = function() {
@@ -2487,7 +2309,6 @@ function bindTudo() {
       if (painel) painel.style.display = chkMontar.checked ? "block" : "none";
     };
   }
-
   var kmEl = document.getElementById("calc-km");
   var precoEl = document.getElementById("calc-valor-litro");
   var chkSegunda = document.getElementById("chk-segunda-viagem");
@@ -2498,18 +2319,14 @@ function bindTudo() {
   if (vfEl) vfEl.oninput = function() { recalcularTotais(); };
   var sinalEl = document.getElementById("valor-sinal");
   if (sinalEl) sinalEl.oninput = function() { recalcularTotais(); };
-
   b = document.getElementById("btn-soma-automatica");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); calcularSomaAutomatica(); };
-
   b = document.getElementById("btn-aplicar-desconto");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); aplicarDesconto(); };
-
   b = document.getElementById("btn-confirmar-agendamento");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleSalvarFesta(); };
   b = document.getElementById("btn-salvar-como-orcamento");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleSalvarOrcamento(); };
-
   b = document.getElementById("btn-adicionar-peca");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2534,11 +2351,8 @@ function bindTudo() {
     };
     if (fileInput && fileInput.files && fileInput.files[0]) {
       reduzirImagem(fileInput.files[0], 900, 0.82).then(executar).catch(function() { executar(""); });
-    } else {
-      executar("");
-    }
+    } else { executar(""); }
   };
-
   b = document.getElementById("btn-adicionar-categoria");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2564,7 +2378,6 @@ function bindTudo() {
       Utils.showToast("Categoria removida!", "success");
     }).catch(function(err) { Utils.showToast(String(err), "warning"); });
   };
-
   b = document.getElementById("btn-remover-tema-admin");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2573,7 +2386,6 @@ function bindTudo() {
     if (isNaN(idx)) return Utils.showToast("Selecione um tema válido!", "warning");
     window.removerTema(idx);
   };
-
   initModalEditar();
 }
 
