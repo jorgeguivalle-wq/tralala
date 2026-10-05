@@ -145,6 +145,9 @@ const Utils = {
   }
 };
 
+// Helper: evita undefined/null que quebram o Firebase
+function safe(v) { return (v === undefined || v === null) ? "" : v; }
+
 // ============================================================
 // REDUZIR IMAGEM
 // ============================================================
@@ -238,7 +241,7 @@ const FreteCalc = {
 };
 
 // ============================================================
-// RECALCULAR TOTAIS (festa + frete - sinal)
+// RECALCULAR TOTAIS
 // ============================================================
 function recalcularTotais() {
   var inputValorFesta = document.getElementById('valor-festa');
@@ -293,13 +296,13 @@ const Database = {
         const pecaId = peca.idFirebase || newRef.key;
         const payload = {
           idFirebase: pecaId,
-          nome: peca.nome || "",
+          nome: safe(peca.nome),
           quantidade: parseInt(peca.quantidade) || 1,
-          categoria: peca.categoria || "Outros",
-          modelo: peca.modelo || "",
+          categoria: safe(peca.categoria) || "Outros",
+          modelo: safe(peca.modelo),
           preco: parseFloat(peca.preco) || 0,
           precoReposicao: parseFloat(peca.precoReposicao) || 0,
-          imagem: peca.imagem || "",
+          imagem: safe(peca.imagem),
           atualizadoEm: Date.now()
         };
         await newRef.set(payload);
@@ -397,7 +400,13 @@ const Database = {
 
   salvarContratoNuvem: function(dados) {
     if (!db) return Promise.reject("Sem conexão");
-    return db.ref('contratos').push().set(dados);
+    // Remove undefined/null recursivamente
+    var limpo = {};
+    Object.keys(dados).forEach(function(k) {
+      var v = dados[k];
+      if (v !== undefined && v !== null) limpo[k] = v;
+    });
+    return db.ref('contratos').push().set(limpo);
   },
 
   salvarKitNuvem: function(dados) {
@@ -1077,7 +1086,7 @@ function atualizarInfoKitCriando() {
 }
 
 // ============================================================
-// RESUMO DE SELEÇÃO (festa)
+// RESUMO DE SELEÇÃO
 // ============================================================
 function atualizarResumoSelecao() {
   var box = document.getElementById("resumo-selecao");
@@ -1232,8 +1241,7 @@ function renderReservas(filtro) {
     var devedor = totGeral - sinal;
     var quitado = devedor <= 0;
 
-    // ---- PEÇAS DO TEMA ----
-    var pecas = res.pecas || [];
+    var pecas = Array.isArray(res.pecas) ? res.pecas : [];
     var pecasHtml = "";
     if (pecas.length > 0) {
       pecasHtml = '<div style="margin-top:10px; padding-top:10px; border-top:1px dashed #e1cbd4;">' +
@@ -1299,17 +1307,17 @@ window.GerarContratoReserva = function(idReserva) {
   var tipoModelo = (resposta.trim() === "2") ? "com-frete" : "pegue-monte";
 
   var dadosContrato = {
-    nome: res.cliente || "",
-    cpf: res.cpf || "",
-    telefone: res.telefone || "",
-    endereco: res.endereco || "",
-    local: res.local || "",
-    data: res.data || "",
+    nome: safe(res.cliente),
+    cpf: safe(res.cpf),
+    telefone: safe(res.telefone),
+    endereco: safe(res.endereco),
+    local: safe(res.local),
+    data: safe(res.data),
     horario: "",
     valor: parseFloat(res.total) || 0,
-    pecas: res.pecas || [],
-    tema: res.tema || "",
-    obs: res.obs || ""
+    pecas: Array.isArray(res.pecas) ? res.pecas : [],
+    tema: safe(res.tema),
+    obs: safe(res.obs)
   };
 
   var htmlContrato = tipoModelo === "com-frete"
@@ -1317,9 +1325,17 @@ window.GerarContratoReserva = function(idReserva) {
     : gerarContratoPegueMonte(dadosContrato);
 
   Database.salvarContratoNuvem({
-    nome: res.cliente, cpf: res.cpf, data: res.data,
-    valor: parseFloat(res.total) || 0, modelo: tipoModelo,
-    tema: res.tema, pecas: res.pecas || [], obs: res.obs || "",
+    nome: safe(res.cliente),
+    cpf: safe(res.cpf),
+    telefone: safe(res.telefone),
+    endereco: safe(res.endereco),
+    local: safe(res.local),
+    data: safe(res.data),
+    valor: parseFloat(res.total) || 0,
+    modelo: tipoModelo,
+    tema: safe(res.tema),
+    pecas: Array.isArray(res.pecas) ? res.pecas : [],
+    obs: safe(res.obs),
     criadoEm: Date.now()
   }).catch(function(err) { console.warn("Contrato não salvo na nuvem:", err); });
 
@@ -1559,13 +1575,14 @@ function renderRelatorioGeralPontos(dadosPontos) {
 }
 
 // ============================================================
-// CONTRATO — TEMPLATES
+// CONTRATO — TEMPLATES (BLINDADOS CONTRA STRING)
 // ============================================================
 function gerarContratoPegueMonte(dados) {
-  var dataFmt = dados.data ? dados.data.split("-").reverse().join("/") : "____/____/______";
-  var valorFmt = dados.valor ? dados.valor.toFixed(2).replace('.', ',') : "______,____";
+  var dataFmt = dados.data ? String(dados.data).split("-").reverse().join("/") : "____/____/______";
+  var valorNum = parseFloat(dados.valor) || 0;
+  var valorFmt = valorNum ? valorNum.toFixed(2).replace('.', ',') : "______,____";
   var dataAtual = new Date().toLocaleDateString('pt-BR');
-  var pecasTexto = dados.pecas && dados.pecas.length > 0 ? dados.pecas.join(", ") : "__________________________________";
+  var pecasTexto = (dados.pecas && dados.pecas.length > 0) ? dados.pecas.join(", ") : "__________________________________";
 
   return '<div class="pagina-contrato">' +
     '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
@@ -1600,11 +1617,12 @@ function gerarContratoPegueMonte(dados) {
 }
 
 function gerarContratoComFrete(dados) {
-  var dataFmt = dados.data ? dados.data.split("-").reverse().join("/") : "____/____/______";
-  var valorFmt = dados.valor ? dados.valor.toFixed(2).replace('.', ',') : "______,____";
-  var valorMetade = dados.valor ? (dados.valor/2).toFixed(2).replace('.', ',') : "______,____";
+  var dataFmt = dados.data ? String(dados.data).split("-").reverse().join("/") : "____/____/______";
+  var valorNum = parseFloat(dados.valor) || 0;
+  var valorFmt = valorNum ? valorNum.toFixed(2).replace('.', ',') : "______,____";
+  var valorMetade = valorNum ? (valorNum/2).toFixed(2).replace('.', ',') : "______,____";
   var dataAtual = new Date().toLocaleDateString('pt-BR');
-  var pecasTexto = dados.pecas && dados.pecas.length > 0 ? dados.pecas.join(", ") : "__________________________________";
+  var pecasTexto = (dados.pecas && dados.pecas.length > 0) ? dados.pecas.join(", ") : "__________________________________";
 
   return '<div class="pagina-contrato">' +
     '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
@@ -1975,26 +1993,35 @@ function handleSalvarFesta() {
 
   var pecasDoKit = State.pecasSelecionadasKit[State.kitAtual] || [];
   var temaDoKit = State.temasSelecionadosKit[State.kitAtual] || State.temaAtual;
-  // Modelo do contrato baseado em "Montar no Local"
   var modeloContrato = State.montarNoLocal ? "com-frete" : "pegue-monte";
 
+  // ---------- PAYLOAD 100% LIMPO ----------
   var dadosReserva = {
-    cliente, cpf, telefone, endereco, local, data,
-    tema: temaDoKit, kit: State.kitAtual,
-    pecas: pecasDoKit,
+    cliente: safe(cliente),
+    cpf: safe(cpf),
+    telefone: safe(telefone),
+    endereco: safe(endereco),
+    local: safe(local),
+    data: safe(data),
+    tema: safe(temaDoKit),
+    kit: safe(State.kitAtual),
+    pecas: Array.isArray(pecasDoKit) ? pecasDoKit : [],
     montarNoLocal: !!State.montarNoLocal,
-    total, sinal, valorFesta,
-    frete: f.freteTotal,
-    freteKmIda: f.kmIda,
-    freteKmTotal: f.kmTotal,
-    freteSegundaViagem: f.segundaViagem,
-    fretePrecoCombustivel: f.precoCombustivel,
-    freteLitros: f.litros,
-    freteCustoCombustivel: f.custoCombustivel,
-    freteManutencao: f.manutencao,
-    freteTotal: f.freteTotal,
-    modeloContrato, obs,
-    desconto: State.descontoAplicado,
+    total: safe(total),
+    sinal: safe(sinal),
+    valorFesta: valorFesta || 0,
+    frete: f.freteTotal || 0,
+    freteKmIda: f.kmIda || 0,
+    freteKmTotal: f.kmTotal || 0,
+    freteSegundaViagem: !!f.segundaViagem,
+    fretePrecoCombustivel: f.precoCombustivel || 0,
+    freteLitros: f.litros || 0,
+    freteCustoCombustivel: f.custoCombustivel || 0,
+    freteManutencao: f.manutencao || 0,
+    freteTotal: f.freteTotal || 0,
+    modeloContrato: safe(modeloContrato),
+    obs: safe(obs),
+    desconto: State.descontoAplicado || { tipo: "percent", valor: 0, totalOriginal: 0, totalFinal: 0 },
     dataCriacao: Utils.getHojeDataString()
   };
 
@@ -2003,9 +2030,12 @@ function handleSalvarFesta() {
     ModalStatus.sucesso("✓ RESERVA SALVA");
 
     var dadosContrato = {
-      nome: cliente, cpf, telefone, endereco, local, data,
-      horario: "", dataRetirada: data, dataDevolucao: data,
-      valor: total, pecas: pecasDoKit, tema: temaDoKit, obs
+      nome: safe(cliente), cpf: safe(cpf), telefone: safe(telefone),
+      endereco: safe(endereco), local: safe(local), data: safe(data),
+      horario: "", dataRetirada: safe(data), dataDevolucao: safe(data),
+      valor: parseFloat(total) || 0,
+      pecas: Array.isArray(pecasDoKit) ? pecasDoKit : [],
+      tema: safe(temaDoKit), obs: safe(obs)
     };
 
     var htmlContrato = modeloContrato === "com-frete"
@@ -2013,8 +2043,11 @@ function handleSalvarFesta() {
       : gerarContratoPegueMonte(dadosContrato);
 
     Database.salvarContratoNuvem({
-      nome: cliente, cpf, data, valor: total, modelo: modeloContrato,
-      tema: temaDoKit, pecas: pecasDoKit, obs, criadoEm: Date.now()
+      nome: safe(cliente), cpf: safe(cpf), data: safe(data),
+      valor: parseFloat(total) || 0, modelo: safe(modeloContrato),
+      tema: safe(temaDoKit),
+      pecas: Array.isArray(pecasDoKit) ? pecasDoKit : [],
+      obs: safe(obs), criadoEm: Date.now()
     }).catch(function(err) { console.warn("Contrato não salvo:", err); });
 
     var preview = document.getElementById("contrato-preview-content");
@@ -2074,21 +2107,21 @@ function handleSalvarOrcamento() {
   if (!nomeCliente) return Utils.showToast("Preencha o nome do cliente.", "warning");
   var f = FreteCalc.calcular();
   Database.salvarOrcamentoNuvem({
-    cliente: nomeCliente,
-    cpf: cpfEl ? cpfEl.value.trim() : "",
-    tema: State.temaAtual || "Não selecionado",
-    kit: State.kitAtual || "",
-    pecas: State.pecasSelecionadasKit[State.kitAtual] || [],
+    cliente: safe(nomeCliente),
+    cpf: safe(cpfEl ? cpfEl.value.trim() : ""),
+    tema: safe(State.temaAtual) || "Não selecionado",
+    kit: safe(State.kitAtual),
+    pecas: Array.isArray(State.pecasSelecionadasKit[State.kitAtual]) ? State.pecasSelecionadasKit[State.kitAtual] : [],
     montarNoLocal: !!State.montarNoLocal,
-    total: totalEl ? totalEl.value : "0",
+    total: safe(totalEl ? totalEl.value : "0"),
     valorFesta: vfEl ? (parseFloat(vfEl.value) || 0) : 0,
-    frete: f.freteTotal,
-    freteKmIda: f.kmIda, freteKmTotal: f.kmTotal, freteSegundaViagem: f.segundaViagem,
-    fretePrecoCombustivel: f.precoCombustivel, freteLitros: f.litros,
-    freteCustoCombustivel: f.custoCombustivel, freteManutencao: f.manutencao,
-    freteTotal: f.freteTotal,
-    dataFesta: dataEl ? dataEl.value : "",
-    obs: obsEl ? obsEl.value.trim() : "",
+    frete: f.freteTotal || 0,
+    freteKmIda: f.kmIda || 0, freteKmTotal: f.kmTotal || 0, freteSegundaViagem: !!f.segundaViagem,
+    fretePrecoCombustivel: f.precoCombustivel || 0, freteLitros: f.litros || 0,
+    freteCustoCombustivel: f.custoCombustivel || 0, freteManutencao: f.manutencao || 0,
+    freteTotal: f.freteTotal || 0,
+    dataFesta: safe(dataEl ? dataEl.value : ""),
+    obs: safe(obsEl ? obsEl.value.trim() : ""),
     desconto: State.descontoAplicado,
     dataCriacao: Utils.getHojeDataString(), horaCriacao: Utils.getHoraString()
   }).then(function() {
