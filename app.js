@@ -41,7 +41,6 @@ const State = {
   pecasSelecionadasKit: {},
   temasSelecionadosKit: {},
   pecasSelecionadasContrato: [],
-  // Kits sendo criados
   kitCriando: {
     nome: "",
     quantidade: 1,
@@ -49,7 +48,6 @@ const State = {
     temas: [],
     imagem: ""
   },
-  // Soma e desconto
   somaAutomatica: 0,
   descontoAplicado: { tipo: "percent", valor: 0, totalOriginal: 0, totalFinal: 0 },
   frete: {
@@ -282,7 +280,6 @@ try {
 // DATABASE
 // ============================================================
 const Database = {
-  // ---------- ESTOQUE ----------
   salvarPecaNuvem: async function(peca) {
     if (State.salvandoPeca) return;
     State.salvandoPeca = true;
@@ -333,7 +330,6 @@ const Database = {
     } catch (e) { console.error(e); return false; }
   },
 
-  // ---------- CATEGORIAS ----------
   salvarCategoriaNuvem: function(nome) {
     if (!db) return Promise.reject("Sem conexão");
     nome = (nome || "").trim();
@@ -372,7 +368,6 @@ const Database = {
     });
   },
 
-  // ---------- RESERVAS ----------
   salvarReservaNuvem: function(dados) {
     if (!db) return Promise.reject("Sem conexão");
     return db.ref('reservas').push().set(dados);
@@ -382,7 +377,6 @@ const Database = {
     return db.ref("reservas/" + id).remove();
   },
 
-  // ---------- ORÇAMENTOS ----------
   salvarOrcamentoNuvem: function(dados) {
     if (!db) return Promise.reject("Sem conexão");
     return db.ref('orcamentos').push().set(dados);
@@ -392,7 +386,6 @@ const Database = {
     return db.ref("orcamentos/" + id).remove();
   },
 
-  // ---------- REUNIÕES ----------
   salvarReuniaoNuvem: function(dados) {
     if (!db) return Promise.reject("Sem conexão");
     return db.ref('reunioes').push().set(dados);
@@ -402,13 +395,11 @@ const Database = {
     return db.ref("reunioes/" + id).remove();
   },
 
-  // ---------- CONTRATOS ----------
   salvarContratoNuvem: function(dados) {
     if (!db) return Promise.reject("Sem conexão");
     return db.ref('contratos').push().set(dados);
   },
 
-  // ---------- KITS ----------
   salvarKitNuvem: function(dados) {
     if (!db) return Promise.reject("Sem conexão");
     return db.ref('kits').push().set(dados);
@@ -418,7 +409,6 @@ const Database = {
     return db.ref("kits/" + id).remove();
   },
 
-  // ---------- PONTO ----------
   registrarPonto: function(tipo) {
     if (!db || !State.usuarioLogadoEmail) return Utils.showToast("Erro de identificação.", "error");
     var chaveUsuario = State.usuarioLogadoEmail.replace(/[.#$[\]]/g, "_");
@@ -581,7 +571,7 @@ function listenCategorias() {
 }
 
 // ============================================================
-// RENDER: TEMAS (CATÁLOGO) — com botão de preço
+// RENDER: TEMAS (CATÁLOGO)
 // ============================================================
 function renderizarTemas() {
   const corpo = document.getElementById("lista-temas-gerenciados-corpo");
@@ -644,7 +634,6 @@ function renderizarTemas() {
 
   corpo.innerHTML = html;
 
-  // Select remover tema
   const selectRemover = document.getElementById("select-remover-tema");
   if (selectRemover) {
     const va = selectRemover.value;
@@ -660,7 +649,7 @@ function renderizarTemas() {
 }
 
 // ============================================================
-// EDITAR TEMA (com preços)
+// EDITAR TEMA
 // ============================================================
 window.editarTema = function(index) {
   const tema = State.estoqueArray[index];
@@ -679,7 +668,6 @@ window.editarTema = function(index) {
   modal.classList.add("ativo");
 };
 
-// Botão RÁPIDO de adicionar preço
 window.editarPrecoTema = function(index) {
   const tema = State.estoqueArray[index];
   if (!tema) return;
@@ -875,7 +863,7 @@ function renderSugestoesTemaFicha(termo) {
 }
 
 // ============================================================
-// MODAL DE PEÇAS
+// MODAL DE PEÇAS (COM IMAGEM, CATEGORIA E VALOR)
 // ============================================================
 let modalPecasContexto = "kit";
 
@@ -921,10 +909,19 @@ function renderizarListaPecasModal(contexto, filtro) {
     var nome = item.nome || "Sem nome";
     var checked = selecionadasAtuais.indexOf(nome) !== -1 ? "checked" : "";
     var preco = Utils.formatCurrency(item.preco || 0);
-    html += '<label class="peca-check-item">' +
-      '<input type="checkbox" value="' + nome.replace(/"/g, '&quot;') + '" ' + checked + '>' +
-      '<span class="nome-peca">' + nome + '</span>' +
-      '<span class="info-peca">' + preco + ' | Qtd: ' + (item.quantidade || 1) + '</span>' +
+    var categoria = item.categoria || "Geral";
+    var img = item.imagem
+      ? '<img src="' + item.imagem + '" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">'
+      : '<div style="width:48px;height:48px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#888;flex-shrink:0;">Sem Foto</div>';
+    html += '<label class="peca-check-item" style="align-items:flex-start;">' +
+      '<input type="checkbox" value="' + nome.replace(/"/g, '&quot;') + '" ' + checked + ' style="margin-top:14px;">' +
+      img +
+      '<div style="flex:1; margin-left:10px;">' +
+      '<div class="nome-peca" style="font-weight:600;">' + nome + '</div>' +
+      '<div style="font-size:11px; color:var(--text-muted); margin-top:2px;">' +
+      '🏷️ ' + categoria + ' &nbsp;|&nbsp; 💰 ' + preco + ' &nbsp;|&nbsp; Qtd: ' + (item.quantidade || 1) +
+      '</div>' +
+      '</div>' +
       '</label>';
   });
   container.innerHTML = html;
@@ -978,6 +975,8 @@ function confirmarModalPecas() {
 // ============================================================
 // MODAL DE TEMA
 // ============================================================
+let modalTemaContexto = "kit-festa";
+
 function abrirModalTema(contexto) {
   modalTemaContexto = contexto || "kit-festa";
   var modal = document.getElementById("modal-tema-reserva");
@@ -985,8 +984,6 @@ function abrirModalTema(contexto) {
   modal.classList.add("ativo");
   renderizarListaTemasModal("");
 }
-
-let modalTemaContexto = "kit-festa";
 
 function renderizarListaTemasModal(filtro) {
   var container = document.getElementById("lista-temas-modal");
@@ -1090,7 +1087,6 @@ function atualizarResumoSelecao() {
   var html = "";
   var temAlgo = false;
 
-  // Tema
   if (State.temaAtual) {
     temAlgo = true;
     var itemT = State.estoqueMap[State.temaAtual];
@@ -1098,7 +1094,6 @@ function atualizarResumoSelecao() {
     html += '<div style="margin-bottom:6px;">🎨 <b>Tema:</b> ' + State.temaAtual + ' — ' + Utils.formatCurrency(precoT) + '</div>';
   }
 
-  // Peças por kit
   if (State.kitAtual && State.pecasSelecionadasKit[State.kitAtual]) {
     var pecas = State.pecasSelecionadasKit[State.kitAtual];
     if (pecas.length > 0) {
@@ -1129,7 +1124,6 @@ function calcularSomaAutomatica() {
   var total = 0;
   var detalhes = "";
 
-  // Tema (se selecionado e for item avulso)
   if (State.temaAtual) {
     var itemT = State.estoqueMap[State.temaAtual];
     if (itemT) {
@@ -1139,7 +1133,6 @@ function calcularSomaAutomatica() {
     }
   }
 
-  // Peças selecionadas por kit
   if (State.kitAtual && State.pecasSelecionadasKit[State.kitAtual]) {
     var pecas = State.pecasSelecionadasKit[State.kitAtual];
     pecas.forEach(function(nome) {
@@ -1210,7 +1203,7 @@ function aplicarDesconto() {
 }
 
 // ============================================================
-// RENDER: RESERVAS
+// RENDER: RESERVAS (COM BOTÃO GERAR CONTRATO + PEÇAS)
 // ============================================================
 function renderReservas(filtro) {
   if (!filtro) filtro = "";
@@ -1238,6 +1231,24 @@ function renderReservas(filtro) {
     var totGeral = total + frete;
     var devedor = totGeral - sinal;
     var quitado = devedor <= 0;
+
+    // ---- PEÇAS DO TEMA ----
+    var pecas = res.pecas || [];
+    var pecasHtml = "";
+    if (pecas.length > 0) {
+      pecasHtml = '<div style="margin-top:10px; padding-top:10px; border-top:1px dashed #e1cbd4;">' +
+        '<p style="margin:0 0 6px 0; font-size:12px; color:var(--text-muted);"><b>🧩 Peças do tema:</b></p>' +
+        '<div style="display:flex; flex-wrap:wrap; gap:5px;">';
+      pecas.forEach(function(nome) {
+        var item = State.estoqueMap[nome];
+        var img = item && item.imagem
+          ? '<img src="' + item.imagem + '" style="width:30px;height:30px;border-radius:4px;object-fit:cover;flex-shrink:0;">'
+          : '<div style="width:30px;height:30px;background:#eee;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#888;flex-shrink:0;">?</div>';
+        pecasHtml += '<div style="display:inline-flex; align-items:center; gap:5px; background:#f8f0f2; padding:4px 8px; border-radius:14px; font-size:11px; border:1px solid #e1cbd4;">' + img + '<span>' + nome + '</span></div>';
+      });
+      pecasHtml += '</div></div>';
+    }
+
     card.innerHTML = '<div class="reserva-header"><strong>👶 ' + (res.cliente || '') + '</strong>' +
       '<span class="reserva-badge" style="background:' + (quitado ? '#27ae60' : '#e67e22') + ';">' +
       (quitado ? 'PAGO 100%' : 'PENDENTE') + '</span></div>' +
@@ -1251,8 +1262,12 @@ function renderReservas(filtro) {
       '<p>💰 Total: <b>' + Utils.formatCurrency(totGeral) + '</b></p>' +
       '<p>💵 Sinal: <b>' + Utils.formatCurrency(sinal) + '</b></p>' +
       '<p style="color:' + (quitado ? 'green' : 'red') + '">⚠️ Falta: <b>' + Utils.formatCurrency(devedor) + '</b></p>' +
+      pecasHtml +
       '</div>' +
-      '<button type="button" style="width:100%; padding:8px; margin-top:10px; background:var(--error); color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="window.DeletarReserva(\'' + res.id + '\')">🗑️ Excluir</button>';
+      '<div style="display:flex; gap:8px; margin-top:12px;">' +
+      '<button type="button" style="flex:2; padding:11px; background:#e67e22; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.GerarContratoReserva(\'' + res.id + '\')">✍️ Gerar Contrato</button>' +
+      '<button type="button" style="flex:1; padding:11px; background:var(--error); color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600;" onclick="window.DeletarReserva(\'' + res.id + '\')">🗑️</button>' +
+      '</div>';
     container.appendChild(card);
   });
 }
@@ -1263,6 +1278,57 @@ window.DeletarReserva = function(idReserva) {
       Utils.showToast("Agendamento removido!", "success");
     }).catch(function() { Utils.showToast("Falha ao remover.", "error"); });
   }
+};
+
+// ============================================================
+// GERAR CONTRATO A PARTIR DE UMA RESERVA
+// ============================================================
+window.GerarContratoReserva = function(idReserva) {
+  var res = State.reservas.filter(function(r) { return r.id === idReserva; })[0];
+  if (!res) return Utils.showToast("Reserva não encontrada.", "error");
+
+  var resposta = prompt(
+    "Qual o modelo do contrato?\n\n" +
+    "Digite 1 para: 🏠 PEGUE E MONTE\n" +
+    "Digite 2 para: 📦 COM FRETE\n\n" +
+    "(Padrão: 1)",
+    "1"
+  );
+  if (resposta === null) return;
+
+  var tipoModelo = (resposta.trim() === "2") ? "com-frete" : "pegue-monte";
+
+  var dadosContrato = {
+    nome: res.cliente || "",
+    cpf: res.cpf || "",
+    telefone: res.telefone || "",
+    endereco: res.endereco || "",
+    local: res.local || "",
+    data: res.data || "",
+    horario: "",
+    valor: parseFloat(res.total) || 0,
+    pecas: res.pecas || [],
+    tema: res.tema || "",
+    obs: res.obs || ""
+  };
+
+  var htmlContrato = tipoModelo === "com-frete"
+    ? gerarContratoComFrete(dadosContrato)
+    : gerarContratoPegueMonte(dadosContrato);
+
+  Database.salvarContratoNuvem({
+    nome: res.cliente, cpf: res.cpf, data: res.data,
+    valor: parseFloat(res.total) || 0, modelo: tipoModelo,
+    tema: res.tema, pecas: res.pecas || [], obs: res.obs || "",
+    criadoEm: Date.now()
+  }).catch(function(err) { console.warn("Contrato não salvo na nuvem:", err); });
+
+  var preview = document.getElementById("contrato-preview-content");
+  if (preview) preview.innerHTML = htmlContrato;
+  var modalVis = document.getElementById("modal-visualizar-contrato");
+  if (modalVis) modalVis.classList.add("ativo");
+
+  Utils.showToast("Contrato gerado!", "success");
 };
 
 // ============================================================
@@ -1672,7 +1738,6 @@ function gerarContratoAvulso(gerarPdf) {
 
   var html = modelo === "com-frete" ? gerarContratoComFrete(dados) : gerarContratoPegueMonte(dados);
 
-  // Salvar sem travar o fluxo
   Database.salvarContratoNuvem({
     nome, cpf, data, horario, valor, endereco, telefone, local, modelo,
     tema, pecas, obs, criadoEm: Date.now()
@@ -1760,17 +1825,12 @@ window.promoverKitParaFesta = function(idKit) {
   var kit = State.kits.filter(function(k) { return k.id === idKit; })[0];
   if (!kit) return;
 
-  // Preencher o nome do kit personalizado? Aqui coloca como "Kit Custom"
-  // Mas o usuário pode querer que vá como "Kit Personalizado"
   var nomeKitFesta = "Kit Customizado";
 
-  // Marcar botão de kit (visual) — desmarca todos e não marca nenhum padrão
   document.querySelectorAll('.btn-kit-opcao').forEach(function(b) { b.classList.remove('ativo'); });
   State.kitAtual = nomeKitFesta;
 
-  // Colocar peças
   State.pecasSelecionadasKit[nomeKitFesta] = kit.pecas || [];
-  // Colocar tema (primeiro)
   if (kit.temas && kit.temas.length > 0) {
     State.temasSelecionadosKit[nomeKitFesta] = kit.temas[0];
     State.temaAtual = kit.temas[0];
@@ -1781,7 +1841,6 @@ window.promoverKitParaFesta = function(idKit) {
     if (hidden) hidden.value = kit.temas[0];
   }
 
-  // Mostrar caixa de ações do kit
   var box = document.getElementById("kit-acoes-box");
   var nome = document.getElementById("kit-acoes-nome");
   if (box) box.classList.add("ativo");
@@ -1789,11 +1848,8 @@ window.promoverKitParaFesta = function(idKit) {
 
   atualizarInfoKitFesta();
   atualizarResumoSelecao();
-
-  // Calcular soma automática
   calcularSomaAutomatica();
 
-  // Fechar painel kits e voltar pra festa
   var painelKits = document.getElementById("painel-gerador-kits");
   if (painelKits) painelKits.style.display = "none";
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1833,7 +1889,6 @@ function salvarKit() {
       criadoEm: Date.now()
     }).then(function() {
       ModalStatus.sucesso("✓ KIT SALVO");
-      // Reset
       if (nomeEl) nomeEl.value = "";
       if (qtdEl) qtdEl.value = "1";
       if (imgInput) imgInput.value = "";
@@ -1920,7 +1975,8 @@ function handleSalvarFesta() {
 
   var pecasDoKit = State.pecasSelecionadasKit[State.kitAtual] || [];
   var temaDoKit = State.temasSelecionadosKit[State.kitAtual] || State.temaAtual;
-  var modeloContrato = (document.getElementById("modelo-contrato") || {}).value || "pegue-monte";
+  // Modelo do contrato baseado em "Montar no Local"
+  var modeloContrato = State.montarNoLocal ? "com-frete" : "pegue-monte";
 
   var dadosReserva = {
     cliente, cpf, telefone, endereco, local, data,
@@ -1946,7 +2002,6 @@ function handleSalvarFesta() {
   Database.salvarReservaNuvem(dadosReserva).then(function() {
     ModalStatus.sucesso("✓ RESERVA SALVA");
 
-    // Gerar contrato automaticamente
     var dadosContrato = {
       nome: cliente, cpf, telefone, endereco, local, data,
       horario: "", dataRetirada: data, dataDevolucao: data,
@@ -1967,7 +2022,6 @@ function handleSalvarFesta() {
     var modalVis = document.getElementById("modal-visualizar-contrato");
     if (modalVis) modalVis.classList.add("ativo");
 
-    // Limpar
     if (elCliente) elCliente.value = "";
     if (elCpf) elCpf.value = "";
     if (elTelefone) elTelefone.value = "";
@@ -2050,7 +2104,6 @@ function handleSalvarOrcamento() {
 function bindTudo() {
   var b;
 
-  // LOGIN
   b = document.getElementById("btn-login-direto");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleLogin(); };
   b = document.getElementById("btn-logout-direto");
@@ -2060,7 +2113,6 @@ function bindTudo() {
     if (e.key === "Enter") { var l = document.getElementById("btn-login-direto"); if (l) l.click(); }
   };
 
-  // PONTO
   b = document.getElementById("btn-ponto-entrada");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); Database.registrarPonto('entrada'); };
   b = document.getElementById("btn-ponto-saida");
@@ -2072,7 +2124,6 @@ function bindTudo() {
     if (p) p.style.display = (p.style.display === "none" || p.style.display === "") ? "block" : "none";
   };
 
-  // RELATÓRIOS
   b = document.getElementById("btn-abrir-central-relatorios");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2099,7 +2150,6 @@ function bindTudo() {
     if (pg) pg.style.display = pg.style.display === 'none' ? 'block' : 'none';
   };
 
-  // ORÇAMENTOS
   b = document.getElementById("btn-abrir-orcamentos");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2110,7 +2160,6 @@ function bindTudo() {
     if (abrindo) renderOrcamentos();
   };
 
-  // REUNIÕES
   b = document.getElementById("btn-abrir-reunioes-painel");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2145,7 +2194,6 @@ function bindTudo() {
       .catch(function() { ModalStatus.erro("Erro ao agendar."); });
   };
 
-  // CATÁLOGO
   b = document.getElementById("btn-abrir-catalogo-temas");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2156,7 +2204,6 @@ function bindTudo() {
     if (abrindo) renderizarTemas();
   };
 
-  // GERADOR DE KITS
   b = document.getElementById("btn-abrir-gerador-kits");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2179,7 +2226,6 @@ function bindTudo() {
   b = document.getElementById("btn-salvar-kit");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); salvarKit(); };
 
-  // GERADOR DE CONTRATO
   b = document.getElementById("btn-abrir-gerador-contrato");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2220,7 +2266,6 @@ function bindTudo() {
   b = document.getElementById("btn-imprimir-contrato");
   if (b) b.onclick = function() { window.print(); };
 
-  // KITS DE FESTA
   var botoesKit = document.querySelectorAll('.btn-kit-opcao');
   botoesKit.forEach(function(btn) {
     btn.onclick = function(e) {
@@ -2244,7 +2289,6 @@ function bindTudo() {
   b = document.getElementById("btn-esc-tema");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); if (!State.kitAtual) return Utils.showToast("Selecione um kit.", "warning"); abrirModalTema("kit-festa"); };
 
-  // MODAL PEÇAS
   b = document.getElementById("btn-fechar-modal-pecas");
   if (b) b.onclick = function() { document.getElementById("modal-pecas").classList.remove("ativo"); };
   b = document.getElementById("btn-cancelar-pecas");
@@ -2256,7 +2300,6 @@ function bindTudo() {
     renderizarListaPecasModal(modalPecasContexto, e.target.value);
   };
 
-  // MODAL TEMA
   b = document.getElementById("btn-fechar-modal-tema");
   if (b) b.onclick = function() { document.getElementById("modal-tema-reserva").classList.remove("ativo"); };
   b = document.getElementById("btn-cancelar-tema");
@@ -2268,19 +2311,15 @@ function bindTudo() {
     renderizarListaTemasModal(e.target.value);
   };
 
-  // MONTAR NO LOCAL
   var chkMontar = document.getElementById("chk-montar-local");
   if (chkMontar) {
     chkMontar.onchange = function() {
       State.montarNoLocal = !!chkMontar.checked;
       var painel = document.getElementById("painel-montagem-local");
       if (painel) painel.style.display = chkMontar.checked ? "block" : "none";
-      var modelo = document.getElementById("modelo-contrato");
-      if (modelo) modelo.value = chkMontar.checked ? "com-frete" : "pegue-monte";
     };
   }
 
-  // FRETE
   var kmEl = document.getElementById("calc-km");
   var precoEl = document.getElementById("calc-valor-litro");
   var chkSegunda = document.getElementById("chk-segunda-viagem");
@@ -2292,21 +2331,17 @@ function bindTudo() {
   var sinalEl = document.getElementById("valor-sinal");
   if (sinalEl) sinalEl.oninput = function() { recalcularTotais(); };
 
-  // SOMA AUTOMÁTICA
   b = document.getElementById("btn-soma-automatica");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); calcularSomaAutomatica(); };
 
-  // DESCONTO
   b = document.getElementById("btn-aplicar-desconto");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); aplicarDesconto(); };
 
-  // SALVAR RESERVA / ORÇAMENTO
   b = document.getElementById("btn-confirmar-agendamento");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleSalvarFesta(); };
   b = document.getElementById("btn-salvar-como-orcamento");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleSalvarOrcamento(); };
 
-  // ADICIONAR PEÇA
   b = document.getElementById("btn-adicionar-peca");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2336,7 +2371,6 @@ function bindTudo() {
     }
   };
 
-  // CATEGORIAS
   b = document.getElementById("btn-adicionar-categoria");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
@@ -2363,7 +2397,6 @@ function bindTudo() {
     }).catch(function(err) { Utils.showToast(String(err), "warning"); });
   };
 
-  // REMOVER TEMA
   b = document.getElementById("btn-remover-tema-admin");
   if (b) b.onclick = function(e) {
     if (e) e.preventDefault();
