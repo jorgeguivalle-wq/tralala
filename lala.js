@@ -1,0 +1,364 @@
+// ============================================================
+// ASSISTENTE VIRTUAL LALÁ 🌸
+// ============================================================
+(function() {
+  'use strict';
+
+  var LALA = {
+    // ============================================================
+    // BASE DE CONHECIMENTO — Palavras-chave e respostas
+    // ============================================================
+    respostas: [
+      {
+        palavras: ['oi', 'ola', 'olá', 'bom dia', 'boa tarde', 'boa noite', 'e ai', 'e aí', 'tudo bem', 'hey', 'hi'],
+        resposta: 'Oi! 🌸 Que bom te ver por aqui!<br><br>Sou a <b>Lalá</b> e tô aqui pra te ajudar com o sistema da <b>Tralalá Festas</b>.<br><br>Pode perguntar sobre <b>agendamento, orçamento, kit, contrato, frete</b> e muito mais. 💬'
+      },
+      {
+        palavras: ['obrigado', 'obrigada', 'valeu', 'brigado', 'brigada', 'muito obrigado', 'thanks'],
+        resposta: 'Fico feliz em ajudar! 🥰<br><br>Se precisar de mais alguma coisa, é só chamar. Boas festas! 🎉'
+      },
+      {
+        palavras: ['tchau', 'ate mais', 'até mais', 'adeus', 'flw', 'falou', 'ate logo', 'até logo'],
+        resposta: 'Até logo! 🌸<br><br>Qualquer dúvida, é só clicar em mim de novo. Tenha um ótimo dia! 💕'
+      },
+      {
+        palavras: ['quem e voce', 'quem é você', 'seu nome', 'qual seu nome', 'o que voce e', 'o que você é'],
+        resposta: 'Sou a <b>Lalá</b> 🌸, a assistente virtual da <b>Tralalá Festas</b>!<br><br>Fui criada pra te ajudar com todas as dúvidas sobre o sistema: agendamentos, orçamentos, kits, contratos, frete, catálogo e muito mais. 💬'
+      },
+      {
+        palavras: ['ajuda', 'me ajuda', 'socorro', 'help', 'o que voce faz', 'o que você faz', 'como funciona'],
+        resposta: 'Posso te ajudar com várias coisas da loja! 🎉<br><br>Olha só o que sei fazer:<br><br>📅 <b>Agendar uma festa</b><br>📋 <b>Salvar orçamento</b><br>🎁 <b>Criar e gerenciar kits</b><br>✍️ <b>Gerar contratos</b><br>🚚 <b>Calcular frete</b><br>🎨 <b>Cadastrar temas e peças</b><br>🏷️ <b>Aplicar descontos</b><br>⏰ <b>Registrar ponto</b><br>📊 <b>Ver relatórios</b><br>📂 <b>Gerenciar categorias</b><br>💰 <b>Ver preços e valores</b><br><br>É só perguntar! 💬'
+      },
+
+      // ============ AGENDAMENTO ============
+      {
+        palavras: ['agendar', 'agendamento', 'marcar festa', 'nova festa', 'reserva', 'reservar', 'cadastrar festa', 'como agendar', 'fazer uma reserva'],
+        resposta: 'Pra agendar uma festa é facinho! 📅<br><br><b>Passo a passo:</b><br>1️⃣ Preencha o <b>Nome do Cliente</b>, <b>CPF</b> e <b>Telefone</b><br>2️⃣ Escolha a <b>Data do Evento</b><br>3️⃣ Digite o <b>Endereço</b> e o <b>Local do Evento</b><br>4️⃣ Busque e selecione um <b>Tema/Peça</b> no campo de busca<br>5️⃣ Escolha o <b>Modelo do Kit</b> (Só um Bolinho, Básico, Prata ou Ouro)<br>6️⃣ Escolha as <b>peças</b> e o <b>tema</b> se quiser personalizar<br>7️⃣ Calcule o <b>frete</b> e a <b>soma automática</b><br>8️⃣ Aplique <b>desconto</b> se precisar<br>9️⃣ Clique em <b>✅ Confirmar e Salvar Reserva</b><br><br>Pronto! O contrato já é gerado automaticamente. 🎉',
+        atalho: { texto: '📅 Ir para o agendamento', destino: 'titulo-form-reserva' }
+      },
+      {
+        palavras: ['montar no local', 'montagem', 'montar na festa', 'vai montar'],
+        resposta: 'O <b>Montar no Local</b> é quando a equipe da Tralalá vai até o evento montar a decoração. 🛠️<br><br>Pra ativar:<br>1️⃣ Marque a caixinha <b>🛠️ Montar no Local?</b><br>2️⃣ Informe quantas <b>peças</b> vão<br>3️⃣ Diga se vai <b>LED</b><br><br>Quando você marca essa opção, o sistema já entende que o contrato precisa ser <b>Com Frete</b> e adiciona o deslocamento. 🚚',
+        atalho: { texto: '🛠️ Ir para montagem', destino: 'chk-montar-local' }
+      },
+      {
+        palavras: ['segunda viagem', '2 viagem', 'duas viagens', '2a viagem', 'segunda vez'],
+        resposta: 'A <b>2ª viagem</b> é quando o cliente precisa que a gente vá <b>duas vezes</b> ao local (ex: entrega e retirada, ou montar e desmontar). 🔄<br><br>Quando você marca essa opção na calculadora de frete, o sistema <b>dobra o cálculo</b> automaticamente porque considera <b>4 trajetos</b> (ida + volta + ida + volta). 🚗',
+        atalho: { texto: '🔄 Ir para o frete', destino: 'chk-segunda-viagem' }
+      },
+      {
+        palavras: ['tema ja alugado', 'tema duplicado', 'nao consigo agendar', 'tema indisponivel', 'tema ja reservado', 'bloqueado'],
+        resposta: 'Ah, isso é uma proteção do sistema! 🔒<br><br>Quando você tenta agendar uma festa com um <b>tema que já está alugado</b> no mesmo dia, o sistema bloqueia pra evitar conflito.<br><br>Exemplo: se você tem só <b>1 maquete Star Wars</b> e já reservou ela pro dia 15/10, ninguém mais pode alugar no dia 15/10.<br><br><b>Soluções:</b><br>🔹 Escolher outra data<br>🔹 Escolher outro tema<br>🔹 Aumentar a quantidade do tema no catálogo (se você tiver mais de um)',
+        atalho: { texto: '🎨 Ir para o catálogo', destino: 'btn-abrir-catalogo-temas' }
+      },
+
+      // ============ ORÇAMENTO ============
+      {
+        palavras: ['orcamento', 'orçamento', 'salvar orcamento', 'salvar orçamento', 'cotacao', 'cotação', 'preco', 'orcar', 'orçar'],
+        resposta: 'O <b>orçamento</b> serve pra você guardar uma proposta pro cliente antes de fechar a festa. 📋<br><br><b>Como fazer:</b><br>1️⃣ Preencha os dados do cliente<br>2️⃣ Escolha o tema, kit e peças<br>3️⃣ Calcule o frete e valores<br>4️⃣ Clique em <b>📋 Ver Orçamentos</b> (no menu superior)<br>5️⃣ Depois é só salvar<br><br>Pra ver depois, clique no botão <b>📋 Ver Orçamentos</b>. Lá você pode <b>promover</b> um orçamento pra reserva de verdade. ✅',
+        atalho: { texto: '📋 Ver orçamentos', destino: 'btn-abrir-orcamentos' }
+      },
+      {
+        palavras: ['promover orcamento', 'promover orçamento', 'transformar orcamento', 'virar reserva'],
+        resposta: 'Pra <b>promover um orçamento</b> e transformar em reserva:<br><br>1️⃣ Clique em <b>📋 Ver Orçamentos</b><br>2️⃣ Encontre o orçamento desejado<br>3️⃣ Clique no <b>✅</b> verde ao lado<br><br>O sistema automaticamente preenche o formulário com os dados do orçamento e você só precisa confirmar! 🎉'
+      },
+
+      // ============ KIT ============
+      {
+        palavras: ['kit', 'kits', 'criar kit', 'novo kit', 'montar kit', 'gerar kit', 'gerador de kit'],
+        resposta: 'Os <b>Kits</b> são pacotes prontos de peças + tema que você cria pra agilizar o agendamento. 🎁<br><br><b>Como criar um kit:</b><br>1️⃣ Clique em <b>🎁 Gerar Kits</b> no menu<br>2️⃣ Dê um <b>nome</b> pro kit (ex: Kit Princesa)<br>3️⃣ Defina a <b>quantidade disponível</b><br>4️⃣ Clique em <b>🍽️ Selecionar Peças</b> e escolha as peças<br>5️⃣ Clique em <b>🎨 Selecionar Temas</b> e escolha o tema<br>6️⃣ Adicione uma <b>foto</b> (opcional)<br>7️⃣ Clique em <b>💾 Salvar Kit no Acervo</b><br><br>Depois, quando for agendar, você pode usar o kit direto! 🚀',
+        atalho: { texto: '🎁 Abrir gerador de kits', destino: 'btn-abrir-gerador-kits' }
+      },
+      {
+        palavras: ['promover kit', 'usar kit', 'kit pronto', 'kit customizado', 'kit personalizado'],
+        resposta: 'Pra <b>usar um kit pronto</b> numa festa:<br><br>1️⃣ Abra <b>🎁 Gerar Kits</b><br>2️⃣ Encontre o kit desejado<br>3️⃣ Clique em <b>✅ Promover p/ Festa</b><br><br>O sistema automaticamente preenche as peças e o tema no formulário! Depois é só preencher os dados do cliente. 🎉',
+        atalho: { texto: '🎁 Ver kits', destino: 'btn-abrir-gerador-kits' }
+      },
+      {
+        palavras: ['so um bolinho', 'só um bolinho', 'kit basico', 'kit básico', 'kit prata', 'kit ouro', 'modelo do kit', 'tipos de kit'],
+        resposta: 'Temos <b>4 modelos de kit</b> principais pra escolher: 🧁<br><br>🧁 <b>Só um Bolinho</b> — pra festas simples<br>📦 <b>Kit Básico</b> — itens essenciais<br>🥈 <b>Kit Prata</b> — decoração completa<br>🥇 <b>Kit Ouro</b> — pacote premium<br><br>Você escolhe no formulário de agendamento. Cada um pode ser <b>personalizado</b> com peças e tema. 🎨'
+      },
+
+      // ============ CONTRATO ============
+      {
+        palavras: ['contrato', 'gerar contrato', 'fazer contrato', 'contratos', 'modelo de contrato', 'imprimir contrato', 'pdf contrato'],
+        resposta: 'O <b>contrato</b> é gerado automaticamente quando você salva uma reserva! ✍️<br><br>Mas você também pode gerar um <b>contrato avulso</b>:<br>1️⃣ Clique em <b>✍️ Gerar Contrato</b><br>2️⃣ Preencha os dados do cliente<br>3️⃣ Escolha o <b>modelo</b> (Com Frete, Pegue e Monte ou Loja)<br>4️⃣ Selecione o <b>tema</b> e as <b>peças</b><br>5️⃣ Clique em <b>💾 Salvar Contrato</b><br>6️⃣ Clique em <b>📄 Gerar PDF</b><br><br>O PDF sai prontinho pra você enviar pro cliente. 📥',
+        atalho: { texto: '✍️ Gerar contrato', destino: 'btn-abrir-gerador-contrato' }
+      },
+      {
+        palavras: ['modelo de contrato', 'tipos de contrato', 'qual contrato', '3 contratos', 'pegue e monte', 'com frete', 'contrato loja'],
+        resposta: 'Temos <b>3 modelos de contrato</b>: 📄<br><br>🏠 <b>Pegue e Monte</b> — o cliente retira e devolve as peças na loja<br>📦 <b>Com Frete</b> — a Tralalá entrega, monta e retira no local<br>🏬 <b>Pegue e Monte (Loja)</b> — versão com tabela preenchida automaticamente (ideal pra mostrar pro cliente)<br><br>Você escolhe na hora de gerar o contrato. 📝',
+        atalho: { texto: '✍️ Ver contratos', destino: 'btn-abrir-gerador-contrato' }
+      },
+      {
+        palavras: ['gerar contrato reserva', 'contrato da reserva', 'contrato de agendamento'],
+        resposta: 'Você pode gerar o contrato direto de uma <b>reserva já existente</b>:<br><br>1️⃣ Desça até <b>📋 Relatório de Agendamentos Ativos</b><br>2️⃣ Encontre a reserva desejada<br>3️⃣ Clique em <b>✍️ Gerar Contrato</b><br>4️⃣ Escolha o modelo (1, 2 ou 3)<br><br>O contrato abre automaticamente preenchido! 🎉'
+      },
+
+      // ============ FRETE ============
+      {
+        palavras: ['frete', 'calcular frete', 'calculadora de frete', 'combustivel', 'combustível', 'km', 'kilometro', 'distancia', 'distância'],
+        resposta: 'O <b>frete</b> é calculado automaticamente com base em 3 coisas: 🚚<br><br>1️⃣ <b>KM só IDA</b> — distância até o local<br>2️⃣ <b>Preço do combustível</b> (padrão R$ 8,00)<br>3️⃣ Se precisa de <b>2ª viagem</b> ou não<br><br><b>Cálculo:</b> o carro faz <b>9 km/L</b> e é somado <b>20% de manutenção</b> em cima do combustível.<br><br><b>Exemplo:</b> 45 km de ida + volta = 90 km<br>90 ÷ 9 = 10 litros × R$ 8,00 = R$ 80,00<br>+ 20% manutenção = <b>R$ 96,00 de frete</b>',
+        atalho: { texto: '🚚 Ir pra calculadora', destino: 'calc-km' }
+      },
+      {
+        palavras: ['valor do frete', 'quanto cobrar', 'quanto e o frete', 'quanto é o frete'],
+        resposta: 'O valor do frete aparece automaticamente na calculadora, dentro de <b>💰 Acerto Financeiro & Frete</b>. 💰<br><br>É só preencher os <b>KM de ida</b> e o <b>preço do combustível</b> que o sistema calcula sozinho. O valor aparece em <b>verde</b> no campo "Frete". 🚚',
+        atalho: { texto: '🚚 Ir pra calculadora', destino: 'calc-km' }
+      },
+
+      // ============ DESCONTO ============
+      {
+        palavras: ['desconto', 'aplicar desconto', 'dar desconto', 'descontar', 'abaixar preco', 'abaixar preço'],
+        resposta: 'Pra <b>aplicar desconto</b>: 🏷️<br><br>1️⃣ Vá até <b>🏷️ Aplicar Desconto</b><br>2️⃣ Escolha o tipo: <b>% Percentual</b> ou <b>R$ Reais</b><br>3️⃣ Digite o valor<br>4️⃣ Clique em <b>Aplicar</b><br><br>O sistema mostra o <b>valor original</b>, o <b>valor do desconto</b> e o <b>valor final</b>. 💰',
+        atalho: { texto: '🏷️ Aplicar desconto', destino: 'desconto-tipo' }
+      },
+
+      // ============ CATÁLOGO ============
+      {
+        palavras: ['catalogo', 'catálogo', 'cadastrar tema', 'novo tema', 'nova peca', 'nova peça', 'cadastrar peca', 'cadastrar peça', 'adicionar tema', 'adicionar peca'],
+        resposta: 'O <b>Catálogo</b> é onde você guarda todos os temas e peças da loja. 🎨<br><br><b>Como cadastrar:</b><br>1️⃣ Clique em <b>🎨 Ver Catálogo</b><br>2️⃣ Preencha:<br>&nbsp;&nbsp;• Nome da peça/tema<br>&nbsp;&nbsp;• Quantidade<br>&nbsp;&nbsp;• Categoria (Maquete, Infantil, etc.)<br>&nbsp;&nbsp;• Modelo/Estilo<br>&nbsp;&nbsp;• Preço de locação<br>&nbsp;&nbsp;• Preço de reposição<br>&nbsp;&nbsp;• Foto (opcional)<br>3️⃣ Clique em <b>Salvar Peça no Acervo</b><br><br>Pronto! Já aparece na lista. ✅',
+        atalho: { texto: '🎨 Abrir catálogo', destino: 'btn-abrir-catalogo-temas' }
+      },
+      {
+        palavras: ['categoria', 'categorias', 'criar categoria', 'nova categoria', 'gerenciar categoria'],
+        resposta: 'As <b>categorias</b> servem pra organizar o catálogo (Maquete, Infantil, Casamento, etc.). 📂<br><br><b>Como criar:</b><br>1️⃣ Abra o <b>🎨 Ver Catálogo</b><br>2️⃣ Vá em <b>📂 Gerenciar Categorias</b><br>3️⃣ Digite o nome da nova categoria<br>4️⃣ Clique em <b>➕ Adicionar</b><br><br>Pra remover, escolha na lista e clique em <b>🗑️ Remover</b>.',
+        atalho: { texto: '📂 Ver categorias', destino: 'input-nova-categoria' }
+      },
+      {
+        palavras: ['editar tema', 'editar peca', 'editar peça', 'mudar preco', 'alterar preco', 'alterar preço', 'mudar tema'],
+        resposta: 'Pra <b>editar</b> um tema ou peça:<br><br>1️⃣ Abra o <b>🎨 Ver Catálogo</b><br>2️⃣ Encontre o item na lista<br>3️⃣ Clique no <b>✏️ lápis</b> pra editar tudo<br>4️⃣ Ou no <b>💰 cifrão</b> pra editar só o preço<br><br>Depois é só salvar! ✅',
+        atalho: { texto: '🎨 Abrir catálogo', destino: 'btn-abrir-catalogo-temas' }
+      },
+      {
+        palavras: ['preco de locacao', 'preço de locação', 'preco locacao', 'preco de aluguel', 'valor da locacao'],
+        resposta: 'O <b>preço de locação</b> é quanto você cobra pra alugar aquela peça/tema. 💰<br><br>É diferente do <b>preço de reposição</b>, que é o valor cobrado se o cliente danificar ou perder a peça. 🔧<br><br>Você cadastra os dois no catálogo. 📝'
+      },
+      {
+        palavras: ['preco de reposicao', 'preço de reposição', 'reposicao', 'reposição', 'valor de reposicao'],
+        resposta: 'O <b>preço de reposição</b> é quanto custa <b>repor</b> a peça caso o cliente danifique ou perca. 🔧<br><br>No contrato, fica definido que a CONTRATANTE paga <b>50% do valor de reposição</b> caso haja dano com recuperação. Se não tiver recuperação, paga o valor de mercado. 💰'
+      },
+
+      // ============ REUNIÕES ============
+      {
+        palavras: ['reuniao', 'reunião', 'agendar reuniao', 'agendar reunião', 'marcar reuniao', 'marcar reunião', 'reunioes', 'reuniões'],
+        resposta: 'Pra agendar uma <b>reunião com cliente</b>: 📅<br><br>1️⃣ Clique em <b>📅 Agendar Reuniões</b><br>2️⃣ Preencha:<br>&nbsp;&nbsp;• Nome do cliente<br>&nbsp;&nbsp;• Data e hora<br>&nbsp;&nbsp;• Pauta/objetivo<br>3️⃣ Clique em <b>Agendar Reunião</b><br><br>Todas as reuniões aparecem na lista logo abaixo. 📋',
+        atalho: { texto: '📅 Agendar reunião', destino: 'btn-abrir-reunioes-painel' }
+      },
+
+      // ============ PONTO ============
+      {
+        palavras: ['ponto', 'ponto eletronico', 'ponto eletrônico', 'registrar ponto', 'bater ponto', 'entrada', 'saida', 'saída', 'horario', 'horário'],
+        resposta: 'O <b>Ponto Eletrônico</b> serve pra registrar a entrada e saída dos funcionários. ⏰<br><br><b>Como usar:</b><br>🟢 Clique em <b>Registrar Entrada</b> quando chegar<br>🔴 Clique em <b>Registrar Saída</b> quando for embora<br><br>Pra ver o histórico completo, clique em <b>📋 Histórico</b>. 📊',
+        atalho: { texto: '⏰ Ir pro ponto', destino: 'btn-ponto-entrada' }
+      },
+
+      // ============ RELATÓRIOS ============
+      {
+        palavras: ['relatorio', 'relatório', 'relatorios', 'relatórios', 'ver vendas', 'faturamento', 'quanto vendi', 'grafico', 'gráfico'],
+        resposta: 'Pra ver os <b>relatórios de venda</b>: 📊<br><br>1️⃣ Clique em <b>📊 Venda Mensal & Anual</b><br>2️⃣ Escolha o <b>mês</b> no seletor<br>3️⃣ Veja a lista de vendas do mês<br><br>Pra ver o <b>gráfico anual</b>, clique em <b>📈 Anual</b>.<br><br>Pra ver o gráfico do mês atual, clique em <b>📈 Gráfico</b>. 📈',
+        atalho: { texto: '📊 Ver relatórios', destino: 'btn-abrir-central-relatorios' }
+      },
+      {
+        palavras: ['grafico anual', 'gráfico anual', 'faturamento anual', 'vendas do ano'],
+        resposta: 'O <b>gráfico anual</b> mostra o faturamento mês a mês do ano todo. 📈<br><br>É só clicar em <b>📈 Anual</b> dentro de <b>📊 Venda Mensal & Anual</b>. O sistema soma automaticamente todas as reservas do ano. 📊',
+        atalho: { texto: '📈 Ver gráfico anual', destino: 'btn-toggle-grafico' }
+      },
+
+      // ============ LOGIN ============
+      {
+        palavras: ['login', 'entrar', 'acesso', 'senha', 'email', 'e-mail', 'esqueci a senha', 'nao consigo entrar', 'não consigo entrar'],
+        resposta: 'Pra <b>entrar no sistema</b>: 🔐<br><br>1️⃣ Digite seu <b>e-mail</b> de acesso<br>2️⃣ Digite sua <b>senha</b><br>3️⃣ Clique em <b>Entrar no Painel</b><br><br>Se esqueceu a senha, entre em contato com o administrador do sistema. 📧'
+      },
+      {
+        palavras: ['sair', 'logout', 'deslogar', 'fechar sistema', 'encerrar sessao', 'encerrar sessão'],
+        resposta: 'Pra <b>sair do sistema</b>, é só clicar em <b>Sair</b> no topo da página, do lado do seu nome. 👤<br><br>Pronto, você volta pra tela de login. 🔐',
+        atalho: { texto: '🚪 Sair', destino: 'btn-logout-direto' }
+      },
+
+      // ============ VALORES ============
+      {
+        palavras: ['sinal', 'valor do sinal', 'entrada do cliente', 'quanto de sinal', 'adiantamento'],
+        resposta: 'O <b>sinal</b> é o valor que o cliente paga adiantado pra garantir a reserva. 💵<br><br>Você preenche no campo <b>Sinal Pago (R$)</b> e o sistema calcula automaticamente o <b>Resta Pagar</b>. 💰<br><br>Exemplo: Festa de R$ 500, sinal de R$ 200 → resta pagar R$ 300. ✅',
+        atalho: { texto: '💵 Ir pro sinal', destino: 'valor-sinal' }
+      },
+      {
+        palavras: ['total', 'valor total', 'quanto ficou', 'valor final', 'preco total', 'preço total'],
+        resposta: 'O <b>valor total</b> é a soma de tudo: 💰<br><br>➕ Valor da festa (peças + tema)<br>➕ Valor do frete<br>➖ Desconto (se tiver)<br>➖ Sinal pago<br>= <b>Resta Pagar</b><br><br>O sistema calcula automaticamente conforme você preenche. 📊',
+        atalho: { texto: '💰 Ver valores', destino: 'valor-total' }
+      },
+      {
+        palavras: ['soma automatica', 'soma automática', 'calcular soma', 'somar pecas', 'somar peças', 'somar valores'],
+        resposta: 'A <b>Soma Automática</b> calcula sozinha o valor total das peças e do tema que você escolheu. 🧮<br><br>É só clicar no botão <b>🧮 Calcular Soma Automática</b> dentro de <b>💰 Acerto Financeiro & Frete</b>.<br><br>O sistema soma tudo e coloca no campo <b>Valor da Festa</b>. 🎉',
+        atalho: { texto: '🧮 Calcular soma', destino: 'btn-soma-automatica' }
+      },
+
+      // ============ ERROS ============
+      {
+        palavras: ['erro', 'nao funciona', 'não funciona', 'bug', 'problema', 'nao abre', 'não abre', 'travou', 'deu erro'],
+        resposta: 'Poxa, sinto muito que algo não esteja funcionando! 😥<br><br>Tenta essas coisinhas primeiro:<br><br>1️⃣ <b>Recarregue a página</b> (aperte F5 ou Ctrl+F5)<br>2️⃣ Verifique se você está <b>logado</b><br>3️⃣ Confira se preencheu todos os campos <b>obrigatórios</b><br>4️⃣ Se estiver no celular, tente girar a tela ou usar o computador<br><br>Se o problema continuar, avisa o suporte. 🔧'
+      },
+      {
+        palavras: ['sumiu', 'desapareceu', 'nao aparece', 'não aparece', 'nao mostra', 'não mostra', 'sumiu os dados'],
+        resposta: 'Se alguma coisa sumiu, calma! 🌸<br><br>Tenta essas opções:<br><br>1️⃣ <b>Recarregue a página</b> — pode ser só lentidão da internet<br>2️⃣ Verifique se está <b>logado</b> com o e-mail correto<br>3️⃣ Confira se o item foi <b>salvo</b> mesmo (aparece uma mensagem verde de confirmação)<br><br>Se realmente sumiu, me avisa que eu repasso pro suporte. 🔧'
+      },
+
+      // ============ INFORMAÇÕES DA LOJA ============
+      {
+        palavras: ['tralala', 'tralalá', 'loja', 'endereco da loja', 'endereço da loja', 'onde fica', 'telefone da loja', 'contato'],
+        resposta: 'A <b>Tralalá Decorações de Festas</b> fica em:<br><br>📍 <b>QN 508 Conjunto 03 Loja 06, Samambaia Sul</b><br>📞 Telefone: <b>(61) 9 8191-9559</b><br>📧 E-mail: <b>tralaladecoracoes@gmail.com</b><br>📋 CNPJ: <b>21.918.863/0001-12</b><br><br>Qualquer dúvida é só chamar! 💕'
+      },
+
+      // ============ ELOGIOS ============
+      {
+        palavras: ['bom trabalho', 'parabens', 'parabéns', 'legal', 'muito bom', 'otimo', 'ótimo', 'top', 'show', 'gostei'],
+        resposta: 'Aaah, muito obrigada! 🥰🌸<br><br>Fico muito feliz que gostou! Se precisar de mais alguma coisa, é só chamar. 💕'
+      }
+    ],
+
+    // ============================================================
+    // RESPOSTA PADRÃO — quando não encontra nada
+    // ============================================================
+    respostaPadrao: 'Infelizmente não posso ajudar com essa informação. 🌸<br><br>Fui programada para ajudar apenas com coisas da <b>Tralalá Festas</b>: <b>agendamentos, orçamentos, kits, contratos, frete, catálogo, ponto, descontos</b> e <b>relatórios</b>.<br><br>Tenta reformular sua pergunta ou clica em um dos atalhos abaixo. 💬',
+
+    // ============================================================
+    // Busca resposta por palavra-chave
+    // ============================================================
+    buscar: function(texto) {
+      if (!texto) return null;
+      var t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+      var candidatos = [];
+      this.respostas.forEach(function(item) {
+        item.palavras.forEach(function(p) {
+          var pNorm = p.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          if (t.indexOf(pNorm) !== -1) {
+            candidatos.push({ item: item, tamanho: pNorm.length });
+          }
+        });
+      });
+
+      if (candidatos.length === 0) return null;
+
+      candidatos.sort(function(a, b) { return b.tamanho - a.tamanho; });
+      return candidatos[0].item;
+    }
+  };
+
+  // ============================================================
+  // LÓGICA DO CHAT
+  // ============================================================
+  var fab = document.getElementById('lala-fab');
+  var janela = document.getElementById('lala-janela');
+  var body = document.getElementById('lala-body');
+  var input = document.getElementById('lala-input');
+  var enviar = document.getElementById('lala-enviar');
+  var fechar = document.getElementById('lala-fechar');
+  var atalhos = document.getElementById('lala-atalhos');
+
+  if (!fab || !janela) return;
+
+  fab.addEventListener('click', function() {
+    janela.classList.toggle('ativo');
+    fab.classList.remove('pulso');
+    if (janela.classList.contains('ativo')) {
+      setTimeout(function() { input.focus(); }, 200);
+    }
+  });
+
+  fechar.addEventListener('click', function() {
+    janela.classList.remove('ativo');
+  });
+
+  function addMsg(texto, tipo) {
+    var div = document.createElement('div');
+    div.className = 'lala-msg ' + tipo;
+
+    if (tipo === 'bot' && typeof texto === 'object') {
+      div.innerHTML = texto.texto;
+      if (texto.atalho) {
+        var btn = document.createElement('button');
+        btn.className = 'lala-link-btn';
+        btn.textContent = texto.atalho.texto;
+        btn.onclick = function() {
+          var el = document.getElementById(texto.atalho.destino);
+          if (el) {
+            if (el.tagName === 'BUTTON') {
+              el.click();
+            } else {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              if (el.focus) {
+                setTimeout(function() {
+                  el.focus();
+                  el.style.transition = 'box-shadow 0.3s';
+                  el.style.boxShadow = '0 0 0 4px rgba(163,83,106,0.4)';
+                  setTimeout(function(){ el.style.boxShadow = ''; }, 1500);
+                }, 500);
+              }
+            }
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+          if (window.innerWidth <= 500) {
+            janela.classList.remove('ativo');
+          }
+        };
+        div.appendChild(document.createElement('br'));
+        div.appendChild(btn);
+      }
+    } else {
+      div.innerHTML = texto;
+    }
+
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function addDigitando() {
+    var div = document.createElement('div');
+    div.className = 'lala-msg bot lala-digitando';
+    div.id = 'lala-digitando';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+    return div;
+  }
+
+  function responder(texto) {
+    if (!texto || !texto.trim()) return;
+    addMsg(texto, 'user');
+    var digitando = addDigitando();
+
+    setTimeout(function() {
+      if (digitando && digitando.parentNode) digitando.parentNode.removeChild(digitando);
+
+      var resposta = LALA.buscar(texto);
+      if (resposta) {
+        addMsg({ texto: resposta.resposta, atalho: resposta.atalho }, 'bot');
+      } else {
+        addMsg(LALA.respostaPadrao, 'bot');
+      }
+    }, 700 + Math.random() * 400);
+  }
+
+  enviar.addEventListener('click', function() {
+    var t = input.value.trim();
+    if (!t) return;
+    responder(t);
+    input.value = '';
+  });
+
+  input.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      enviar.click();
+    }
+  });
+
+  atalhos.addEventListener('click', function(e) {
+    if (e.target.classList.contains('lala-atalho')) {
+      var pergunta = e.target.getAttribute('data-pergunta');
+      responder(pergunta);
+    }
+  });
+
+})();
