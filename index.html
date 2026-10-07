@@ -15,23 +15,11 @@
   <style>
     /* ============ ASSISTENTE VIRTUAL LALÁ ============ */
     .lala-fab {
-      position: fixed;
-      bottom: 25px;
-      right: 25px;
-      width: 65px;
-      height: 65px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #a3536a, #c26e85);
-      color: #fff;
-      border: none;
-      font-size: 32px;
-      cursor: pointer;
-      box-shadow: 0 8px 25px rgba(163, 83, 106, 0.5);
-      z-index: 99999;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position: fixed; bottom: 25px; right: 25px; width: 65px; height: 65px;
+      border-radius: 50%; background: linear-gradient(135deg, #a3536a, #c26e85);
+      color: #fff; border: none; font-size: 32px; cursor: pointer;
+      box-shadow: 0 8px 25px rgba(163, 83, 106, 0.5); z-index: 99999;
+      transition: all 0.3s ease; display: flex; align-items: center; justify-content: center;
     }
     .lala-fab:hover { transform: scale(1.1) rotate(-8deg); box-shadow: 0 10px 30px rgba(163, 83, 106, 0.7); }
     .lala-fab.pulso { animation: lalaPulso 1.8s infinite; }
@@ -40,141 +28,56 @@
       50% { box-shadow: 0 8px 35px rgba(163, 83, 106, 0.95), 0 0 0 10px rgba(163, 83, 106, 0.15); }
     }
     .lala-janela {
-      position: fixed;
-      bottom: 100px;
-      right: 25px;
-      width: 360px;
-      max-width: calc(100vw - 40px);
-      height: 500px;
-      max-height: calc(100vh - 130px);
-      background: #fff;
-      border-radius: 20px;
-      box-shadow: 0 15px 50px rgba(0,0,0,0.25);
-      z-index: 99998;
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
+      position: fixed; bottom: 100px; right: 25px; width: 360px;
+      max-width: calc(100vw - 40px); height: 500px; max-height: calc(100vh - 130px);
+      background: #fff; border-radius: 20px; box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+      z-index: 99998; display: none; flex-direction: column; overflow: hidden;
       border: 2px solid var(--primary-light);
     }
     .lala-janela.ativo { display: flex; animation: lalaSubir 0.3s ease; }
-    @keyframes lalaSubir {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .lala-header {
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: #fff;
-      padding: 16px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-    }
+    @keyframes lalaSubir { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .lala-header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
     .lala-header-info { display: flex; align-items: center; gap: 10px; }
-    .lala-avatar {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: #fff; display: flex; align-items: center; justify-content: center;
-      font-size: 22px; flex-shrink: 0;
-    }
+    .lala-avatar { width: 40px; height: 40px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
     .lala-titulo { font-weight: 700; font-size: 15px; line-height: 1.2; }
     .lala-status { font-size: 11px; opacity: 0.85; display: flex; align-items: center; gap: 4px; }
-    .lala-status::before {
-      content: ''; width: 7px; height: 7px; border-radius: 50%; background: #4cd964;
-      box-shadow: 0 0 6px #4cd964;
-    }
-    .lala-fechar {
-      background: rgba(255,255,255,0.2); border: none; color: #fff; cursor: pointer;
-      width: 30px; height: 30px; border-radius: 50%; font-size: 16px; line-height: 1;
-      transition: background 0.2s;
-    }
+    .lala-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #4cd964; box-shadow: 0 0 6px #4cd964; }
+    .lala-fechar { background: rgba(255,255,255,0.2); border: none; color: #fff; cursor: pointer; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; line-height: 1; transition: background 0.2s; }
     .lala-fechar:hover { background: rgba(255,255,255,0.35); }
-    .lala-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 15px;
-      background: #fdfbfc;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .lala-msg {
-      max-width: 85%;
-      padding: 10px 14px;
-      border-radius: 14px;
-      font-size: 13px;
-      line-height: 1.5;
-      word-wrap: break-word;
-      animation: lalaMsg 0.3s ease;
-    }
+    .lala-body { flex: 1; overflow-y: auto; padding: 15px; background: #fdfbfc; display: flex; flex-direction: column; gap: 10px; }
+    .lala-msg { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.5; word-wrap: break-word; animation: lalaMsg 0.3s ease; }
     @keyframes lalaMsg { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    .lala-msg.bot {
-      background: #fff;
-      color: var(--text-main);
-      border: 1px solid #f1e6f5;
-      border-bottom-left-radius: 4px;
-      align-self: flex-start;
-      box-shadow: 0 2px 6px rgba(163,83,106,0.06);
-    }
-    .lala-msg.user {
-      background: var(--primary);
-      color: #fff;
-      align-self: flex-end;
-      border-bottom-right-radius: 4px;
-    }
+    .lala-msg.bot { background: #fff; color: var(--text-main); border: 1px solid #f1e6f5; border-bottom-left-radius: 4px; align-self: flex-start; box-shadow: 0 2px 6px rgba(163,83,106,0.06); }
+    .lala-msg.user { background: var(--primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
     .lala-msg.bot strong, .lala-msg.bot b { color: var(--primary); }
-    .lala-msg.bot ul { margin: 6px 0 6px 18px; padding: 0; }
-    .lala-msg.bot li { margin-bottom: 4px; }
-    .lala-msg .lala-link-btn {
-      display: inline-block; margin-top: 6px; margin-right: 4px;
-      background: var(--primary-light); color: #fff; border: none;
-      padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
-      cursor: pointer; transition: background 0.2s;
-    }
+    .lala-msg .lala-link-btn { display: inline-block; margin-top: 6px; margin-right: 4px; background: var(--primary-light); color: #fff; border: none; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
     .lala-msg .lala-link-btn:hover { background: var(--primary-dark); }
-    .lala-digitando {
-      display: flex; gap: 4px; align-items: center; padding: 12px 16px;
-    }
-    .lala-digitando span {
-      width: 7px; height: 7px; border-radius: 50%; background: var(--primary-light);
-      animation: lalaBounce 1.2s infinite;
-    }
+    .lala-digitando { display: flex; gap: 4px; align-items: center; padding: 12px 16px; }
+    .lala-digitando span { width: 7px; height: 7px; border-radius: 50%; background: var(--primary-light); animation: lalaBounce 1.2s infinite; }
     .lala-digitando span:nth-child(2) { animation-delay: 0.2s; }
     .lala-digitando span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes lalaBounce {
-      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-      30% { transform: translateY(-6px); opacity: 1; }
-    }
-    .lala-atalhos {
-      padding: 10px 12px; background: #fff; border-top: 1px solid #f1e6f5;
-      display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; max-height: 90px; overflow-y: auto;
-    }
-    .lala-atalho {
-      padding: 6px 12px; background: #f8f0f2; color: var(--primary-dark);
-      border: 1px solid #e1cbd4; border-radius: 20px; font-size: 11px;
-      cursor: pointer; transition: all 0.2s; white-space: nowrap;
-    }
+    @keyframes lalaBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-6px); opacity: 1; } }
+    .lala-atalhos { padding: 10px 12px; background: #fff; border-top: 1px solid #f1e6f5; display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; max-height: 90px; overflow-y: auto; }
+    .lala-atalho { padding: 6px 12px; background: #f8f0f2; color: var(--primary-dark); border: 1px solid #e1cbd4; border-radius: 20px; font-size: 11px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
     .lala-atalho:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .lala-footer {
-      padding: 10px 12px; background: #fff; border-top: 1px solid #f1e6f5;
-      display: flex; gap: 8px; flex-shrink: 0;
-    }
-    .lala-input {
-      flex: 1; padding: 10px 14px; border: 1.5px solid var(--border-color);
-      border-radius: 22px; font-size: 13px; font-family: inherit;
-      outline: none; transition: border-color 0.2s;
-    }
+    .lala-footer { padding: 10px 12px; background: #fff; border-top: 1px solid #f1e6f5; display: flex; gap: 8px; flex-shrink: 0; }
+    .lala-input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border-color); border-radius: 22px; font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.2s; }
     .lala-input:focus { border-color: var(--primary); }
-    .lala-enviar {
-      width: 42px; height: 42px; border-radius: 50%; border: none;
-      background: var(--primary); color: #fff; cursor: pointer; font-size: 18px;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s; flex-shrink: 0;
-    }
+    .lala-enviar { width: 42px; height: 42px; border-radius: 50%; border: none; background: var(--primary); color: #fff; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
     .lala-enviar:hover { background: var(--primary-dark); transform: scale(1.05); }
     @media (max-width: 500px) {
       .lala-janela { width: calc(100vw - 30px); right: 15px; bottom: 90px; height: 70vh; }
       .lala-fab { bottom: 15px; right: 15px; width: 58px; height: 58px; font-size: 28px; }
     }
+
+    /* ============ NOTA PROMISSÓRIA ============ */
+    .nota-promissoria { background: #fff; border: 2px solid #000; padding: 20px 25px; margin: 20px 0; font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.4; page-break-inside: avoid; }
+    .nota-promissoria h2 { text-align: center; font-size: 14pt; font-weight: bold; margin: 0 0 15px 0; border-bottom: 1px solid #000; padding-bottom: 6px; }
+    .nota-promissoria .linha-nota { margin: 8px 0; text-align: justify; }
+    .nota-promissoria .campo-linha { display: inline-block; border-bottom: 1px solid #000; min-width: 80px; padding: 0 4px; }
+    .nota-promissoria .campo-linha-grande { display: inline-block; border-bottom: 1px solid #000; min-width: 200px; padding: 0 4px; }
+    .nota-promissoria .assinatura-nota { margin-top: 30px; text-align: center; }
+    .nota-promissoria .linha-assinatura-nota { border-top: 1px solid #000; width: 70%; margin: 20px auto 4px auto; }
   </style>
 </head>
 <body>
@@ -543,14 +446,6 @@
           </div>
         </div>
 
-        <div class="input-group" style="margin-top: 15px;">
-          <label style="font-weight: 600; color: var(--primary);">📄 Modelo do Contrato:</label>
-          <select id="modelo-contrato">
-            <option value="pegue-monte">🏠 Pegue e Monte</option>
-            <option value="com-frete">📦 Com Frete</option>
-          </select>
-        </div>
-
         <!-- RESUMO DE SELEÇÃO -->
         <div id="resumo-selecao" style="background: #f8f4ff; border: 1.5px solid #d8b4e2; padding: 15px; border-radius: 10px; margin-top: 20px; display: none;">
           <h4 style="margin: 0 0 10px 0; color: #9b59b6; font-size: 14px;">📋 Itens Selecionados</h4>
@@ -763,6 +658,9 @@
       </div>
       <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;" class="no-print">
         <button type="button" id="btn-baixar-pdf-contrato" class="btn btn-pdf" style="width:auto; padding:12px 24px;">📥 Baixar PDF</button>
+        <button type="button" id="btn-editar-contrato" class="btn btn-outline" style="width:auto; padding:12px 24px; border-color:#3498db; color:#3498db;">✏️ Editar Manualmente</button>
+        <button type="button" id="btn-salvar-edicao-contrato" class="btn btn-success" style="width:auto; padding:12px 24px; display:none;">💾 Salvar Alterações</button>
+        <button type="button" id="btn-add-nota-promissoria" class="btn btn-outline" style="width:auto; padding:12px 24px; border-color:#9b59b6; color:#9b59b6; display:none;">📝 Adicionar Nota Promissória</button>
         <button type="button" id="btn-imprimir-contrato" class="btn btn-outline" style="width:auto; padding:12px 24px;">🖨️ Imprimir</button>
       </div>
     </div>
@@ -775,21 +673,17 @@
         <h3 style="margin:0; color:#3498db;" id="titulo-modal-pecas">🍽️ Escolher Peças</h3>
         <button type="button" id="btn-fechar-modal-pecas" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
       </div>
-
       <div class="input-group" style="margin-bottom: 12px;">
         <label style="font-size: 13px;">🔍 Filtrar peças:</label>
         <input type="text" id="filtro-pecas" placeholder="Digite o nome..." style="padding: 10px;">
       </div>
-
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <span style="font-size:13px; color:var(--text-muted);">Marque as peças:</span>
         <span class="badge-contador" id="contador-pecas-selecionadas">0 selecionadas</span>
       </div>
-
       <div class="lista-pecas-checkbox" id="lista-pecas-checkbox">
         <div style="text-align:center; padding: 20px; color: #999; font-size: 13px;">Carregando peças...</div>
       </div>
-
       <div style="display:flex; gap:10px; margin-top:20px;">
         <button type="button" id="btn-cancelar-pecas" class="btn btn-outline" style="flex:1;">Cancelar</button>
         <button type="button" id="btn-confirmar-pecas" class="btn btn-success" style="flex:2;">✅ Confirmar Peças</button>
@@ -804,18 +698,14 @@
         <h3 style="margin:0; color:var(--primary);">🎨 Escolher Tema</h3>
         <button type="button" id="btn-fechar-modal-tema" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
       </div>
-
       <div class="input-group" style="margin-bottom: 12px;">
         <label style="font-size: 13px;">🔍 Buscar tema:</label>
         <input type="text" id="filtro-tema-modal" placeholder="Digite o nome..." style="padding: 10px;">
       </div>
-
       <div style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Clique em um tema pra selecionar:</div>
-
       <div class="lista-pecas-checkbox" id="lista-temas-modal">
         <div style="text-align:center; padding:20px; color:#999; font-size:13px;">Carregando temas...</div>
       </div>
-
       <div style="display:flex; gap:10px; margin-top:20px;">
         <button type="button" id="btn-cancelar-tema" class="btn btn-outline" style="flex:1;">Cancelar</button>
         <button type="button" id="btn-confirmar-tema" class="btn btn-success" style="flex:2;">✅ Confirmar Tema</button>
@@ -830,24 +720,19 @@
         <h3 style="margin:0; color:var(--primary);">✏️ Editar Peça / Tema</h3>
         <button type="button" id="btn-fechar-editar-tema" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
       </div>
-
       <input type="hidden" id="editar-tema-id" value="">
-
       <div class="preview-box-editar">
         <img id="editar-tema-preview" class="preview-foto-editar" src="https://placehold.co/200x200?text=Sem+Foto" alt="Preview">
         <div style="font-size:12px; color:var(--text-muted); margin-top:5px;">Pré-visualização</div>
       </div>
-
       <div class="input-group">
         <label>📷 Trocar Foto (opcional):</label>
         <input type="file" id="editar-tema-imagem" class="input-file-editar" accept="image/*">
       </div>
-
       <div class="input-group">
         <label>📝 Nome:</label>
         <input type="text" id="editar-tema-nome" placeholder="Ex: Fundo do Mar">
       </div>
-
       <div class="grid-2">
         <div class="input-group">
           <label>📦 Quantidade:</label>
@@ -858,12 +743,10 @@
           <input type="text" id="editar-tema-categoria" placeholder="Ex: Maquete">
         </div>
       </div>
-
       <div class="input-group">
         <label>✨ Modelo / Estilo:</label>
         <input type="text" id="editar-tema-modelo" placeholder="Ex: Rústico">
       </div>
-
       <div class="grid-2">
         <div class="input-group">
           <label>💰 Preço Locação (R$):</label>
@@ -874,10 +757,61 @@
           <input type="number" id="editar-tema-preco-reposicao" value="0" step="0.01">
         </div>
       </div>
-
       <div style="display:flex; gap:10px; margin-top:20px;">
         <button type="button" id="btn-cancelar-editar-tema" class="btn btn-outline" style="flex:1;">Cancelar</button>
         <button type="button" id="btn-salvar-editar-tema" class="btn btn-success" style="flex:2;">💾 Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL QUANTIDADE DE PEÇAS ================= -->
+  <div id="modal-qtd-pecas" class="modal-pecas" style="z-index:17000;">
+    <div class="modal-pecas-conteudo" style="max-width:600px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #27ae60; padding-bottom:10px; margin-bottom:15px;">
+        <h3 style="margin:0; color:#27ae60;">📦 Quantidade de Peças</h3>
+        <button type="button" id="btn-fechar-modal-qtd" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
+      </div>
+      <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+        Confirme quantas unidades de cada peça vão pra festa. O estoque será atualizado automaticamente.
+      </p>
+      <div id="lista-qtd-pecas" style="max-height:400px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px; padding:10px; background:#fafafa;"></div>
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button type="button" id="btn-cancelar-qtd" class="btn btn-outline" style="flex:1;">Cancelar</button>
+        <button type="button" id="btn-confirmar-qtd" class="btn btn-success" style="flex:2;">✅ Confirmar e Salvar Reserva</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL NOTA PROMISSÓRIA ================= -->
+  <div id="modal-nota-promissoria" class="modal-contrato" style="z-index:19000;">
+    <div class="modal-conteudo" style="max-width:500px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #9b59b6; padding-bottom:10px; margin-bottom:20px;">
+        <h3 style="margin:0; color:#9b59b6;">📝 Nota Promissória</h3>
+        <button type="button" id="btn-fechar-modal-nota" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
+      </div>
+      <div class="input-group">
+        <label>📅 Data de Vencimento:</label>
+        <input type="date" id="nota-vencimento">
+      </div>
+      <div class="input-group">
+        <label>🔢 Número da Nota:</label>
+        <input type="text" id="nota-numero" placeholder="Ex: 001">
+      </div>
+      <div class="input-group">
+        <label>💰 Valor (R$):</label>
+        <input type="number" id="nota-valor" step="0.01" placeholder="0.00">
+      </div>
+      <div class="input-group">
+        <label>📅 Data do Evento:</label>
+        <input type="date" id="nota-data-evento">
+      </div>
+      <div class="input-group">
+        <label>📅 Data de Emissão:</label>
+        <input type="date" id="nota-data-emissao">
+      </div>
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button type="button" id="btn-cancelar-nota" class="btn btn-outline" style="flex:1;">Cancelar</button>
+        <button type="button" id="btn-gerar-nota" class="btn btn-success" style="flex:2; background-color:#9b59b6;">📝 Gerar Nota</button>
       </div>
     </div>
   </div>
