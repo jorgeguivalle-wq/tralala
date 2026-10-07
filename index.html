@@ -14,26 +14,11 @@
   <link rel="stylesheet" href="style.css">
   <style>
     /* ============ ASSISTENTE VIRTUAL LALÁ ============ */
-    .lala-fab {
-      position: fixed; bottom: 25px; right: 25px; width: 65px; height: 65px;
-      border-radius: 50%; background: linear-gradient(135deg, #a3536a, #c26e85);
-      color: #fff; border: none; font-size: 32px; cursor: pointer;
-      box-shadow: 0 8px 25px rgba(163, 83, 106, 0.5); z-index: 99999;
-      transition: all 0.3s ease; display: flex; align-items: center; justify-content: center;
-    }
+    .lala-fab { position: fixed; bottom: 25px; right: 25px; width: 65px; height: 65px; border-radius: 50%; background: linear-gradient(135deg, #a3536a, #c26e85); color: #fff; border: none; font-size: 32px; cursor: pointer; box-shadow: 0 8px 25px rgba(163, 83, 106, 0.5); z-index: 99999; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; }
     .lala-fab:hover { transform: scale(1.1) rotate(-8deg); box-shadow: 0 10px 30px rgba(163, 83, 106, 0.7); }
     .lala-fab.pulso { animation: lalaPulso 1.8s infinite; }
-    @keyframes lalaPulso {
-      0%, 100% { box-shadow: 0 8px 25px rgba(163, 83, 106, 0.5); }
-      50% { box-shadow: 0 8px 35px rgba(163, 83, 106, 0.95), 0 0 0 10px rgba(163, 83, 106, 0.15); }
-    }
-    .lala-janela {
-      position: fixed; bottom: 100px; right: 25px; width: 360px;
-      max-width: calc(100vw - 40px); height: 500px; max-height: calc(100vh - 130px);
-      background: #fff; border-radius: 20px; box-shadow: 0 15px 50px rgba(0,0,0,0.25);
-      z-index: 99998; display: none; flex-direction: column; overflow: hidden;
-      border: 2px solid var(--primary-light);
-    }
+    @keyframes lalaPulso { 0%, 100% { box-shadow: 0 8px 25px rgba(163, 83, 106, 0.5); } 50% { box-shadow: 0 8px 35px rgba(163, 83, 106, 0.95), 0 0 0 10px rgba(163, 83, 106, 0.15); } }
+    .lala-janela { position: fixed; bottom: 100px; right: 25px; width: 360px; max-width: calc(100vw - 40px); height: 500px; max-height: calc(100vh - 130px); background: #fff; border-radius: 20px; box-shadow: 0 15px 50px rgba(0,0,0,0.25); z-index: 99998; display: none; flex-direction: column; overflow: hidden; border: 2px solid var(--primary-light); }
     .lala-janela.ativo { display: flex; animation: lalaSubir 0.3s ease; }
     @keyframes lalaSubir { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .lala-header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
@@ -65,17 +50,12 @@
     .lala-input:focus { border-color: var(--primary); }
     .lala-enviar { width: 42px; height: 42px; border-radius: 50%; border: none; background: var(--primary); color: #fff; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
     .lala-enviar:hover { background: var(--primary-dark); transform: scale(1.05); }
-    @media (max-width: 500px) {
-      .lala-janela { width: calc(100vw - 30px); right: 15px; bottom: 90px; height: 70vh; }
-      .lala-fab { bottom: 15px; right: 15px; width: 58px; height: 58px; font-size: 28px; }
-    }
+    @media (max-width: 500px) { .lala-janela { width: calc(100vw - 30px); right: 15px; bottom: 90px; height: 70vh; } .lala-fab { bottom: 15px; right: 15px; width: 58px; height: 58px; font-size: 28px; } }
 
     /* ============ NOTA PROMISSÓRIA ============ */
     .nota-promissoria { background: #fff; border: 2px solid #000; padding: 20px 25px; margin: 20px 0; font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.4; page-break-inside: avoid; }
     .nota-promissoria h2 { text-align: center; font-size: 14pt; font-weight: bold; margin: 0 0 15px 0; border-bottom: 1px solid #000; padding-bottom: 6px; }
     .nota-promissoria .linha-nota { margin: 8px 0; text-align: justify; }
-    .nota-promissoria .campo-linha { display: inline-block; border-bottom: 1px solid #000; min-width: 80px; padding: 0 4px; }
-    .nota-promissoria .campo-linha-grande { display: inline-block; border-bottom: 1px solid #000; min-width: 200px; padding: 0 4px; }
     .nota-promissoria .assinatura-nota { margin-top: 30px; text-align: center; }
     .nota-promissoria .linha-assinatura-nota { border-top: 1px solid #000; width: 70%; margin: 20px auto 4px auto; }
   </style>
@@ -555,50 +535,28 @@
     </section>
   </div>
 
-  <!-- ================= MODAL GERADOR DE CONTRATO ================= -->
+  <!-- ================= MODAIS ================= -->
   <div id="modal-gerador-contrato" class="modal-contrato">
     <div class="modal-conteudo">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
         <h3 style="margin:0; color:var(--primary);">✍️ Gerador de Contrato</h3>
         <button type="button" id="btn-fechar-modal-contrato" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
       </div>
-
       <form id="form-contrato-avulso">
         <div class="grid-2">
-          <div class="input-group">
-            <label>Nome do Contratante:</label>
-            <input type="text" id="c-nome" placeholder="Ex: Lenira Ribeiro">
-          </div>
-          <div class="input-group">
-            <label>CPF:</label>
-            <input type="text" id="c-cpf" placeholder="000.000.000-00">
-          </div>
+          <div class="input-group"><label>Nome do Contratante:</label><input type="text" id="c-nome" placeholder="Ex: Lenira Ribeiro"></div>
+          <div class="input-group"><label>CPF:</label><input type="text" id="c-cpf" placeholder="000.000.000-00"></div>
         </div>
         <div class="grid-2">
-          <div class="input-group">
-            <label>Data da Festa:</label>
-            <input type="date" id="c-data">
-          </div>
-          <div class="input-group">
-            <label>Horário:</label>
-            <input type="time" id="c-horario">
-          </div>
+          <div class="input-group"><label>Data da Festa:</label><input type="date" id="c-data"></div>
+          <div class="input-group"><label>Horário:</label><input type="time" id="c-horario"></div>
         </div>
         <div class="grid-2">
-          <div class="input-group">
-            <label>Valor Total (R$):</label>
-            <input type="number" id="c-valor" placeholder="600.00" step="0.01">
-          </div>
-          <div class="input-group">
-            <label>Endereço do Cliente:</label>
-            <input type="text" id="c-endereco" placeholder="Endereço completo">
-          </div>
+          <div class="input-group"><label>Valor Total (R$):</label><input type="number" id="c-valor" placeholder="600.00" step="0.01"></div>
+          <div class="input-group"><label>Endereço do Cliente:</label><input type="text" id="c-endereco" placeholder="Endereço completo"></div>
         </div>
         <div class="grid-2">
-          <div class="input-group">
-            <label>Telefone:</label>
-            <input type="text" id="c-telefone" placeholder="(61) 9XXXX-XXXX">
-          </div>
+          <div class="input-group"><label>Telefone:</label><input type="text" id="c-telefone" placeholder="(61) 9XXXX-XXXX"></div>
           <div class="input-group">
             <label>Modelo do Contrato:</label>
             <select id="c-modelo">
@@ -608,22 +566,15 @@
             </select>
           </div>
         </div>
-        <div class="input-group">
-          <label>Local do Evento:</label>
-          <input type="text" id="c-local" placeholder="Endereço do evento">
-        </div>
-
+        <div class="input-group"><label>Local do Evento:</label><input type="text" id="c-local" placeholder="Endereço do evento"></div>
         <div class="input-group">
           <label>🔍 Tema do Contrato:</label>
           <div class="sugestoes-wrapper">
-            <div class="busca-container">
-              <input type="text" id="contrato-tema-busca" placeholder="Digite o nome do tema..." autocomplete="off">
-            </div>
+            <div class="busca-container"><input type="text" id="contrato-tema-busca" placeholder="Digite o nome do tema..." autocomplete="off"></div>
             <div id="contrato-tema-sugestoes" class="lista-sugestoes"></div>
           </div>
           <input type="hidden" id="contrato-tema-selecionado" value="">
         </div>
-
         <div class="input-group">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
             <label style="margin:0;">Peças (do Catálogo):</label>
@@ -632,12 +583,7 @@
           <select id="c-pecas" multiple style="height:90px; padding:5px;"></select>
           <div style="font-size:11px; color:var(--text-muted); margin-top:5px;" id="c-pecas-info">Clique em "Abrir Lista de Peças" pra escolher.</div>
         </div>
-
-        <div class="input-group">
-          <label>Observações:</label>
-          <input type="text" id="c-obs" placeholder="Ex: Fazer entrega às 13h">
-        </div>
-
+        <div class="input-group"><label>Observações:</label><input type="text" id="c-obs" placeholder="Ex: Fazer entrega às 13h"></div>
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
           <button type="button" id="btn-gerar-salvar-contrato" class="btn btn-primary" style="background-color:#e67e22; flex:1;">💾 Salvar Contrato</button>
           <button type="button" id="btn-gerar-pdf-contrato" class="btn btn-success" style="flex:1;">📄 Gerar PDF</button>
@@ -646,7 +592,6 @@
     </div>
   </div>
 
-  <!-- ================= MODAL VISUALIZAR CONTRATO ================= -->
   <div id="modal-visualizar-contrato" class="modal-visualizar-contrato">
     <div class="modal-visualizar-conteudo">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
@@ -656,7 +601,7 @@
       <div class="visualizador-contrato-scroll" id="visualizador-scroll">
         <div id="contrato-preview-content"></div>
       </div>
-      <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;" class="no-print">
+      <div id="toolbar-contrato" style="margin-top:20px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;" class="no-print">
         <button type="button" id="btn-baixar-pdf-contrato" class="btn btn-pdf" style="width:auto; padding:12px 24px;">📥 Baixar PDF</button>
         <button type="button" id="btn-editar-contrato" class="btn btn-outline" style="width:auto; padding:12px 24px; border-color:#3498db; color:#3498db;">✏️ Editar Manualmente</button>
         <button type="button" id="btn-salvar-edicao-contrato" class="btn btn-success" style="width:auto; padding:12px 24px; display:none;">💾 Salvar Alterações</button>
@@ -666,7 +611,6 @@
     </div>
   </div>
 
-  <!-- ================= MODAL DE PEÇAS ================= -->
   <div id="modal-pecas" class="modal-pecas">
     <div class="modal-pecas-conteudo">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #3498db; padding-bottom:10px; margin-bottom:20px;">
@@ -691,7 +635,6 @@
     </div>
   </div>
 
-  <!-- ================= MODAL DE TEMA ================= -->
   <div id="modal-tema-reserva" class="modal-tema-reserva">
     <div class="modal-tema-reserva-conteudo">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
@@ -713,7 +656,6 @@
     </div>
   </div>
 
-  <!-- ================= MODAL EDITAR TEMA ================= -->
   <div id="modal-editar-tema" class="modal-editar-tema">
     <div class="modal-editar-conteudo">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:10px; margin-bottom:20px;">
@@ -725,37 +667,16 @@
         <img id="editar-tema-preview" class="preview-foto-editar" src="https://placehold.co/200x200?text=Sem+Foto" alt="Preview">
         <div style="font-size:12px; color:var(--text-muted); margin-top:5px;">Pré-visualização</div>
       </div>
-      <div class="input-group">
-        <label>📷 Trocar Foto (opcional):</label>
-        <input type="file" id="editar-tema-imagem" class="input-file-editar" accept="image/*">
-      </div>
-      <div class="input-group">
-        <label>📝 Nome:</label>
-        <input type="text" id="editar-tema-nome" placeholder="Ex: Fundo do Mar">
-      </div>
+      <div class="input-group"><label>📷 Trocar Foto (opcional):</label><input type="file" id="editar-tema-imagem" class="input-file-editar" accept="image/*"></div>
+      <div class="input-group"><label>📝 Nome:</label><input type="text" id="editar-tema-nome" placeholder="Ex: Fundo do Mar"></div>
       <div class="grid-2">
-        <div class="input-group">
-          <label>📦 Quantidade:</label>
-          <input type="number" id="editar-tema-qtd" value="1" min="0">
-        </div>
-        <div class="input-group">
-          <label>🏷️ Categoria:</label>
-          <input type="text" id="editar-tema-categoria" placeholder="Ex: Maquete">
-        </div>
+        <div class="input-group"><label>📦 Quantidade:</label><input type="number" id="editar-tema-qtd" value="1" min="0"></div>
+        <div class="input-group"><label>🏷️ Categoria:</label><input type="text" id="editar-tema-categoria" placeholder="Ex: Maquete"></div>
       </div>
-      <div class="input-group">
-        <label>✨ Modelo / Estilo:</label>
-        <input type="text" id="editar-tema-modelo" placeholder="Ex: Rústico">
-      </div>
+      <div class="input-group"><label>✨ Modelo / Estilo:</label><input type="text" id="editar-tema-modelo" placeholder="Ex: Rústico"></div>
       <div class="grid-2">
-        <div class="input-group">
-          <label>💰 Preço Locação (R$):</label>
-          <input type="number" id="editar-tema-preco" value="0" step="0.01">
-        </div>
-        <div class="input-group">
-          <label>🔧 Preço Reposição (R$):</label>
-          <input type="number" id="editar-tema-preco-reposicao" value="0" step="0.01">
-        </div>
+        <div class="input-group"><label>💰 Preço Locação (R$):</label><input type="number" id="editar-tema-preco" value="0" step="0.01"></div>
+        <div class="input-group"><label>🔧 Preço Reposição (R$):</label><input type="number" id="editar-tema-preco-reposicao" value="0" step="0.01"></div>
       </div>
       <div style="display:flex; gap:10px; margin-top:20px;">
         <button type="button" id="btn-cancelar-editar-tema" class="btn btn-outline" style="flex:1;">Cancelar</button>
@@ -764,7 +685,6 @@
     </div>
   </div>
 
-  <!-- ================= MODAL QUANTIDADE DE PEÇAS ================= -->
   <div id="modal-qtd-pecas" class="modal-pecas" style="z-index:17000;">
     <div class="modal-pecas-conteudo" style="max-width:600px;">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #27ae60; padding-bottom:10px; margin-bottom:15px;">
@@ -782,33 +702,17 @@
     </div>
   </div>
 
-  <!-- ================= MODAL NOTA PROMISSÓRIA ================= -->
   <div id="modal-nota-promissoria" class="modal-contrato" style="z-index:19000;">
     <div class="modal-conteudo" style="max-width:500px;">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #9b59b6; padding-bottom:10px; margin-bottom:20px;">
         <h3 style="margin:0; color:#9b59b6;">📝 Nota Promissória</h3>
         <button type="button" id="btn-fechar-modal-nota" style="background:none; border:none; font-size:20px; cursor:pointer; color:#999;">✕</button>
       </div>
-      <div class="input-group">
-        <label>📅 Data de Vencimento:</label>
-        <input type="date" id="nota-vencimento">
-      </div>
-      <div class="input-group">
-        <label>🔢 Número da Nota:</label>
-        <input type="text" id="nota-numero" placeholder="Ex: 001">
-      </div>
-      <div class="input-group">
-        <label>💰 Valor (R$):</label>
-        <input type="number" id="nota-valor" step="0.01" placeholder="0.00">
-      </div>
-      <div class="input-group">
-        <label>📅 Data do Evento:</label>
-        <input type="date" id="nota-data-evento">
-      </div>
-      <div class="input-group">
-        <label>📅 Data de Emissão:</label>
-        <input type="date" id="nota-data-emissao">
-      </div>
+      <div class="input-group"><label>📅 Data de Vencimento:</label><input type="date" id="nota-vencimento"></div>
+      <div class="input-group"><label>🔢 Número da Nota:</label><input type="text" id="nota-numero" placeholder="Ex: 001"></div>
+      <div class="input-group"><label>💰 Valor (R$):</label><input type="number" id="nota-valor" step="0.01" placeholder="0.00"></div>
+      <div class="input-group"><label>📅 Data do Evento:</label><input type="date" id="nota-data-evento"></div>
+      <div class="input-group"><label>📅 Data de Emissão:</label><input type="date" id="nota-data-emissao"></div>
       <div style="display:flex; gap:10px; margin-top:20px;">
         <button type="button" id="btn-cancelar-nota" class="btn btn-outline" style="flex:1;">Cancelar</button>
         <button type="button" id="btn-gerar-nota" class="btn btn-success" style="flex:2; background-color:#9b59b6;">📝 Gerar Nota</button>
@@ -816,7 +720,6 @@
     </div>
   </div>
 
-  <!-- ================= MODAL DE LOADING ================= -->
   <div id="modal-status-operacao" class="modal-loading-overlay">
     <div class="modal-loading-box">
       <div id="spinner-status" class="spinner-loading"></div>
@@ -825,9 +728,8 @@
     </div>
   </div>
 
-  <!-- ================= ASSISTENTE VIRTUAL LALÁ ================= -->
+  <!-- ================= LALÁ ================= -->
   <button type="button" id="lala-fab" class="lala-fab pulso" title="Fale com a Lalá 🌸">🌸</button>
-
   <div id="lala-janela" class="lala-janela">
     <div class="lala-header">
       <div class="lala-header-info">
@@ -840,11 +742,7 @@
       <button type="button" class="lala-fechar" id="lala-fechar">✕</button>
     </div>
     <div class="lala-body" id="lala-body">
-      <div class="lala-msg bot">
-        Oi! 🌸 Sou a <b>Lalá</b>, sua assistente da <b>Tralalá Festas</b>!<br><br>
-        Posso te ajudar com dúvidas sobre <b>agendamentos, orçamentos, kits, contratos, frete, catálogo</b> e muito mais.<br><br>
-        É só digitar sua pergunta ou clicar em um dos atalhos abaixo. 💬
-      </div>
+      <div class="lala-msg bot">Oi! 🌸 Sou a <b>Lalá</b>, sua assistente da <b>Tralalá Festas</b>!<br><br>Posso te ajudar com dúvidas sobre <b>agendamentos, orçamentos, kits, contratos, frete, catálogo</b> e muito mais.<br><br>É só digitar sua pergunta ou clicar em um dos atalhos abaixo. 💬</div>
     </div>
     <div class="lala-atalhos" id="lala-atalhos">
       <button type="button" class="lala-atalho" data-pergunta="Como agendar uma festa?">📅 Agendar festa</button>
