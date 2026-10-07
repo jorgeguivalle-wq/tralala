@@ -2250,3 +2250,123 @@ document.addEventListener('DOMContentLoaded', function() {
   bindTudo();
   console.log("✅ Sistema Tralalá inicializado!");
 });
+  
+// ============================================================
+// FUNÇÕES EXTRAS — coladas no final
+// ============================================================
+window.EditarContrato = function() {
+  var preview = document.getElementById("contrato-preview-content");
+  if (!preview) return;
+  preview.contentEditable = "true";
+  preview.style.outline = "2px dashed #3498db";
+  preview.style.padding = "10px";
+  preview.style.borderRadius = "8px";
+  var btnEditar = document.getElementById("btn-editar-contrato");
+  var btnSalvar = document.getElementById("btn-salvar-edicao-contrato");
+  if (btnEditar) btnEditar.style.display = "none";
+  if (btnSalvar) btnSalvar.style.display = "inline-flex";
+  console.log("✅ Modo edição ativado");
+};
+
+window.SalvarEdicaoContrato = function() {
+  if (!confirm("⚠️ Tem certeza que deseja salvar essas alterações?")) return;
+  var preview = document.getElementById("contrato-preview-content");
+  if (!preview) return;
+  var htmlEditado = preview.innerHTML;
+  Database.salvarContratoNuvem({
+    nome: "EDIÇÃO MANUAL",
+    contratoEditado: htmlEditado,
+    criadoEm: Date.now(),
+    editadoManualmente: true
+  }).then(function() {
+    preview.contentEditable = "false";
+    preview.style.outline = "";
+    preview.style.padding = "";
+    var btnEditar = document.getElementById("btn-editar-contrato");
+    var btnSalvar = document.getElementById("btn-salvar-edicao-contrato");
+    if (btnEditar) btnEditar.style.display = "inline-flex";
+    if (btnSalvar) btnSalvar.style.display = "none";
+    alert("✓ Edição salva com sucesso!");
+  }).catch(function() { alert("Erro ao salvar edição."); });
+};
+
+window.ConfirmarQtdPecas = function() {
+  var inputs = document.querySelectorAll(".input-qtd-peca");
+  var pecasQtd = {};
+  var valido = true;
+  inputs.forEach(function(input) {
+    var nome = input.getAttribute("data-peca");
+    var qtd = parseInt(input.value) || 0;
+    var max = parseInt(input.max) || 0;
+    if (qtd > max) {
+      alert("❌ " + nome + ": você pediu " + qtd + " mas só tem " + max + " disponível.");
+      valido = false;
+    }
+    if (qtd > 0) pecasQtd[nome] = qtd;
+  });
+  if (!valido) return;
+  document.getElementById("modal-qtd-pecas").classList.remove("ativo");
+  if (typeof salvarReservaFinal === 'function') {
+    salvarReservaFinal(pecasQtd);
+  } else {
+    alert("Função salvarReservaFinal não encontrada no app.js");
+  }
+};
+
+window.AbrirNotaPromissoria = function() {
+  var hoje = new Date();
+  var dataEmit = hoje.toISOString().split("T")[0];
+  var elEmissao = document.getElementById("nota-data-emissao");
+  if (elEmissao) elEmissao.value = dataEmit;
+  var elNum = document.getElementById("nota-numero"); if (elNum) elNum.value = "";
+  var elValor = document.getElementById("nota-valor"); if (elValor) elValor.value = "";
+  var elVenc = document.getElementById("nota-vencimento"); if (elVenc) elVenc.value = "";
+  var elEvento = document.getElementById("nota-data-evento"); if (elEvento) elEvento.value = "";
+  var modal = document.getElementById("modal-nota-promissoria");
+  if (modal) modal.classList.add("ativo");
+};
+
+window.GerarNotaPromissoria = function() {
+  var venc = (document.getElementById("nota-vencimento") || {}).value || "";
+  var num = (document.getElementById("nota-numero") || {}).value || "____";
+  var valor = parseFloat((document.getElementById("nota-valor") || {}).value) || 0;
+  var dataEvento = (document.getElementById("nota-data-evento") || {}).value || "";
+  var vencFmt = venc ? venc.split("-").reverse().join("/") : "____/____/______";
+  var valorFmt = valor ? valor.toFixed(2).replace('.', ',') : "______,00";
+  var eventoFmt = dataEvento ? dataEvento.split("-").reverse().join("/") : "____/____/______";
+  var notaHTML = '<div class="nota-promissoria">' +
+    '<h2>NOTA PROMISSÓRIA</h2>' +
+    '<div style="display:flex; justify-content:space-between;">' +
+    '<div><b>Vencimento:</b> ' + vencFmt + '</div>' +
+    '<div><b>Número:</b> ' + num + '</div></div>' +
+    '<div style="text-align:right; margin-top:6px;"><b>Valor:</b> R$ ' + valorFmt + '</div>' +
+    '<div class="linha-nota" style="margin-top:15px;">A(os) ____ de __________________ de 20____, pagarei a <b>Tralalá Decorações de Festas</b>, CNPJ <b>21.918.863/0001-12</b>, a quantia de <b>R$ ' + valorFmt + '</b>. Caso não seja entregue os itens alugados, conforme descrito no contrato, a festa se realizará no dia ' + eventoFmt + '. Em caso de extravio ou quebra de peças me comprometo a pagar valor de mercado por cada peça em moeda corrente.</div>' +
+    '<div style="text-align:center; margin-top:25px;">Brasília-DF, <span style="display:inline-block; border-bottom:1px solid #000; min-width:40px;">&nbsp;</span> de <span style="display:inline-block; border-bottom:1px solid #000; min-width:200px;">&nbsp;</span> de 20____.</div>' +
+    '<div class="assinatura-nota"><div class="linha-assinatura-nota"></div><div style="font-weight:bold;">CONTRATANTE:</div><div>CPF:</div><div>ENDEREÇO CLIENTE:</div></div>' +
+    '</div>';
+  var espaco = document.getElementById("espaco-nota-promissoria-loja");
+  if (!espaco) { alert("Contrato Loja não está aberto."); return; }
+  espaco.innerHTML = notaHTML;
+  document.getElementById("modal-nota-promissoria").classList.remove("ativo");
+  alert("✅ Nota Promissória adicionada!");
+};
+
+// ============================================================
+// FIX DO bindTudo — reconecta os botões novos DEPOIS que carrega
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    var btnEditar = document.getElementById("btn-editar-contrato");
+    if (btnEditar) btnEditar.onclick = window.EditarContrato;
+    var btnSalvarEd = document.getElementById("btn-salvar-edicao-contrato");
+    if (btnSalvarEd) btnSalvarEd.onclick = window.SalvarEdicaoContrato;
+    var btnNota = document.getElementById("btn-add-nota-promissoria");
+    if (btnNota) btnNota.onclick = window.AbrirNotaPromissoria;
+    var btnConfirmarQtd = document.getElementById("btn-confirmar-qtd");
+    if (btnConfirmarQtd) btnConfirmarQtd.onclick = window.ConfirmarQtdPecas;
+    var btnGerarNota = document.getElementById("btn-gerar-nota");
+    if (btnGerarNota) btnGerarNota.onclick = window.GerarNotaPromissoria;
+    console.log("✅ Botões novos conectados!");
+  }, 500);
+});
+
