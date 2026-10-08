@@ -356,3 +356,73 @@ h4 { color: var(--primary-dark); font-size: 15px; font-weight: 600; }
   .grid-2, .grid-3, .grid-4, .grid-kits { grid-template-columns: 1fr; }
   .pagina-contrato { width: 100%; min-height: 297mm; padding: 15mm 12mm; margin: 5px auto; }
 }
+
+/* ============ CORREÇÃO DA IMPRESSÃO/PDF ============ */
+@media print {
+  /* Esconde TUDO que não é o contrato */
+  body * { visibility: hidden; }
+  #modal-visualizar-contrato, #modal-visualizar-contrato * { visibility: visible; }
+  #contrato-preview-content, #contrato-preview-content * { visibility: visible; }
+
+  /* Posiciona o modal no topo */
+  #modal-visualizar-contrato {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    z-index: 99999 !important;
+  }
+  #modal-visualizar-contrato .modal-visualizar-conteudo {
+    box-shadow: none !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+  .visualizador-contrato-scroll {
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+  #contrato-preview-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    width: 100% !important;
+  }
+
+  /* Esconde a Lalá, botões e outros */
+  .lala-fab, .lala-janela { display: none !important; }
+  .no-print, button { display: none !important; }
+
+  /* Força página A4 */
+  @page { size: A4 portrait; margin: 0; }
+  html, body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 210mm !important;
+  }
+  .pagina-contrato {
+    width: 210mm !important;
+    min-height: auto !important;
+    padding: 15mm 16mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+  .pagina-contrato:last-child {
+    page-break-after: auto !important;
+  }
+}
