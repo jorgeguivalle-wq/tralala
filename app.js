@@ -2572,3 +2572,94 @@ document.addEventListener('DOMContentLoaded', function() {
 
   console.log("✅ FIX: PDF com largura correta");
 })();
+
+
+// ============================================================
+// FIX — Imprimir e Baixar PDF (SÓ O CONTRATO)
+// ============================================================
+(function() {
+  'use strict';
+
+  // Botão Imprimir: usa window.print() nativo
+  // O CSS @media print cuida de esconder tudo que não é contrato
+  window.ImprimirContrato = function() {
+    var preview = document.getElementById("contrato-preview-content");
+    if (!preview || !preview.querySelector('.pagina-contrato')) {
+      return Utils.showToast("Nenhum contrato aberto para imprimir.", "warning");
+    }
+    setTimeout(function() { window.print(); }, 200);
+  };
+
+  // Botão Baixar PDF: abre janela nova com só o contrato e dispara print
+  window.BaixarPDFContrato = function() {
+    var preview = document.getElementById("contrato-preview-content");
+    if (!preview) return Utils.showToast("Nenhum contrato aberto.", "warning");
+    var pagina = preview.querySelector('.pagina-contrato');
+    if (!pagina) return Utils.showToast("Contrato não encontrado.", "warning");
+
+    var nome = (document.getElementById("c-nome") || {}).value
+      || (document.getElementById("nome-cliente") || {}).value
+      || "contrato";
+
+    var w = window.open('', '_blank', 'width=900,height=700');
+    if (!w) {
+      Utils.showToast("⚠️ Permita popups para baixar o PDF.", "warning");
+      return;
+    }
+
+    // Copia estilos
+    var estilos = '';
+    try {
+      document.querySelectorAll('style').forEach(function(s) {
+        estilos += '<style>' + s.innerHTML + '</style>';
+      });
+      document.querySelectorAll('link[rel="stylesheet"]').forEach(function(l) {
+        estilos += '<link rel="stylesheet" href="' + l.href + '">';
+      });
+    } catch(e) {}
+
+    // Só o .pagina-contrato puro — sem cabeçalho, sem botões, sem Lalá
+    var html = '<!DOCTYPE html><html><head>' +
+      '<meta charset="UTF-8">' +
+      '<title>Contrato - ' + nome + '</title>' +
+      estilos +
+      '<style>' +
+      '  @page { size: A4 portrait; margin: 0; }' +
+      '  html, body { margin: 0 !important; padding: 0 !important; background: white !important; }' +
+      '  body { padding: 0 !important; }' +
+      '  .pagina-contrato {' +
+      '    box-shadow: none !important;' +
+      '    margin: 0 auto !important;' +
+      '    padding: 15mm 16mm !important;' +
+      '    width: 210mm !important;' +
+      '    min-height: 297mm !important;' +
+      '    box-sizing: border-box !important;' +
+      '    page-break-after: avoid !important;' +
+      '    break-after: avoid !important;' +
+      '  }' +
+      '  .nota-promissoria { page-break-inside: avoid !important; }' +
+      '</style>' +
+      '</head><body>' +
+      pagina.outerHTML +
+      '</body></html>';
+
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+
+    setTimeout(function() { w.print(); }, 600);
+  };
+
+  // Reconecta os botões
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+      var b1 = document.getElementById("btn-imprimir-contrato");
+      if (b1) b1.onclick = function(e) { if (e) e.preventDefault(); window.ImprimirContrato(); };
+      var b2 = document.getElementById("btn-baixar-pdf-contrato");
+      if (b2) b2.onclick = function(e) { if (e) e.preventDefault(); window.BaixarPDFContrato(); };
+    }, 800);
+  });
+
+  console.log("✅ FIX: Imprimir e PDF sem cabeçalho, sem botões, sem Lalá");
+})();
