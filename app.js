@@ -327,6 +327,7 @@ const Database = {
     });
   },
   salvarReservaNuvem: function(dados) { if (!db) return Promise.reject("Sem conexão"); return db.ref('reservas').push().set(dados); },
+  atualizarReservaNuvem: function(id, dados) { if (!db) return Promise.reject("Sem conexão"); return db.ref('reservas/' + id).update(dados); },
   excluirReservaNuvem: function(id) { if (!db) return Promise.reject("Sem conexão"); return db.ref("reservas/" + id).remove(); },
   salvarOrcamentoNuvem: function(dados) { if (!db) return Promise.reject("Sem conexão"); return db.ref('orcamentos').push().set(dados); },
   excluirOrcamentoNuvem: function(id) { if (!db) return Promise.reject("Sem conexão"); return db.ref("orcamentos/" + id).remove(); },
@@ -498,7 +499,7 @@ function renderizarTemas() {
     if (!grupos[cat]) grupos[cat] = [];
     grupos[cat].push(item);
   });
-  var ordemPreferida = ["Maquete", "Louças de porcelana"];
+  var ordemPreferida = ["Maquete", "Louças de porcelana", "Painéis"];
   var categoriasOrdenadas = Object.keys(grupos).sort(function(a, b) {
     var ia = ordemPreferida.indexOf(a); var ib = ordemPreferida.indexOf(b);
     if (ia !== -1 && ib !== -1) return ia - ib;
@@ -715,7 +716,7 @@ function renderSugestoesTemaFicha(termo) {
 }
 
 // ============================================================
-// MODAL DE PEÇAS — COM QUANTIDADE
+// MODAL DE PEÇAS — AGRUPADO POR CATEGORIA
 // ============================================================
 let modalPecasContexto = "kit";
 
@@ -758,32 +759,58 @@ function renderizarListaPecasModal(contexto, filtro) {
     return;
   }
 
-  var html = "";
+  // Agrupa por categoria
+  var grupos = {};
   pecas.forEach(function(item) {
-    var nome = item.nome || "Sem nome";
-    var checked = selecionadasAtuais.indexOf(nome) !== -1 ? "checked" : "";
-    var preco = Utils.formatCurrency(item.preco || 0);
-    var categoria = item.categoria || "Geral";
-    var disponivel = parseInt(item.quantidade) || 0;
-    var qtdAtual = qtdAtuais[nome] || 1;
-    var img = item.imagem
-      ? '<img src="' + item.imagem + '" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">'
-      : '<div style="width:48px;height:48px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#888;flex-shrink:0;">Sem Foto</div>';
-    html += '<label class="peca-check-item" style="align-items:flex-start; gap:10px;">' +
-      '<input type="checkbox" value="' + nome.replace(/"/g, '&quot;') + '" ' + checked + ' style="margin-top:14px;" class="chk-peca-modal">' +
-      img +
-      '<div style="flex:1; margin-left:6px;">' +
-        '<div class="nome-peca" style="font-weight:600;">' + nome + '</div>' +
-        '<div style="font-size:11px; color:var(--text-muted); margin-top:2px;">' +
-          '🏷️ ' + categoria + ' &nbsp;|&nbsp; 💰 ' + preco + ' &nbsp;|&nbsp; 📦 Disponível: <b>' + disponivel + '</b>' +
-        '</div>' +
-      '</div>' +
-      '<div style="display:flex; flex-direction:column; align-items:center; gap:2px; margin-top:6px;">' +
-        '<label style="font-size:10px; color:var(--text-muted); font-weight:600;">QTD</label>' +
-        '<input type="number" class="qtd-peca-modal" data-peca="' + nome.replace(/"/g, '&quot;') + '" value="' + qtdAtual + '" min="1" max="' + disponivel + '" ' + (checked ? '' : 'disabled') + ' style="width:55px; padding:6px; border:1.5px solid #ddd; border-radius:6px; text-align:center; font-size:12px; font-weight:600; background:' + (checked ? '#fff' : '#f0f0f0') + ';">' +
-      '</div>' +
-    '</label>';
+    var cat = (item.categoria && String(item.categoria).trim()) || "Sem Categoria";
+    if (!grupos[cat]) grupos[cat] = [];
+    grupos[cat].push(item);
   });
+
+  var ordemPreferida = ["Maquete", "Louças de porcelana", "Painéis"];
+  var catsOrdenadas = Object.keys(grupos).sort(function(a, b) {
+    var ia = ordemPreferida.indexOf(a); var ib = ordemPreferida.indexOf(b);
+    if (ia !== -1 && ib !== -1) return ia - ib;
+    if (ia !== -1) return -1; if (ib !== -1) return 1;
+    return a.localeCompare(b, 'pt-BR');
+  });
+
+  var html = "";
+  catsOrdenadas.forEach(function(cat) {
+    var itens = grupos[cat];
+    // Cabeçalho da categoria
+    html += '<div class="categoria-header-modal">' +
+      '<span>📁 ' + cat + '</span>' +
+      '<span class="badge-cat-modal">' + itens.length + ' peça' + (itens.length > 1 ? 's' : '') + '</span>' +
+      '</div>';
+
+    itens.forEach(function(item) {
+      var nome = item.nome || "Sem nome";
+      var checked = selecionadasAtuais.indexOf(nome) !== -1 ? "checked" : "";
+      var preco = Utils.formatCurrency(item.preco || 0);
+      var categoria = item.categoria || "Geral";
+      var disponivel = parseInt(item.quantidade) || 0;
+      var qtdAtual = qtdAtuais[nome] || 1;
+      var img = item.imagem
+        ? '<img src="' + item.imagem + '" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">'
+        : '<div style="width:48px;height:48px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#888;flex-shrink:0;">Sem Foto</div>';
+      html += '<label class="peca-check-item" style="align-items:flex-start; gap:10px; margin-bottom:4px;">' +
+        '<input type="checkbox" value="' + nome.replace(/"/g, '&quot;') + '" ' + checked + ' style="margin-top:14px;" class="chk-peca-modal">' +
+        img +
+        '<div style="flex:1; margin-left:6px;">' +
+          '<div class="nome-peca" style="font-weight:600;">' + nome + '</div>' +
+          '<div style="font-size:11px; color:var(--text-muted); margin-top:2px;">' +
+            '🏷️ ' + categoria + ' &nbsp;|&nbsp; 💰 ' + preco + ' &nbsp;|&nbsp; 📦 Disponível: <b>' + disponivel + '</b>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex; flex-direction:column; align-items:center; gap:2px; margin-top:6px;">' +
+          '<label style="font-size:10px; color:var(--text-muted); font-weight:600;">QTD</label>' +
+          '<input type="number" class="qtd-peca-modal" data-peca="' + nome.replace(/"/g, '&quot;') + '" value="' + qtdAtual + '" min="1" max="' + disponivel + '" ' + (checked ? '' : 'disabled') + ' style="width:55px; padding:6px; border:1.5px solid #ddd; border-radius:6px; text-align:center; font-size:12px; font-weight:600; background:' + (checked ? '#fff' : '#f0f0f0') + ';">' +
+        '</div>' +
+      '</label>';
+    });
+  });
+
   container.innerHTML = html;
 
   var checkboxes = container.querySelectorAll('.chk-peca-modal');
@@ -1020,7 +1047,7 @@ function aplicarDesconto() {
 }
 
 // ============================================================
-// RESERVAS
+// RESERVAS — COM BOTÃO EDITAR
 // ============================================================
 function renderReservas(filtro) {
   if (!filtro) filtro = "";
@@ -1069,9 +1096,10 @@ function renderReservas(filtro) {
       '<p>💵 Sinal: <b>' + Utils.formatCurrency(sinal) + '</b></p>' +
       '<p style="color:' + (quitado ? 'green' : 'red') + '">⚠️ Falta: <b>' + Utils.formatCurrency(devedor) + '</b></p>' +
       pecasHtml + '</div>' +
-      '<div style="display:flex; gap:8px; margin-top:12px;">' +
-      '<button type="button" style="flex:2; padding:11px; background:#e67e22; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.GerarContratoReserva(\'' + res.id + '\')">✍️ Gerar Contrato</button>' +
-      '<button type="button" style="flex:1; padding:11px; background:var(--error); color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600;" onclick="window.DeletarReserva(\'' + res.id + '\')">🗑️</button>' +
+      '<div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">' +
+      '<button type="button" style="flex:2; min-width:120px; padding:11px; background:#e67e22; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.GerarContratoReserva(\'' + res.id + '\')">✍️ Gerar Contrato</button>' +
+      '<button type="button" style="flex:1; min-width:70px; padding:11px; background:#3498db; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.AbrirEditarReserva(\'' + res.id + '\')" title="Editar">✏️ Editar</button>' +
+      '<button type="button" style="flex:1; min-width:70px; padding:11px; background:var(--error); color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.DeletarReserva(\'' + res.id + '\')" title="Excluir">🗑️</button>' +
       '</div>';
     container.appendChild(card);
   });
@@ -1084,7 +1112,59 @@ window.DeletarReserva = function(idReserva) {
 };
 
 // ============================================================
-// GERAR CONTRATO (com pecasQtd)
+// EDITAR RESERVA
+// ============================================================
+window.AbrirEditarReserva = function(idReserva) {
+  var res = State.reservas.filter(function(r) { return r.id === idReserva; })[0];
+  if (!res) return Utils.showToast("Reserva não encontrada.", "error");
+  document.getElementById("edit-reserva-id").value = res.id;
+  document.getElementById("edit-cliente").value = res.cliente || "";
+  document.getElementById("edit-cpf").value = res.cpf || "";
+  document.getElementById("edit-telefone").value = res.telefone || "";
+  document.getElementById("edit-data").value = res.data || "";
+  document.getElementById("edit-endereco").value = res.endereco || "";
+  document.getElementById("edit-local").value = res.local || "";
+  document.getElementById("edit-tema").value = res.tema || "";
+  document.getElementById("edit-kit").value = res.kit || "";
+  document.getElementById("edit-total").value = res.total || 0;
+  document.getElementById("edit-sinal").value = res.sinal || 0;
+  document.getElementById("edit-frete").value = res.frete || 0;
+  document.getElementById("edit-obs").value = res.obs || "";
+  document.getElementById("modal-editar-reserva").classList.add("ativo");
+};
+
+window.SalvarEditarReserva = function() {
+  var id = document.getElementById("edit-reserva-id").value;
+  if (!id) return Utils.showToast("ID não encontrado.", "error");
+  var dados = {
+    cliente: safe(document.getElementById("edit-cliente").value.trim()),
+    cpf: safe(document.getElementById("edit-cpf").value.trim()),
+    telefone: safe(document.getElementById("edit-telefone").value.trim()),
+    data: safe(document.getElementById("edit-data").value),
+    endereco: safe(document.getElementById("edit-endereco").value.trim()),
+    local: safe(document.getElementById("edit-local").value.trim()),
+    tema: safe(document.getElementById("edit-tema").value.trim()),
+    kit: safe(document.getElementById("edit-kit").value.trim()),
+    total: safe(document.getElementById("edit-total").value || "0"),
+    sinal: safe(document.getElementById("edit-sinal").value || "0"),
+    frete: safe(document.getElementById("edit-frete").value || "0"),
+    obs: safe(document.getElementById("edit-obs").value.trim()),
+    atualizadoEm: Date.now()
+  };
+  ModalStatus.exibir("SALVANDO ALTERAÇÕES...", dados.cliente);
+  Database.atualizarReservaNuvem(id, dados)
+    .then(function() {
+      ModalStatus.sucesso("✓ RESERVA ATUALIZADA");
+      document.getElementById("modal-editar-reserva").classList.remove("ativo");
+    })
+    .catch(function(err) {
+      console.error(err);
+      ModalStatus.erro("Erro ao salvar.");
+    });
+};
+
+// ============================================================
+// GERAR CONTRATO DA RESERVA
 // ============================================================
 window.GerarContratoReserva = function(idReserva) {
   var res = State.reservas.filter(function(r) { return r.id === idReserva; })[0];
@@ -1214,9 +1294,6 @@ window.PromoverOrcamento = function(idOrcamento) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   atualizarResumoSelecao();
 };
-// ============================================================
-// FEITO POR NEO FLUX
-// ============================================================
 
 // ============================================================
 // REUNIÕES
@@ -1611,7 +1688,7 @@ function gerarContratoAvulso(gerarPdf) {
 }
 
 // ============================================================
-// GERAR PDF
+// GERAR PDF — FIX DEFINITIVO (CLONE FORA DO MODAL)
 // ============================================================
 function gerarContratoPDF() {
   var elemento = document.getElementById("contrato-preview-content");
@@ -1619,8 +1696,13 @@ function gerarContratoPDF() {
   if (typeof html2pdf === 'undefined') { alert("Biblioteca PDF não carregada."); return; }
   var pagina = elemento.querySelector('.pagina-contrato');
   if (!pagina) { Utils.showToast("Nenhum contrato gerado ainda.", "warning"); return; }
+
   var nome = (document.getElementById("c-nome") || {}).value || (document.getElementById("nome-cliente") || {}).value || "contrato";
+
+  // Clona o conteúdo
   var clone = pagina.cloneNode(true);
+
+  // Aplica estilos inline diretamente no clone (garante que aparece)
   clone.style.width = "210mm";
   clone.style.minHeight = "297mm";
   clone.style.padding = "18mm 16mm";
@@ -1628,29 +1710,52 @@ function gerarContratoPDF() {
   clone.style.margin = "0";
   clone.style.background = "white";
   clone.style.boxSizing = "border-box";
+  clone.style.position = "static";
+  clone.style.transform = "none";
+  clone.style.fontFamily = "'Times New Roman', Times, serif";
+
+  // Container temporário FORA do modal
   var temp = document.createElement("div");
   temp.style.position = "fixed";
-  temp.style.left = "-9999px";
+  temp.style.left = "0";
   temp.style.top = "0";
+  temp.style.zIndex = "999999";
   temp.style.background = "white";
   temp.style.width = "210mm";
+  temp.style.opacity = "0";
+  temp.style.pointerEvents = "none";
   temp.appendChild(clone);
   document.body.appendChild(temp);
-  html2pdf().from(clone).set({
-    margin: 0,
-    filename: 'contrato-' + nome.replace(/\s+/g, '-').toLowerCase() + '.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false, windowWidth: 794 },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
-    pagebreak: { mode: ['css', 'legacy'] }
-  }).save().then(function() {
-    document.body.removeChild(temp);
-    Utils.showToast("PDF baixado!", "success");
-  }).catch(function(err) {
-    document.body.removeChild(temp);
-    console.error(err);
-    Utils.showToast("Erro ao gerar PDF.", "error");
-  });
+
+  Utils.showToast("⏳ Gerando PDF, aguarde...", "info");
+
+  // Espera um pouquinho pro DOM renderizar
+  setTimeout(function() {
+    html2pdf().from(clone).set({
+      margin: 0,
+      filename: 'contrato-' + nome.replace(/\s+/g, '-').toLowerCase() + '.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 794,
+        windowHeight: clone.scrollHeight
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+      pagebreak: { mode: ['css', 'legacy'] }
+    }).save().then(function() {
+      document.body.removeChild(temp);
+      Utils.showToast("PDF baixado!", "success");
+    }).catch(function(err) {
+      document.body.removeChild(temp);
+      console.error(err);
+      Utils.showToast("Erro ao gerar PDF.", "error");
+    });
+  }, 300);
 }
 
 // ============================================================
@@ -1695,28 +1800,23 @@ window.SalvarEdicaoContrato = function() {
 };
 
 // ============================================================
-// NOTA PROMISSÓRIA — COM DATA POR EXTENSO
+// NOTA PROMISSÓRIA — DATA POR EXTENSO
 // ============================================================
 window.AbrirNotaPromissoria = function() {
   var hoje = new Date();
   var dataEmitISO = hoje.toISOString().split("T")[0];
-
   var elEmissao = document.getElementById("nota-data-emissao");
   if (elEmissao) elEmissao.value = dataEmitISO;
-
-  // Pré-preenche dia, mês e ano por extenso com a data de hoje
   var elDia = document.getElementById("nota-dia");
   if (elDia) elDia.value = hoje.getDate();
   var elMes = document.getElementById("nota-mes");
   if (elMes) elMes.value = mesesExtenso[hoje.getMonth()];
   var elAno = document.getElementById("nota-ano");
   if (elAno) elAno.value = hoje.getFullYear();
-
   var elNum = document.getElementById("nota-numero"); if (elNum) elNum.value = "";
   var elValor = document.getElementById("nota-valor"); if (elValor) elValor.value = "";
   var elVenc = document.getElementById("nota-vencimento"); if (elVenc) elVenc.value = "";
   var elEvento = document.getElementById("nota-data-evento"); if (elEvento) elEvento.value = "";
-
   var modal = document.getElementById("modal-nota-promissoria");
   if (modal) modal.classList.add("ativo");
 };
@@ -1726,17 +1826,13 @@ window.GerarNotaPromissoria = function() {
   var num = (document.getElementById("nota-numero") || {}).value || "____";
   var valor = parseFloat((document.getElementById("nota-valor") || {}).value) || 0;
   var dataEvento = (document.getElementById("nota-data-evento") || {}).value || "";
-
   var dia = (document.getElementById("nota-dia") || {}).value || "____";
   var mes = (document.getElementById("nota-mes") || {}).value || "__________________";
   var ano = (document.getElementById("nota-ano") || {}).value || "20____";
-
   var vencFmt = venc ? venc.split("-").reverse().join("/") : "____/____/______";
   var valorFmt = valor ? valor.toFixed(2).replace('.', ',') : "______,00";
   var eventoFmt = dataEvento ? dataEvento.split("-").reverse().join("/") : "____/____/______";
-
   var dataExtenso = dia + " de " + mes + " de " + ano;
-
   var notaHTML = '<div class="nota-promissoria">' +
     '<h2>NOTA PROMISSÓRIA</h2>' +
     '<div style="display:flex; justify-content:space-between;">' +
@@ -1757,7 +1853,6 @@ window.GerarNotaPromissoria = function() {
       '<div>ENDEREÇO CLIENTE:</div>' +
     '</div>' +
   '</div>';
-
   var espaco = document.getElementById("espaco-nota-promissoria-loja");
   if (!espaco) { Utils.showToast("Contrato Loja não está aberto.", "warning"); return; }
   espaco.innerHTML = notaHTML;
@@ -1898,15 +1993,7 @@ function handleSalvarFesta() {
   var hidden = document.getElementById("busca-tema-input");
   var filtro = document.getElementById("filtro-tema-input");
   var cliente = elCliente ? elCliente.value.trim() : "";
-  var cpf = elCpf ? elCpf.value.trim() : "";
-  var telefone = elTelefone ? elTelefone.value.trim() : "";
-  var endereco = elEndereco ? elEndereco.value.trim() : "";
-  var local = elLocal ? elLocal.value.trim() : "";
   var data = elData ? elData.value : "";
-  var total = elTotal ? elTotal.value || "0" : "0";
-  var sinal = elSinal ? elSinal.value || "0" : "0";
-  var obs = elObs ? elObs.value.trim() : "";
-  var valorFesta = elValorFesta ? (parseFloat(elValorFesta.value) || 0) : 0;
   if (hidden && hidden.value.trim()) State.temaAtual = hidden.value.trim();
   else if (filtro && filtro.value.trim()) State.temaAtual = filtro.value.trim();
   if (!cliente || !data || !State.temaAtual || !State.kitAtual) return Utils.showToast("Preencha cliente, data, tema e selecione o kit!", "warning");
@@ -2201,6 +2288,12 @@ function bindTudo() {
   if (b) b.onclick = function() { document.getElementById("modal-qtd-pecas").classList.remove("ativo"); };
   b = document.getElementById("btn-confirmar-qtd");
   if (b) b.onclick = function() { window.ConfirmarQtdPecas(); };
+  b = document.getElementById("btn-fechar-editar-reserva");
+  if (b) b.onclick = function() { document.getElementById("modal-editar-reserva").classList.remove("ativo"); };
+  b = document.getElementById("btn-cancelar-editar-reserva");
+  if (b) b.onclick = function() { document.getElementById("modal-editar-reserva").classList.remove("ativo"); };
+  b = document.getElementById("btn-salvar-editar-reserva");
+  if (b) b.onclick = function() { window.SalvarEditarReserva(); };
   var botoesKit = document.querySelectorAll('.btn-kit-opcao');
   botoesKit.forEach(function(btn) {
     btn.onclick = function(e) {
@@ -2330,16 +2423,5 @@ document.addEventListener('DOMContentLoaded', function() {
   listenKits();
   bindTudo();
   console.log("✅ Sistema Tralalá inicializado!");
+  console.log("✅ PARTE 3 carregada — Editar Reserva, Peças por Categoria, PDF corrigido, Festa na Mesa");
 });
-
-// Reconecta botões da Nota Promissória (com data por extenso)
-document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(function() {
-    var btnNota = document.getElementById("btn-add-nota-promissoria");
-    if (btnNota) btnNota.onclick = window.AbrirNotaPromissoria;
-    var btnGerarNota = document.getElementById("btn-gerar-nota");
-    if (btnGerarNota) btnGerarNota.onclick = window.GerarNotaPromissoria;
-  }, 700);
-});
-
-console.log("✅ Tralalá Festas — versão com data por extenso na Nota Promissória!");
