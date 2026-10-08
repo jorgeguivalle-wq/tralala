@@ -2784,3 +2784,29 @@ window.GerarContratoReserva = function(idReserva) {
 
 console.log("✅ Quantidades do contrato corrigidas!");
 
+
+// ============================================================
+// FIX DEFINITIVO — Substituição garantida
+// ============================================================
+(function() {
+  'use strict';
+
+  window.descricaoPecasDetalhada = function(pecas, pecasQtd) {
+    if (!pecas || pecas.length === 0) return "__________________________________";
+    return pecas.map(function(nomePeca) {
+      var item = State.estoqueMap[nomePeca];
+      var qtd = (pecasQtd && pecasQtd[nomePeca]) ? parseInt(pecasQtd[nomePeca]) : 1;
+      if (item) {
+        var partes = [];
+        if (item.categoria) partes.push(item.categoria);
+        partes.push(qtd + " unidade" + (qtd > 1 ? "s" : ""));
+        if (item.modelo) partes.push(item.modelo);
+        return nomePeca + " (" + partes.join(", ") + ")";
+      }
+      return nomePeca;
+    }).join("; ");
+  };
+
+  console.log("✅ FIX APLICADO: descricaoPecasDetalhada substituída!");
+  console.log("Verificação:", window.descricaoPecasDetalhada.toString().substring(0, 100));
+})();
