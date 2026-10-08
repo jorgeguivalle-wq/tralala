@@ -2370,3 +2370,147 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 500);
 });
 
+// ============================================================
+// SOBRESCREVE renderizarListaPecasModal — com campo de quantidade
+// ============================================================
+window.renderizarListaPecasModal = function(contexto, filtro) {
+  var container = document.getElementById("lista-pecas-checkbox");
+  if (!container) return;
+  if (!filtro) filtro = "";
+
+  var selecionadasAtuais = [];
+  var qtdAtuais = {};
+
+  if (contexto === "kit") {
+    selecionadasAtuais = State.kitCriando.pecas || [];
+    qtdAtuais = State.kitCriando.pecasQtd || {};
+  } else if (contexto === "contrato") {
+    selecionadasAtuais = State.pecasSelecionadasContrato || [];
+    qtdAtuais = State.pecasQtdContrato || {};
+  } else if (contexto === "kit-festa" && State.kitAtual) {
+    selecionadasAtuais = State.pecasSelecionadasKit[State.kitAtual] || [];
+    qtdAtuais = State.pecasQtdKit[State.kitAtual] || {};
+  }
+
+  var fNorm = Utils.normalizar(filtro);
+  var pecas = State.estoqueArray.filter(function(item) {
+    if (!filtro.trim()) return true;
+    return Utils.normalizar(item.nome || "").indexOf(fNorm) !== -1;
+  });
+
+  if (pecas.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:#999; font-size:13px;">Nenhuma peça encontrada.</div>';
+    return;
+  }
+
+  var html = "";
+  pecas.forEach(function(item) {
+    var nome = item.nome || "Sem nome";
+    var checked = selecionadasAtuais.indexOf(nome) !== -1 ? "checked" : "";
+    var preco = Utils.formatCurrency(item.preco || 0);
+    var categoria = item.categoria || "Geral";
+    var disponivel = parseInt(item.quantidade) || 0;
+    var qtdAtual = qtdAtuais[nome] || 1;
+
+    var img = item.imagem
+      ? '<img src="' + item.imagem + '" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">'
+      : '<div style="width:48px;height:48px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#888;flex-shrink:0;">Sem Foto</div>';
+
+    html += '<label class="peca-check-item" style="align-items:flex-start; gap:10px;">' +
+      '<input type="checkbox" value="' + nome.replace(/"/g, '&quot;') + '" ' + checked + ' style="margin-top:14px;" class="chk-peca-modal">' +
+      img +
+      '<div style="flex:1; margin-left:6px;">' +
+        '<div class="nome-peca" style="font-weight:600;">' + nome + '</div>' +
+        '<div style="font-size:11px; color:var(--text-muted); margin-top:2px;">' +
+          '🏷️ ' + categoria + ' &nbsp;|&nbsp; 💰 ' + preco + ' &nbsp;|&nbsp; 📦 Disponível: <b>' + disponivel + '</b>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex; flex-direction:column; align-items:center; gap:2px; margin-top:6px;">' +
+        '<label style="font-size:10px; color:var(--text-muted); font-weight:600;">QTD</label>' +
+        '<input type="number" class="qtd-peca-modal" data-peca="' + nome.replace(/"/g, '&quot;') + '" value="' + qtdAtual + '" min="1" max="' + disponivel + '" ' + (checked ? '' : 'disabled') + ' style="width:55px; padding:6px; border:1.5px solid #ddd; border-radius:6px; text-align:center; font-size:12px; font-weight:600; background:' + (checked ? '#fff' : '#f0f0f0') + ';">' +
+      '</div>' +
+    '</label>';
+  });
+  container.innerHTML = html;
+
+  var checkboxes = container.querySelectorAll('.chk-peca-modal');
+  var contador = document.getElementById("contador-pecas-selecionadas");
+  if (contador) contador.textContent = selecionadasAtuais.length + " selecionadas";
+
+  // Liga/desliga o input de quantidade conforme o checkbox
+  checkboxes.forEach(function(cb) {
+    var nomePeca = cb.value;
+    var inputQtd = container.querySelector('.qtd-peca-modal[data-peca="' + nomePeca.replace(/"/g, '\\"') + '"]');
+    cb.onchange = function() {
+      if (inputQtd) {
+        inputQtd.disabled = !cb.checked;
+        inputQtd.style.background = cb.checked ? "#fff" : "#f0f0f0";
+      }
+      var count = container.querySelectorAll('.chk-peca-modal:checked').length;
+      if (contador) contador.textContent = count + " selecionadas";
+    };
+  });
+
+  // Valida se a qtd não passa do disponível
+  container.querySelectorAll('.qtd-peca-modal').forEach(function(inp) {
+    inp.oninput = function() {
+      var max = parseInt(inp.max) || 0;
+      var val = parseInt(inp.value) || 0;
+      if (val > max) {
+        inp.value = max;
+        Utils.showToast("⚠️ Máximo disponível: " + max, "warning");
+      }
+      if (val < 1) inp.value = 1;
+    };
+  });
+};
+
+// ============================================================
+// SOBRESCREVE confirmarModalPecas — salva quantidade também
+// ============================================================
+window.confirmarModalPecas = function() {
+  var container = document.getElementById("lista-pecas-checkbox");
+  var selecionadas = [];
+  var qtdSelecionadas = {};
+  if (container) {
+    container.querySelectorAll('.chk-peca-modal:checked').forEach(function(cb) {
+      var nome = cb.value;
+      selecionadas.push(nome);
+      var inp = container.querySelector('.qtd-peca-modal[data-peca="' + nome.replace(/"/g, '\\"') + '"]');
+      qtdSelecionadas[nome] = inp ? (parseInt(inp.value) || 1) : 1;
+    });
+  }
+
+  if (modalPecasContexto === "kit") {
+    State.kitCriando.pecas = selecionadas;
+    State.kitCriando.pecasQtd = qtdSelecionadas;
+    atualizarInfoKitCriando();
+    Utils.showToast("✅ " + selecionadas.length + " peça(s) selecionada(s)", "success");
+  } else if (modalPecasContexto === "contrato") {
+    State.pecasSelecionadasContrato = selecionadas;
+    State.pecasQtdContrato = qtdSelecionadas;
+    var selectPecas = document.getElementById("c-pecas");
+    if (selectPecas) { for (var i = 0; i < selectPecas.options.length; i++) { selectPecas.options[i].selected = selecionadas.indexOf(selectPecas.options[i].value) !== -1; } }
+    var info = document.getElementById("c-pecas-info");
+    if (info) info.textContent = selecionadas.length + " peça(s) selecionada(s).";
+    Utils.showToast("✅ " + selecionadas.length + " peça(s) no contrato", "success");
+  } else if (modalPecasContexto === "kit-festa" && State.kitAtual) {
+    State.pecasSelecionadasKit[State.kitAtual] = selecionadas;
+    State.pecasQtdKit[State.kitAtual] = qtdSelecionadas;
+    atualizarInfoKitFesta();
+    atualizarResumoSelecao();
+    Utils.showToast("✅ " + selecionadas.length + " peça(s) salva(s) no " + State.kitAtual, "success");
+  }
+
+  document.getElementById("modal-pecas").classList.remove("ativo");
+};
+
+// ============================================================
+// Inicializa State com os campos novos (se não existir)
+// ============================================================
+if (!State.pecasQtdKit) State.pecasQtdKit = {};
+if (!State.pecasQtdContrato) State.pecasQtdContrato = {};
+if (!State.kitCriando.pecasQtd) State.kitCriando.pecasQtd = {};
+
+console.log("✅ Campo de QUANTIDADE adicionado ao modal de peças!");
+
