@@ -2425,3 +2425,150 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log("✅ Sistema Tralalá inicializado!");
   console.log("✅ PARTE 3 carregada — Editar Reserva, Peças por Categoria, PDF corrigido, Festa na Mesa");
 });
+
+
+// ============================================================
+// FIX — Impressão correta (só o contrato)
+// ============================================================
+(function() {
+  'use strict';
+
+  window.ImprimirContrato = function() {
+    var preview = document.getElementById("contrato-preview-content");
+    if (!preview) return Utils.showToast("Nenhum contrato aberto.", "warning");
+
+    var pagina = preview.querySelector('.pagina-contrato');
+    if (!pagina) return Utils.showToast("Contrato não encontrado.", "warning");
+
+    // Abre uma nova janela só com o contrato
+    var janelaPrint = window.open('', '_blank', 'width=900,height=700');
+    if (!janelaPrint) return Utils.showToast("Permita popups para imprimir.", "warning");
+
+    // Copia os estilos
+    var estilos = "";
+    try {
+      // Pega todos os style tags
+      document.querySelectorAll('style, link[rel="stylesheet"]').forEach(function(el) {
+        if (el.tagName === 'STYLE') {
+          estilos += '<style>' + el.innerHTML + '</style>';
+        } else if (el.tagName === 'LINK') {
+          estilos += '<link rel="stylesheet" href="' + el.href + '">';
+        }
+      });
+    } catch (e) { console.warn(e); }
+
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Contrato</title>' +
+      estilos +
+      '<style>' +
+      '@page { size: A4 portrait; margin: 0; }' +
+      'body { margin: 0; padding: 0; background: white; }' +
+      '.pagina-contrato { box-shadow: none !important; margin: 0 auto !important; page-break-after: avoid !important; }' +
+      '</style>' +
+      '</head><body>' +
+      pagina.outerHTML +
+      '</body></html>';
+
+    janelaPrint.document.open();
+    janelaPrint.document.write(html);
+    janelaPrint.document.close();
+
+    janelaPrint.focus();
+    setTimeout(function() {
+      janelaPrint.print();
+    }, 500);
+  };
+
+  // Reconecta o botão de imprimir
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+      var btnImprimir = document.getElementById("btn-imprimir-contrato");
+      if (btnImprimir) {
+        btnImprimir.onclick = function() { window.ImprimirContrato(); };
+      }
+    }, 800);
+  });
+
+  console.log("✅ FIX: Impressão abre só o contrato em nova janela");
+})();
+
+
+// ============================================================
+// FIX — PDF: ajusta largura corretamente
+// ============================================================
+(function() {
+  'use strict';
+
+  window.gerarContratoPDF = function() {
+    var elemento = document.getElementById("contrato-preview-content");
+    if (!elemento) return;
+    if (typeof html2pdf === 'undefined') { alert("Biblioteca PDF não carregada."); return; }
+
+    var pagina = elemento.querySelector('.pagina-contrato');
+    if (!pagina) { Utils.showToast("Nenhum contrato gerado ainda.", "warning"); return; }
+
+    var nome = (document.getElementById("c-nome") || {}).value
+      || (document.getElementById("nome-cliente") || {}).value
+      || "contrato";
+
+    // Clona o conteúdo
+    var clone = pagina.cloneNode(true);
+
+    // Container temporário FORA do modal, INVISÍVEL mas RENDERIZÁVEL
+    var temp = document.createElement("div");
+    temp.style.position = "absolute";
+    temp.style.left = "-10000px";
+    temp.style.top = "0";
+    temp.style.background = "white";
+    temp.style.width = "210mm";
+    temp.style.margin = "0";
+    temp.style.padding = "0";
+
+    // Aplica estilos inline
+    clone.style.width = "210mm";
+    clone.style.minHeight = "297mm";
+    clone.style.padding = "18mm 16mm";
+    clone.style.boxShadow = "none";
+    clone.style.margin = "0";
+    clone.style.background = "white";
+    clone.style.boxSizing = "border-box";
+    clone.style.fontFamily = "'Times New Roman', Times, serif";
+    clone.style.display = "block";
+
+    temp.appendChild(clone);
+    document.body.appendChild(temp);
+
+    Utils.showToast("⏳ Gerando PDF, aguarde...", "info");
+
+    setTimeout(function() {
+      var opt = {
+        margin: 0,
+        filename: 'contrato-' + nome.replace(/\s+/g, '-').toLowerCase() + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          logging: false,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 794,
+          width: 794,
+          height: clone.scrollHeight
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+        pagebreak: { mode: ['avoid-all', 'css'] }
+      };
+
+      html2pdf().from(clone).set(opt).save().then(function() {
+        if (temp.parentNode) temp.parentNode.removeChild(temp);
+        Utils.showToast("PDF baixado!", "success");
+      }).catch(function(err) {
+        if (temp.parentNode) temp.parentNode.removeChild(temp);
+        console.error(err);
+        Utils.showToast("Erro ao gerar PDF.", "error");
+      });
+    }, 400);
+  };
+
+  console.log("✅ FIX: PDF com largura correta");
+})();
