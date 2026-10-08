@@ -1217,3 +1217,1129 @@ window.PromoverOrcamento = function(idOrcamento) {
 // ============================================================
 // FEITO POR NEO FLUX
 // ============================================================
+
+// ============================================================
+// REUNIÕES
+// ============================================================
+function iniciarPainelReunioes() {
+  if (!db) return;
+  db.ref('reunioes').on('value', function(snap) {
+    var val = snap.val(); var arr = [];
+    if (val && typeof val === 'object') {
+      Object.keys(val).forEach(function(id) {
+        if (val[id]) { var copy = { id: id }; for (var k in val[id]) { if (val[id].hasOwnProperty(k)) copy[k] = val[id][k]; } arr.push(copy); }
+      });
+    }
+    arr.sort(function(a, b) { return new Date(a.dataHora || 0) - new Date(b.dataHora || 0); });
+    var container = document.getElementById("lista-reunioes-container");
+    if (!container) return;
+    if (arr.length === 0) { container.innerHTML = '<p style="color:#999; text-align:center;">Nenhuma reunião agendada.</p>'; return; }
+    var html = "";
+    arr.forEach(function(r) {
+      var dataFmt = r.dataHora ? r.dataHora.replace('T', ' às ') : 'Não informada';
+      html += '<div class="card-reuniao" style="border-left-color:#27ae60;">' +
+        '<div class="reserva-header"><strong>👤 ' + (r.cliente || 'Sem nome') + '</strong><span class="reserva-badge" style="background:#27ae60;">AGENDADA</span></div>' +
+        '<div class="reserva-body"><p>📅 ' + dataFmt + '</p>' + (r.pauta ? '<p>📝 ' + r.pauta + '</p>' : '') + '</div>' +
+        '<button type="button" style="width:100%; padding:6px; margin-top:8px; background:#e74c3c; color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="window.ExcluirReuniao(\'' + r.id + '\')">🗑️ Excluir</button></div>';
+    });
+    container.innerHTML = html;
+  });
+}
+
+window.ExcluirReuniao = function(idReuniao) {
+  if (confirm("Excluir esta reunião?")) {
+    Database.excluirReuniaoNuvem(idReuniao).then(function() { Utils.showToast("Reunião removida!", "success"); }).catch(function() { Utils.showToast("Falha ao remover.", "error"); });
+  }
+};
+
+// ============================================================
+// PLANILHA E GRÁFICO
+// ============================================================
+function renderPlanilhaVendas() {
+  var tbody = document.querySelector("#tabela-planilha-corpo tbody");
+  if (!tbody) return;
+  var mesSelecionado = (document.getElementById("seletor-mes-planilha") || {}).value || "";
+  var reservasDoMes = State.reservas.filter(function(r) {
+    if (!r.data) return false;
+    var p = r.data.split("-");
+    if (p.length !== 3) return false;
+    var idx = parseInt(p[1]) - 1;
+    return mesesAno[idx] === mesSelecionado;
+  });
+  if (reservasDoMes.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding:15px;">Nenhuma venda neste mês.</td></tr>'; return; }
+  var html = "";
+  reservasDoMes.forEach(function(r) {
+    var total = parseFloat(r.total) || 0;
+    var frete = parseFloat(r.frete) || 0;
+    html += '<tr><td>' + (r.cliente || '') + '</td><td>' + (r.kit || 'Não informado') + '</td><td>R$ ' + (total + frete).toFixed(2) + '</td><td style="text-align:center;">—</td></tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function renderGraficoAnual() {
+  if (typeof Chart === 'undefined') return;
+  var painel = document.getElementById('painel-grafico-faturamento');
+  if (painel) painel.style.display = 'block';
+  var ctx = document.getElementById('graficoAnual');
+  if (!ctx) return;
+  if (chartInstance) chartInstance.destroy();
+  var valores = new Array(12).fill(0);
+  State.reservas.forEach(function(r) {
+    if (!r.data) return;
+    var p = r.data.split("-");
+    if (p.length !== 3) return;
+    var idx = parseInt(p[1]) - 1;
+    if (idx >= 0 && idx < 12) valores[idx] += (parseFloat(r.total) || 0) + (parseFloat(r.frete) || 0);
+  });
+  chartInstance = new Chart(ctx, { type: 'bar', data: { labels: mesesAno, datasets: [{ label: 'Faturamento (R$)', data: valores, backgroundColor: '#a3536a' }] }, options: { responsive: true, maintainAspectRatio: false } });
+}
+
+function renderRelatorioGeralPontos(dadosPontos) {
+  var container = document.querySelector("#lista-pontos-geral-corpo");
+  if (!container) return;
+  var html = ""; var tem = false;
+  for (var usuario in dadosPontos) {
+    if (dadosPontos.hasOwnProperty(usuario)) {
+      var dias = dadosPontos[usuario];
+      for (var dia in dias) {
+        if (dias.hasOwnProperty(dia)) {
+          tem = true;
+          var p = dias[dia];
+          html += '<tr><td>' + usuario.replace(/_/g, ".") + '</td><td>' + Utils.formatDateBR(dia) + '</td>' +
+            '<td style="color:var(--success);">' + (p.entrada || "--:--") + '</td><td style="color:var(--error);">' + (p.saida || "--:--") + '</td></tr>';
+        }
+      }
+    }
+  }
+  container.innerHTML = tem ? html : '<tr><td colspan="4" style="text-align:center; color:#999;">Nenhum ponto registrado.</td></tr>';
+}
+
+// ============================================================
+// CONTRATO 1 — PEGUE E MONTE
+// ============================================================
+function gerarContratoPegueMonte(dados) {
+  var dataFmt = dados.data ? String(dados.data).split("-").reverse().join("/") : "____/____/______";
+  var valorNum = parseFloat(dados.valor) || 0;
+  var valorFmt = valorNum ? valorNum.toFixed(2).replace('.', ',') : "______,____";
+  var dataAtual = new Date().toLocaleDateString('pt-BR');
+  var nome = dados.nome || "_________________________";
+  var cpf = dados.cpf || "_________________________";
+  var endereco = dados.endereco || "_________________________";
+  var pecasDetalhadas = descricaoPecasDetalhada(dados.pecas, dados.pecasQtd);
+
+  return '<div class="pagina-contrato">' +
+    '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
+    '<div class="titulo-contrato">CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO</div>' +
+    '<div class="dados-contratada"><span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS CNPJ: 21.918.863/0001-12</div>' +
+    '<div class="dados-contratante"><span class="negrito">CONTRATANTE:</span> ' + nome + '</div>' +
+    '<div class="dados-contratante"><span class="negrito">CPF:</span> ' + cpf + '</div>' +
+    '<div class="dados-contratante"><span class="negrito">ENDEREÇO CLIENTE:</span> ' + endereco + '</div>' +
+    '<div class="dados-contratante"><span class="negrito">DATA DA FESTA:</span> ' + dataFmt + '</div>' +
+    '<p style="margin-top:4px;">As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.</p>' +
+    '<div class="clausula-titulo">DO OBJETO DO CONTRATO</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 1ª.</span> É objeto do presente contrato a prestação de serviço de Aluguel de ' + pecasDetalhadas + ' à CONTRATANTE (especificado na Clausula 5ª), que a CONTRATADA declara ser de sua propriedade, para o evento que se realizará no dia ' + dataFmt + ', conforme endereço especificado abaixo:</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 2ª.</span> A CONTRATANTE não poderá, sem prévia autorização da CONTRATADA, sublocar, emprestar, ou ceder os móveis locados.</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 3ª.</span> A CONTRATANTE deverá retirar os itens no seguinte endereço QR 308 CONJUNTO 11 lote 20 - Samambaia sul, no dia anterior ao evento, munido de cópia do comprovante de residência em seu nome, cópia do CPF e RG, documentos necessários para locação.</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 4ª.</span> É dever da CONTRATADA oferecer o serviço de acordo com as especificações do contrato. É dever da CONTRATANTE entregar os itens conforme descrito na clausula 1ª no dia seguinte ao evento, até as 12h00 no mesmo local de retirada.</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 5ª.</span> O serviço contratado no presente instrumento será remunerado pela quantia de R$ ' + valorFmt + ', devendo ser pago no ato da reserva.</div>' +
+    '<div class="clausula-texto">Em dinheiro ou depósito bancário (Caixa Econômica Federal, Agencia: 2403, Op.001 Conta corrente: 21702-0 em nome de Aline Alves de Araújo do Valle, CPF: 864.331.211-87 pix) ou ( Banco Itaú, agencia 8624, conta corrente 06209-0, Aline Alves de Araújo, CPF: 864.331.211.87) ou ( Banco do Brasil, Agencia:1230-0, conta corrente 39.464-5, em nome Jorge Leonardo Sampaio do Valle, CPF: 794.883.315-34)</div>' +
+    '<div class="clausula-titulo">DA DEVOLUÇÃO</div>' +
+    '<div class="clausula-texto"><span class="negrito">Cláusula 6ª.</span> Caso Haja perda, Danos, Quebra Ou não devolução dos itens, a CONTRATANTE arcará com 50% do valor de uma peça nova (caso haja recuperação), não havendo recuperação será cobrado o valor de mercado por cada peça, em dinheiro ou outra forma que convier às PARTES. A CONTRATANTE assinará nota promissória referente ao valor real do kit alugado que será devolvido na entrega do mesmo.</div>' +
+    '<div class="paragrafo">Parágrafo primeiro: É dever da CONTRATANTE devolver as peças limpas e embaladas na caixa como foi entregue. É proibido, furar maquete, usar cola quente no painel, peças e mesas, usar confeitos coloridos, vela faísca estes itens danificam e mancham peças e mobília.</div>' +
+    '<div class="paragrafo">O tapete deverá ser devolvido limpo, caso contrário pagará multa de limpeza de R$ 40,00 (quarenta reais).</div>' +
+    '<div class="clausula-titulo">DO CANCELAMENTO</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 7ª.</span> Em caso de desistência a CONTRATANTE pagará multa de quebra de contrato de 50% do valor total do contrato.</div>' +
+    '<div class="paragrafo">Parágrafo primeiro: Em caso de força maior, a CONTRATANTE, poderá solicitar uma carta credito na quantia paga, para utilização de até um ano a partir da data da notificação. Sendo que carta crédito não poderá ser transferida para outro titular, nem prorrogada. Cabendo a CONTRATADA confirmar disponibilidade de peças e data. A CONTRATANTE deverá comprovar o fato ocorrido com documentos oficiais.</div>' +
+    '<div class="paragrafo">Parágrafo Segundo. A Parte impossibilitada de cumprir sua obrigação deverá notificar a outra, de imediato, acerca da extensão do problema e o prazo estimado para remarcação da nova data.</div>' +
+    '<div class="clausula-titulo">DO FORO</div>' +
+    '<div class="clausula-texto">As Partes elegem o foro da Circunscrição Judiciária de Brasília – DF para dirimir os conflitos que porventura venham a surgir em decorrência da execução do presente contrato, com renúncia de qualquer outro, por mais privilegiado que seja.</div>' +
+    '<div class="clausula-texto">E por assim estarem de acordo, as partes celebram o presente instrumento em 02 (duas) vias de igual teor e validade, todos assinados em presença das testemunhas abaixo nominadas e identificadas para que produza todos os efeitos legais.</div>' +
+    '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div><div class="linha-assinatura"></div><div class="assinatura-nome">TRALALÁ DECORAÇOES DE FESTA CNPJ:21.918.863/0001-12</div></div>' +
+    '<div class="assinatura"><div class="assinatura-nome">CONTRATANTE:</div><div class="linha-assinatura"></div><div class="assinatura-nome">' + nome + ' — CPF: ' + cpf + '</div></div>' +
+    '<div style="text-align:center; margin-top:8px; font-size:10pt;">Brasília-DF, ' + dataAtual + '.</div>' +
+    '<div class="rodape-loja">TRALALÁ DECORAÇÕES DE FESTAS QR 308 CONJUNTO 14 LOTE 11, SAMAMBAIA SUL. (61) 9. 8191-9559</div>' +
+  '</div>';
+}
+
+// ============================================================
+// CONTRATO 3 — PEGUE E MONTE (LOJA)
+// ============================================================
+function gerarContratoPegueMonteLoja(dados) {
+  var dataFmt = dados.data ? String(dados.data).split("-").reverse().join("/") : "____/____/______";
+  var valorNum = parseFloat(dados.valor) || 0;
+  var valorFmt = valorNum ? valorNum.toFixed(2).replace('.', ',') : "______,____";
+  var dataAtual = new Date().toLocaleDateString('pt-BR');
+  var nome = dados.nome || "_________________________";
+  var cpf = dados.cpf || "_________________________";
+  var endereco = dados.endereco || "_________________________";
+  var telefone = dados.telefone || "(61) ________________";
+
+  var linhasTabela = "";
+  if (dados.pecas && dados.pecas.length > 0) {
+    dados.pecas.forEach(function(nomePeca) {
+      var item = State.estoqueMap[nomePeca];
+      var qtd = dados.pecasQtd && dados.pecasQtd[nomePeca] ? parseInt(dados.pecasQtd[nomePeca]) : 1;
+      var preco = item ? (parseFloat(item.preco) || 0) : 0;
+      var descricao = nomePeca;
+      if (item) {
+        var partes = [];
+        if (item.categoria) partes.push(item.categoria);
+        if (item.modelo) partes.push(item.modelo);
+        if (partes.length > 0) descricao += " (" + partes.join(" — ") + ")";
+      }
+      linhasTabela += '<tr><td style="text-align:center;">' + qtd + '</td><td>' + descricao + '</td>' +
+        '<td style="text-align:center;">R$ ' + preco.toFixed(2).replace('.', ',') + '</td>' +
+        '<td style="text-align:center;">R$ ' + (preco * qtd).toFixed(2).replace('.', ',') + '</td></tr>';
+    });
+  } else {
+    for (var i = 0; i < 3; i++) {
+      linhasTabela += '<tr><td style="text-align:center; height:24px;">&nbsp;</td><td>&nbsp;</td><td style="text-align:center;">&nbsp;</td><td style="text-align:center;">&nbsp;</td></tr>';
+    }
+  }
+
+  return '<div class="pagina-contrato">' +
+    '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
+    '<div class="titulo-contrato">CONTRATO DE LOCAÇÃO PEGUE & MONTE</div>' +
+    '<div class="dados-contratada"><span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS</div>' +
+    '<div class="dados-contratada"><span class="negrito">CNPJ:</span> 21.918.863/0001-12</div>' +
+    '<div class="dados-contratada"><span class="negrito">E-MAIL:</span> tralaladecoracoes@gmail.com</div><br>' +
+    '<div class="dados-contratante"><span class="negrito">CONTRATANTE:</span> ' + nome + '</div>' +
+    '<div class="dados-contratante"><span class="negrito">CPF:</span> ' + cpf + '</div>' +
+    '<div class="dados-contratante"><span class="negrito">ENDEREÇO CLIENTE:</span> ' + endereco + '</div>' +
+    '<div class="dados-contratante"><span class="negrito">TELEFONE:</span> ' + telefone + '</div>' +
+    '<div class="dados-contratante"><span class="negrito">DATA DA FESTA:</span> ' + dataFmt + '</div>' +
+    '<div class="dados-contratante"><span class="negrito">RETIRADA DOS ITENS:</span> ____/____/______, ATÉ AS ____:____</div>' +
+    '<div class="dados-contratante"><span class="negrito">DEVOLUÇÃO DOS ITENS:</span> ____/____/______, ATÉ AS 11H00 (caso não seja entregue na data e horário combinado será cobrado o valor de uma locação para cada dia de atraso).</div>' +
+    '<p style="margin-top:6px;">As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.</p>' +
+    '<div class="clausula-titulo">DO OBJETO DO CONTRATO</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 1ª.</span> É objeto do presente contrato a prestação de serviço de Locação de:</div>' +
+    '<table class="tabela-itens"><thead><tr><th style="width:60px;">QTDE.</th><th>DESCRIÇÃO DO PRODUTO</th><th style="width:110px;">VALOR UNITÁRIO</th><th style="width:110px;">VALOR TOTAL</th></tr></thead><tbody>' + linhasTabela + '</tbody></table>' +
+    '<div class="paragrafo">Parágrafo primeiro. A CONTRATANTE não poderá, sem prévia autorização da CONTRATADA, sublocar, emprestar, ou ceder os móveis locados.</div>' +
+    '<div class="clausula-titulo">OBRIGAÇÃO DA CONTRATADA</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 2ª.</span> O serviço contratado no presente instrumento deverá ser pago no ato da reserva.</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 3ª.</span> É dever da CONTRATADA oferecer os itens de acordo com as especificações do contrato.</div>' +
+    '<div class="clausula-texto">Em dinheiro ou depósito bancário (Caixa Econômica Federal, Agencia: 2403, Op.001 Conta corrente: 21702-0 em nome de Aline Alves de Araújo do Valle, CPF: 864.331.211-87 pix).</div>' +
+    '<div class="paragrafo">Parágrafo primeiro. Não será aceito, sob hipótese alguma, pagamento pós-festa.</div>' +
+    '<div class="clausula-texto"><span class="negrito">Cláusula 4ª.</span> O recibo do depósito da transferência bancária ou pix, referente ao valor, efetuada na conta informada pela CONTRATADA, servirá para a CONTRATANTE como comprovante de cumprimento da obrigação de pagar.</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 5ª.</span> É dever da CONTRATANTE devolver o(s) produto(s) de acordo com o que foi locado no dia informado neste contrato.</div>' +
+    '<div class="paragrafo">Parágrafo único. A CONTRATANTE deverá retirar e entregar os itens no endereço no seguinte endereço Qn 508 CONJUNTO 03 Loja 06, Samambaia Sul, munido de cópia do comprovante de residência em seu nome, cópia ou foto CPF e RG documentos necessários para a retiradas das peças.</div>' +
+    '<div class="clausula-titulo">DA DEVOLUÇÃO</div>' +
+    '<div class="clausula-texto"><span class="negrito">Cláusula 6ª.</span> Caso Haja perda, Danos, Quebra ou não devolução dos itens, a CONTRATANTE arcará com 50% do valor de uma peça nova para reposição (caso haja recuperação) NÃO Havendo recuperação, será cobrado o valor de mercado por cada item, em dinheiro ou outra forma que convier às PARTES. Em caso de quebra ou extravio de peças a CONTRATANTE assinará uma nota promissória se comprometendo-se com o pagamento que será devolvida após a quitação do debito.</div>' +
+    '<div class="paragrafo">Parágrafo primeiro: É dever da CONTRATANTE devolver as peças como foi entregue, no dia e horário marcado, será cobrado multa de uma diária dos itens alocados com cada dia de atraso da devolução.</div>' +
+    '<div class="paragrafo">OBS: É proibido, furar o bolo cenográfico, usar cola quente no painel, peças e mesas, usar confeitos coloridos, vela faísca estes itens danificam e mancham peças e mobília (uso estará sujeito em caso de avarias, pagar pela recuperação ou peça nova caso não seja possível recuperação).</div>' +
+    '<div class="paragrafo">O tapete deverá ser devolvido com foi entregue sem doces e bolos, caso contrário pagará multa de limpeza de R$ 40,00 (quarenta reais).</div>' +
+    '<div class="paragrafo">Parágrafo Segundo: É dever da CONTRATANTE devolver o kit ou itens na data informada neste contrato, caso contrato será cobrado o valor de uma locação por cada dia de atraso.</div>' +
+    '<div class="clausula-titulo">DO CANCELAMENTO</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 7ª.</span> Em caso de desistência a CONTRATANTE arcará com a multa de quebra de contrato, 50% do valor total do seu contrato. Parágrafo primeiro: Em caso de força maior, a CONTRATANTE, poderá solicitar uma carta credito na quantia paga, para utilização de até um ano a partir da data da notificação. Sendo que essa carta crédito não poderá ser transferida para outro titular, nem prorrogada. Cabendo a CONTRATADA confirmar disponibilidade de peças e data. A CONTRATANTE deverá comprovar o fato ocorrido com documentos oficiais.</div>' +
+    '<div class="paragrafo">Parágrafo Segundo. A Parte impossibilitada de cumprir sua obrigação deverá notificar a outra, de imediato, acerca da extensão do problema e o prazo estimado para remarcação da nova data.</div>' +
+    '<div class="clausula-titulo">DAS CONDIÇÕES GERAIS</div>' +
+    '<div class="clausula-titulo">DO FORO</div>' +
+    '<div class="clausula-texto">As Partes elegem o foro da Circunscrição Judiciária de Brasília – DF para dirimir os conflitos que porventura venham a surgir em decorrência da execução do presente contrato, com renúncia de qualquer outro, por mais privilegiado que seja.</div>' +
+    '<div class="clausula-texto">E por assim estarem de acordo, o contrato será sendo assinado de forma digitalizada, sendo as vias compartilhadas em meio eletrônico e permitida a assinatura híbrida (física e digital).</div>' +
+    '<div id="espaco-nota-promissoria-loja"></div>' +
+    '<div style="text-align:center; margin-top:8px;">Brasília-DF, ' + dataAtual + '.</div>' +
+    '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div><div class="linha-assinatura"></div><div class="assinatura-nome">TRALALÁ DECORAÇÕES DE FESTA — CNPJ: 21.918.863/0001-12</div><div class="assinatura-nome" style="font-size:9pt; margin-top:4px;">REPRESENTANTE LEGAL: ALINE ARAUJO DO VALLE</div></div>' +
+    '<div class="assinatura"><div class="assinatura-nome">CONTRATANTE:</div><div class="linha-assinatura"></div><div class="assinatura-nome">' + nome + ' — CPF: ' + cpf + '</div></div>' +
+    '<div class="rodape-loja">TRALALÁ DECORAÇÕES DE FESTAS — QN 508 CONJUNTO 03 LOJA 06, SAMAMBAIA SUL. (61) 9. 8191-9559</div>' +
+  '</div>';
+}
+
+// ============================================================
+// CONTRATO 2 — COM FRETE
+// ============================================================
+function gerarContratoComFrete(dados) {
+  var dataFmt = dados.data ? String(dados.data).split("-").reverse().join("/") : "____/____/______";
+  var valorNum = parseFloat(dados.valor) || 0;
+  var valorFmt = valorNum ? valorNum.toFixed(2).replace('.', ',') : "______,____";
+  var valorMetade = valorNum ? (valorNum/2).toFixed(2).replace('.', ',') : "______,____";
+  var dataAtual = new Date().toLocaleDateString('pt-BR');
+  var nome = dados.nome || "_________________________";
+  var cpf = dados.cpf || "_________________________";
+  var endereco = dados.endereco || "_________________________";
+  var telefone = dados.telefone || "(61) ________________";
+  var local = dados.local || "_________________________";
+  var horario = dados.horario || "____:____";
+  var pecasTexto = descricaoPecasDetalhada(dados.pecas, dados.pecasQtd);
+
+  return '<div class="pagina-contrato">' +
+    '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
+    '<div class="titulo-contrato">CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO</div>' +
+    '<div class="dados-contratada"><span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS — CNPJ: 21.918.863/0001-12</div>' +
+    '<div class="dados-contratante"><span class="negrito">CONTRATANTE:</span> ' + nome + '</div>' +
+    '<div class="dados-contratante"><span class="negrito">CPF:</span> ' + cpf + '</div>' +
+    '<div class="dados-contratante"><span class="negrito">ENDEREÇO:</span> ' + endereco + '</div>' +
+    '<div class="dados-contratante"><span class="negrito">TELEFONE:</span> ' + telefone + '</div>' +
+    '<div class="dados-contratante"><span class="negrito">LOCAL DO EVENTO:</span> ' + local + '</div>' +
+    '<div class="dados-contratante"><span class="negrito">DATA DA FESTA:</span> ' + dataFmt + ' às ' + horario + '</div>' +
+    '<p style="margin-top:4px;">As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.</p>' +
+    '<div class="clausula-titulo">DO OBJETO DO CONTRATO</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 1ª.</span> É objeto do presente contrato a prestação de serviço de Locação de: ' + pecasTexto + ', à CONTRATANTE (especificado na Clausula 5ª), que a CONTRATADA declara ser de sua propriedade, para o evento que se realizará no dia ' + dataFmt + ', conforme endereço especificado abaixo:</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 2ª.</span> A CONTRATANTE deverá fornecer à CONTRATADA todas as informações necessárias para a realização do serviço, devendo especificar o material, tipo e a quantidade.</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 3ª.</span> É dever da CONTRATANTE devolver o(s) produto(s) de acordo com o que foi locado no término da festa. A CONTRATADA efetuara a retirada dos itens no dia ' + dataFmt + '.</div>' +
+    '<div class="paragrafo">Parágrafo único. A CONTRATADA deverá entregar e buscar o produto no endereço mencionado na cláusula 1ª, em caso de a CONTRATANTE optar por fazer retirada do produto no local, deverá devolvê-lo no local mencionado na cláusula 1ª conforme combinado com a CONTRATADA.</div>' +
+    '<div class="clausula-titulo">OBRIGAÇÃO DA CONTRATADA</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 4ª.</span> É dever da CONTRATADA oferecer o serviço de acordo com as especificações da CONTRATANTE, devendo o material ser entregue no dia ' + dataFmt + ' até as ' + horario + ' no endereço já especificado na Clausula 1ª.</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 5ª.</span> A CONTRATADA fornecerá as seguintes peças:</div>' +
+    '<div class="paragrafo">(X) ' + pecasTexto + '</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 6ª.</span> O serviço contratado no presente instrumento será remunerado pela quantia de R$ ' + valorFmt + ', pago no ato da reserva:</div>' +
+    '<div class="paragrafo">• R$ ' + valorMetade + ' (no ato da reserva)</div>' +
+    '<div class="paragrafo">• R$ ' + valorMetade + ' (na montagem da festa)</div>' +
+    '<div class="paragrafo">*pagamentos em cartão de credito e debito tem acréscimo da taxa da operadora do cartão.</div>' +
+    '<div class="clausula-texto">Em dinheiro ou depósito bancário (Caixa Econômica Federal, Agencia: 2403, Op.001 Conta corrente: 21702-0 em nome de Aline Alves de Araújo do Valle, CPF: 864.331.211-87) ou ( Banco Itaú, agencia 8624, conta corrente 06209-0, Aline Alves de Araújo, CPF: 864.331.211.87) ou ( Banco do Brasil, Agencia:1230-0, conta corrente 39.464-5, em nome Jorge Leonardo Sampaio do Valle, CPF: 794.883.315-34) CHAVE PIX CNPJ: 21.918.863/0001-12</div>' +
+    '<div class="paragrafo">Parágrafo primeiro. Não será aceito, sob hipótese alguma, pagamento pós-festa.</div>' +
+    '<div class="paragrafo">Parágrafo Segundo. No valor acima referido já está incluso frete.</div>' +
+    '<div class="paragrafo">Parágrafo Terceiro. O valor do frete é referente à entrega e à retirada que será realizada pela CONTRATADA no local do evento ou onde for combinado entre as PARTES.</div>' +
+    '<div class="paragrafo">Parágrafo quarto. NÃO está incluso no valor da locação de peças e mobílias, o serviço de arrumação de mesa, como colocar doces, bolo, lembrancinhas e personalizados feitos por terceiros, para esse serviço favor consultar valores com a CONTRATADA.</div>' +
+    '<div class="clausula-texto"><span class="negrito">Cláusula 7ª.</span> O recibo do depósito da transferência bancária, referente ao sinal, efetuada na conta informada para a CONTRATADA, servirá para a CONTRATANTE como comprovante de cumprimento da obrigação de pagar.</div>' +
+    '<div class="clausula-titulo">DA DEVOLUÇÃO</div>' +
+    '<div class="clausula-texto"><span class="negrito">Cláusula 8ª.</span> Caso Haja perda, Danos, Quebra Ou não devolução dos itens, a CONTRATANTE arcará com 50% do valor de uma peça nova para reposição (caso haja recuperação) NÃO Havendo recuperação, será cobrado o valor de mercado por cada item, em dinheiro ou outra forma que convier às PARTES. Em caso de quebra ou extravio de peças a CONTRATANTE assinará uma nota promissória se comprometendo-se com o pagamento que será devolvida após a quitação do debito.</div>' +
+    '<div class="paragrafo">Parágrafo Primeiro: É de responsabilidade da CONTRATANTE que na retirada da decoração, todas as peças alugadas estejam sobre a mesa, caso fique algum item, a CONTRATANTE se responsabilizará pela devolução, a recusa da devolução imediata, acarretará em multa de R$ 20,00, por diária/peça.</div>' +
+    '<div class="paragrafo">Parágrafo segundo: É dever da CONTRATANTE devolver as peças como foi entregue. É proibido, furar o bolo cenográfico, usar cola quente no painel, peças e mesas, usar confeitos coloridos, vela faísca estes itens danificam e mancham peças e mobília (uso estará sujeito em caso de avarias pagar pela recuperação ou peça nova caso não seja possível).</div>' +
+    '<div class="paragrafo">O tapete deverá ser devolvido como foi entregue sem doces e bolos, caso contrário pagará multa de limpeza de R$ 40,00 (quarenta reais).</div>' +
+    '<div class="clausula-titulo">DO CANCELAMENTO</div>' +
+    '<div class="clausula-texto"><span class="negrito">Clausula 9ª.</span> Em caso de desistência a CONTRATANTE arcará com a multa de quebra de contrato, 50% do valor total do seu contrato.</div>' +
+    '<div class="paragrafo">Parágrafo primeiro: Em caso de força maior, a CONTRATANTE, poderá solicitar uma carta credito na quantia paga, para utilização de até um ano a partir da data da notificação. Sendo que essa carta crédito não poderá ser transferida para outro titular, nem prorrogada. Cabendo a CONTRATADA confirmar disponibilidade de peças e data. A CONTRATANTE deverá comprovar o fato ocorrido com documentos oficiais.</div>' +
+    '<div class="paragrafo">Parágrafo Segundo. A Parte impossibilitada de cumprir sua obrigação deverá notificar a outra, de imediato, acerca da extensão do problema e o prazo estimado para remarcação da nova data.</div>' +
+    '<div class="clausula-titulo">DAS CONDIÇÕES GERAIS</div>' +
+    '<div class="clausula-texto"><span class="negrito">Cláusula 10ª.</span> O orçamento ou aceite referente ao serviço contratado, enviado por email, faz parte integrante deste contrato.</div>' +
+    '<div class="clausula-titulo">DO FORO</div>' +
+    '<div class="clausula-texto">As Partes elegem o foro da Circunscrição Judiciária de Brasília – DF para dirimir os conflitos que porventura venham a surgir em decorrência da execução do presente contrato, com renúncia de qualquer outro, por mais privilegiado que seja.</div>' +
+    '<div class="clausula-texto">E por assim estarem de acordo, o contrato será sendo assinado de forma digitalizada, sendo as vias compartilhadas em meio eletrônico e permitida a assinatura híbrida (física e digital).</div>' +
+    '<div style="text-align:center; margin-top:8px;">Brasília-DF, ' + dataAtual + '.</div>' +
+    '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div><div class="linha-assinatura"></div><div class="assinatura-nome">TRALALÁ DECORAÇÕES DE FESTAS — CNPJ: 21.918.863/0001-12</div><div class="assinatura-nome" style="font-size:9pt; margin-top:4px;">ALINE ARAUJO DO VALLE</div></div>' +
+    '<div class="assinatura"><div class="assinatura-nome">CONTRATANTE:</div><div class="linha-assinatura"></div><div class="assinatura-nome">' + nome + ' — CPF: ' + cpf + '</div></div>' +
+    '<div class="rodape-loja">TRALALÁ DECORAÇÕES DE FESTAS Qn 508 CONJUNTO 03 LOJA 06, SAMAMBAIA SUL. (61) 9. 8191-9551</div>' +
+  '</div>';
+}
+
+// ============================================================
+// CONTRATO AVULSO — POPULAR PEÇAS
+// ============================================================
+function carregarTemasNoContrato() {
+  var select = document.getElementById("c-pecas");
+  if (!select) return;
+  select.innerHTML = "";
+  State.estoqueArray.forEach(function(item) {
+    var opt = document.createElement("option");
+    opt.value = item.nome || "";
+    opt.textContent = (item.nome || 'Sem nome') + ' (' + Utils.formatCurrency(item.preco||0) + ')';
+    select.appendChild(opt);
+  });
+}
+
+function popularSelectPecasContrato(tema) {
+  var select = document.getElementById("c-pecas");
+  if (!select) return;
+  select.innerHTML = "";
+  if (!tema) { carregarTemasNoContrato(); return; }
+  var infoTema = State.estoqueMap[tema];
+  var categoriaTema = infoTema && infoTema.categoria ? infoTema.categoria : "";
+  var doTema = State.estoqueArray.filter(function(i) { return (i.nome === tema) || (categoriaTema && i.categoria === categoriaTema); });
+  var lista = doTema.length ? doTema : State.estoqueArray;
+  lista.forEach(function(item) {
+    var opt = document.createElement("option");
+    opt.value = item.nome || "";
+    opt.textContent = (item.nome || 'Sem nome') + ' (' + Utils.formatCurrency(item.preco||0) + ')';
+    select.appendChild(opt);
+  });
+}
+
+function initContratoBusca() {
+  var input = document.getElementById("contrato-tema-busca");
+  var caixa = document.getElementById("contrato-tema-sugestoes");
+  var hidden = document.getElementById("contrato-tema-selecionado");
+  if (!input || !caixa) return;
+  if (input.__tralalaBound) return;
+  input.__tralalaBound = true;
+  input.oninput = function(e) {
+    var termo = e.target.value.trim();
+    if (!termo) { caixa.style.display = "none"; return; }
+    var tNorm = Utils.normalizar(termo);
+    var filtrados = State.estoqueArray.filter(function(i) { return Utils.normalizar(i.nome || "").indexOf(tNorm) !== -1; });
+    caixa.innerHTML = "";
+    filtrados.forEach(function(item) {
+      var div = document.createElement("div");
+      div.className = "sugestao-item";
+      div.innerText = item.nome;
+      div.onclick = function() {
+        input.value = item.nome;
+        if (hidden) hidden.value = item.nome;
+        caixa.style.display = "none";
+        popularSelectPecasContrato(item.nome);
+      };
+      caixa.appendChild(div);
+    });
+    caixa.style.display = filtrados.length ? "block" : "none";
+  };
+}
+
+function gerarContratoAvulso(gerarPdf) {
+  var nome = (document.getElementById("c-nome") || {}).value || "";
+  var cpf = (document.getElementById("c-cpf") || {}).value || "";
+  var data = (document.getElementById("c-data") || {}).value || "";
+  var horario = (document.getElementById("c-horario") || {}).value || "";
+  var valor = parseFloat((document.getElementById("c-valor") || {}).value) || 0;
+  var endereco = (document.getElementById("c-endereco") || {}).value || "";
+  var telefone = (document.getElementById("c-telefone") || {}).value || "";
+  var local = (document.getElementById("c-local") || {}).value || "";
+  var modelo = (document.getElementById("c-modelo") || {}).value || "com-frete";
+  var obs = (document.getElementById("c-obs") || {}).value || "";
+  var tema = (document.getElementById("contrato-tema-selecionado") || {}).value || "";
+  var selectPecas = document.getElementById("c-pecas");
+  var pecas = [];
+  if (selectPecas) {
+    for (var i = 0; i < selectPecas.options.length; i++) { if (selectPecas.options[i].selected) pecas.push(selectPecas.options[i].value); }
+  }
+  if (!nome.trim()) { Utils.showToast("Preencha o nome do contratante!", "warning"); return; }
+  var dados = { nome, cpf, data, horario, valor, endereco, telefone, local, dataRetirada: data, dataDevolucao: data, tema, pecas, obs };
+  var html;
+  if (modelo === "com-frete") html = gerarContratoComFrete(dados);
+  else if (modelo === "pegue-monte-loja") html = gerarContratoPegueMonteLoja(dados);
+  else html = gerarContratoPegueMonte(dados);
+  Database.salvarContratoNuvem({ nome, cpf, data, horario, valor, endereco, telefone, local, modelo, tema, pecas, obs, criadoEm: Date.now() })
+    .then(function() { Utils.showToast("✅ Contrato salvo!", "success"); })
+    .catch(function(err) { console.warn("Erro ao salvar contrato (não bloqueia):", err); Utils.showToast("⚠️ Contrato gerado, mas não foi salvo na nuvem.", "warning"); });
+  var preview = document.getElementById("contrato-preview-content");
+  if (preview) { preview.innerHTML = html; preview.contentEditable = "false"; preview.style.outline = ""; preview.style.padding = ""; preview.style.borderRadius = ""; }
+  document.getElementById("btn-editar-contrato").style.display = "inline-flex";
+  document.getElementById("btn-salvar-edicao-contrato").style.display = "none";
+  document.getElementById("btn-add-nota-promissoria").style.display = (modelo === "pegue-monte-loja") ? "inline-flex" : "none";
+  window.__contratoTipo = modelo;
+  var modalVis = document.getElementById("modal-visualizar-contrato");
+  if (modalVis) modalVis.classList.add("ativo");
+  if (gerarPdf) setTimeout(function() { gerarContratoPDF(); }, 300);
+}
+
+// ============================================================
+// GERAR PDF
+// ============================================================
+function gerarContratoPDF() {
+  var elemento = document.getElementById("contrato-preview-content");
+  if (!elemento) return;
+  if (typeof html2pdf === 'undefined') { alert("Biblioteca PDF não carregada."); return; }
+  var pagina = elemento.querySelector('.pagina-contrato');
+  if (!pagina) { Utils.showToast("Nenhum contrato gerado ainda.", "warning"); return; }
+  var nome = (document.getElementById("c-nome") || {}).value || (document.getElementById("nome-cliente") || {}).value || "contrato";
+  var clone = pagina.cloneNode(true);
+  clone.style.width = "210mm";
+  clone.style.minHeight = "297mm";
+  clone.style.padding = "18mm 16mm";
+  clone.style.boxShadow = "none";
+  clone.style.margin = "0";
+  clone.style.background = "white";
+  clone.style.boxSizing = "border-box";
+  var temp = document.createElement("div");
+  temp.style.position = "fixed";
+  temp.style.left = "-9999px";
+  temp.style.top = "0";
+  temp.style.background = "white";
+  temp.style.width = "210mm";
+  temp.appendChild(clone);
+  document.body.appendChild(temp);
+  html2pdf().from(clone).set({
+    margin: 0,
+    filename: 'contrato-' + nome.replace(/\s+/g, '-').toLowerCase() + '.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false, windowWidth: 794 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+    pagebreak: { mode: ['css', 'legacy'] }
+  }).save().then(function() {
+    document.body.removeChild(temp);
+    Utils.showToast("PDF baixado!", "success");
+  }).catch(function(err) {
+    document.body.removeChild(temp);
+    console.error(err);
+    Utils.showToast("Erro ao gerar PDF.", "error");
+  });
+}
+
+// ============================================================
+// EDITAR CONTRATO MANUALMENTE
+// ============================================================
+window.EditarContrato = function() {
+  var preview = document.getElementById("contrato-preview-content");
+  if (!preview) return;
+  preview.contentEditable = "true";
+  preview.style.outline = "2px dashed #3498db";
+  preview.style.padding = "10px";
+  preview.style.borderRadius = "8px";
+  document.getElementById("btn-editar-contrato").style.display = "none";
+  document.getElementById("btn-salvar-edicao-contrato").style.display = "inline-flex";
+  Utils.showToast("✏️ Contrato liberado para edição", "info");
+};
+
+window.SalvarEdicaoContrato = function() {
+  if (!confirm("⚠️ Tem certeza que deseja salvar essas alterações?\n\nO contrato será salvo permanentemente.")) return;
+  var preview = document.getElementById("contrato-preview-content");
+  if (!preview) return;
+  var htmlEditado = preview.innerHTML;
+  ModalStatus.exibir("SALVANDO EDIÇÃO...", "Aguarde, estamos salvando.");
+  Database.salvarContratoNuvem({
+    nome: "EDIÇÃO MANUAL",
+    contratoEditado: htmlEditado,
+    modelo: window.__contratoTipo || "pegue-monte",
+    criadoEm: Date.now(),
+    editadoManualmente: true
+  }).then(function() {
+    preview.contentEditable = "false";
+    preview.style.outline = "";
+    preview.style.padding = "";
+    preview.style.borderRadius = "";
+    document.getElementById("btn-editar-contrato").style.display = "inline-flex";
+    document.getElementById("btn-salvar-edicao-contrato").style.display = "none";
+    ModalStatus.sucesso("✓ EDIÇÃO SALVA COM SUCESSO");
+  }).catch(function(err) {
+    console.error(err);
+    ModalStatus.erro("Erro ao salvar edição.");
+  });
+};
+
+// ============================================================
+// NOTA PROMISSÓRIA — COM DATA POR EXTENSO
+// ============================================================
+window.AbrirNotaPromissoria = function() {
+  var hoje = new Date();
+  var dataEmitISO = hoje.toISOString().split("T")[0];
+
+  var elEmissao = document.getElementById("nota-data-emissao");
+  if (elEmissao) elEmissao.value = dataEmitISO;
+
+  // Pré-preenche dia, mês e ano por extenso com a data de hoje
+  var elDia = document.getElementById("nota-dia");
+  if (elDia) elDia.value = hoje.getDate();
+  var elMes = document.getElementById("nota-mes");
+  if (elMes) elMes.value = mesesExtenso[hoje.getMonth()];
+  var elAno = document.getElementById("nota-ano");
+  if (elAno) elAno.value = hoje.getFullYear();
+
+  var elNum = document.getElementById("nota-numero"); if (elNum) elNum.value = "";
+  var elValor = document.getElementById("nota-valor"); if (elValor) elValor.value = "";
+  var elVenc = document.getElementById("nota-vencimento"); if (elVenc) elVenc.value = "";
+  var elEvento = document.getElementById("nota-data-evento"); if (elEvento) elEvento.value = "";
+
+  var modal = document.getElementById("modal-nota-promissoria");
+  if (modal) modal.classList.add("ativo");
+};
+
+window.GerarNotaPromissoria = function() {
+  var venc = (document.getElementById("nota-vencimento") || {}).value || "";
+  var num = (document.getElementById("nota-numero") || {}).value || "____";
+  var valor = parseFloat((document.getElementById("nota-valor") || {}).value) || 0;
+  var dataEvento = (document.getElementById("nota-data-evento") || {}).value || "";
+
+  var dia = (document.getElementById("nota-dia") || {}).value || "____";
+  var mes = (document.getElementById("nota-mes") || {}).value || "__________________";
+  var ano = (document.getElementById("nota-ano") || {}).value || "20____";
+
+  var vencFmt = venc ? venc.split("-").reverse().join("/") : "____/____/______";
+  var valorFmt = valor ? valor.toFixed(2).replace('.', ',') : "______,00";
+  var eventoFmt = dataEvento ? dataEvento.split("-").reverse().join("/") : "____/____/______";
+
+  var dataExtenso = dia + " de " + mes + " de " + ano;
+
+  var notaHTML = '<div class="nota-promissoria">' +
+    '<h2>NOTA PROMISSÓRIA</h2>' +
+    '<div style="display:flex; justify-content:space-between;">' +
+      '<div><b>Vencimento:</b> ' + vencFmt + '</div>' +
+      '<div><b>Número:</b> ' + num + '</div>' +
+    '</div>' +
+    '<div style="text-align:right; margin-top:6px;"><b>Valor:</b> R$ ' + valorFmt + '</div>' +
+    '<div class="linha-nota" style="margin-top:15px;">' +
+      'A(os) <b>' + dataExtenso + '</b>, pagarei a <b>Tralalá Decorações de Festas</b>, CNPJ <b>21.918.863/0001-12</b>, a quantia de <b>R$ ' + valorFmt + '</b>. Caso não seja entregue os itens alugados, conforme descrito no contrato, a festa se realizará no dia ' + eventoFmt + '. Em caso de extravio ou quebra de peças me comprometo a pagar valor de mercado por cada peça em moeda corrente.' +
+    '</div>' +
+    '<div style="text-align:center; margin-top:25px;">' +
+      'Brasília-DF, <b>' + dataExtenso + '</b>.' +
+    '</div>' +
+    '<div class="assinatura-nota">' +
+      '<div class="linha-assinatura-nota"></div>' +
+      '<div style="font-weight:bold;">CONTRATANTE:</div>' +
+      '<div>CPF:</div>' +
+      '<div>ENDEREÇO CLIENTE:</div>' +
+    '</div>' +
+  '</div>';
+
+  var espaco = document.getElementById("espaco-nota-promissoria-loja");
+  if (!espaco) { Utils.showToast("Contrato Loja não está aberto.", "warning"); return; }
+  espaco.innerHTML = notaHTML;
+  document.getElementById("modal-nota-promissoria").classList.remove("ativo");
+  Utils.showToast("✅ Nota Promissória adicionada!", "success");
+};
+
+// ============================================================
+// KITS
+// ============================================================
+function renderKits() {
+  var container = document.getElementById("lista-kits-render");
+  if (!container) return;
+  if (State.kits.length === 0) { container.innerHTML = '<p style="text-align:center; color:#999;">Nenhum kit cadastrado ainda.</p>'; return; }
+  var html = "";
+  State.kits.forEach(function(kit) {
+    var pecas = kit.pecas || [];
+    var temas = kit.temas || [];
+    var total = 0;
+    pecas.forEach(function(nome) { var it = State.estoqueMap[nome]; if (it) total += (parseFloat(it.preco) || 0); });
+    temas.forEach(function(nome) { var it = State.estoqueMap[nome]; if (it) total += (parseFloat(it.preco) || 0); });
+    var img = kit.imagem ? '<img src="' + kit.imagem + '" style="width:70px;height:70px;object-fit:cover;border-radius:8px;margin-right:10px;">' : '';
+    html += '<div class="card-kit">' +
+      '<div class="kit-header"><strong>🎁 ' + (kit.nome || 'Sem Nome') + '</strong><span class="badge-contador">Qtd: ' + (kit.quantidade || 1) + '</span></div>' +
+      '<div class="kit-body" style="display:flex;">' + img + '<div style="flex:1;">' +
+      '<div>🎨 <b>Temas:</b> ' + (temas.length ? temas.join(", ") : "—") + '</div>' +
+      '<div>📦 <b>Peças (' + pecas.length + '):</b> ' + (pecas.length ? pecas.slice(0,5).join(", ") + (pecas.length > 5 ? '...' : '') : "—") + '</div>' +
+      '<div>💰 <b>Valor sugerido:</b> ' + Utils.formatCurrency(total) + '</div></div></div>' +
+      '<div class="kit-actions">' +
+      '<button class="btn-promover-kit" onclick="window.promoverKitParaFesta(\'' + kit.id + '\')">✅ Promover p/ Festa</button>' +
+      '<button class="btn-remover-kit" onclick="window.removerKit(\'' + kit.id + '\')">🗑️ Remover</button></div></div>';
+  });
+  container.innerHTML = html;
+}
+
+window.promoverKitParaFesta = function(idKit) {
+  var kit = State.kits.filter(function(k) { return k.id === idKit; })[0];
+  if (!kit) return;
+  var nomeKitFesta = "Kit Customizado";
+  document.querySelectorAll('.btn-kit-opcao').forEach(function(b) { b.classList.remove('ativo'); });
+  State.kitAtual = nomeKitFesta;
+  State.pecasSelecionadasKit[nomeKitFesta] = kit.pecas || [];
+  State.pecasQtdKit[nomeKitFesta] = kit.pecasQtd || {};
+  if (kit.temas && kit.temas.length > 0) {
+    State.temasSelecionadosKit[nomeKitFesta] = kit.temas[0];
+    State.temaAtual = kit.temas[0];
+    State.temaAtualObj = State.estoqueMap[kit.temas[0]] || null;
+    var filtro = document.getElementById("filtro-tema-input");
+    var hidden = document.getElementById("busca-tema-input");
+    if (filtro) filtro.value = kit.temas[0];
+    if (hidden) hidden.value = kit.temas[0];
+  }
+  var box = document.getElementById("kit-acoes-box");
+  var nome = document.getElementById("kit-acoes-nome");
+  if (box) box.classList.add("ativo");
+  if (nome) nome.textContent = nomeKitFesta;
+  atualizarInfoKitFesta();
+  atualizarResumoSelecao();
+  calcularSomaAutomatica();
+  var painelKits = document.getElementById("painel-gerador-kits");
+  if (painelKits) painelKits.style.display = "none";
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  Utils.showToast("✅ Kit promovido! Preencha os dados do cliente.", "success");
+};
+
+window.removerKit = function(idKit) {
+  if (confirm("Remover este kit?")) {
+    Database.excluirKitNuvem(idKit).then(function() { Utils.showToast("Kit removido!", "success"); }).catch(function() { Utils.showToast("Falha ao remover.", "error"); });
+  }
+};
+
+function salvarKit() {
+  var nomeEl = document.getElementById("kit-nome");
+  var qtdEl = document.getElementById("kit-quantidade");
+  var imgInput = document.getElementById("kit-imagem");
+  var nome = nomeEl ? nomeEl.value.trim() : "";
+  var qtd = qtdEl ? (parseInt(qtdEl.value) || 1) : 1;
+  if (!nome) return Utils.showToast("Preencha o nome do kit.", "warning");
+  if (!State.kitCriando.pecas || State.kitCriando.pecas.length === 0) {
+    if (!State.kitCriando.temas || State.kitCriando.temas.length === 0) return Utils.showToast("Selecione pelo menos uma peça ou tema.", "warning");
+  }
+  var processar = function(img) {
+    ModalStatus.exibir("SALVANDO KIT...", nome);
+    Database.salvarKitNuvem({ nome, quantidade: qtd, pecas: State.kitCriando.pecas || [], pecasQtd: State.kitCriando.pecasQtd || {}, temas: State.kitCriando.temas || [], imagem: img || "", criadoEm: Date.now() })
+      .then(function() {
+        ModalStatus.sucesso("✓ KIT SALVO");
+        if (nomeEl) nomeEl.value = "";
+        if (qtdEl) qtdEl.value = "1";
+        if (imgInput) imgInput.value = "";
+        State.kitCriando = { nome: "", quantidade: 1, pecas: [], temas: [], imagem: "", pecasQtd: {} };
+        atualizarInfoKitCriando();
+      }).catch(function() { ModalStatus.erro("Erro ao salvar kit."); });
+  };
+  if (imgInput && imgInput.files && imgInput.files[0]) {
+    reduzirImagem(imgInput.files[0], 600, 0.85).then(processar).catch(function() { processar(""); });
+  } else { processar(""); }
+}
+
+// ============================================================
+// LOGIN/LOGOUT
+// ============================================================
+function handleLogin() {
+  var emailEl = document.getElementById("email");
+  var senhaEl = document.getElementById("senha");
+  var email = emailEl ? emailEl.value.trim() : "";
+  var senha = senhaEl ? senhaEl.value : "";
+  if (!email || !senha) return Utils.showToast("Preencha e-mail e senha.", "warning");
+  if (CONFIG.usuarios[email] === senha) {
+    State.usuarioLogadoEmail = email;
+    var sLogin = document.getElementById("secao-login");
+    var sVerif = document.getElementById("secao-verificador");
+    if (sLogin) sLogin.style.display = "none";
+    if (sVerif) sVerif.style.display = "block";
+    var nome = document.getElementById("nome-usuario");
+    if (nome) nome.innerHTML = "👤 <b>" + email.split('@')[0] + "</b>";
+    Utils.showToast("Login realizado!", "success");
+    try { Database.listenPontoUsuario(); } catch (e) {}
+    if (email === "leonardodovalle@gmail.com" || email === "tralaladecoracoes@gmail.com" || email === "jorgeguivalle@gmail.com") { Database.listenPontosGeral(); }
+  } else { Utils.showToast("E-mail ou senha incorretos.", "error"); }
+}
+
+function handleLogout() { window.location.reload(); }
+
+// ============================================================
+// SALVAR FESTA
+// ============================================================
+function handleSalvarFesta() {
+  var elCliente = document.getElementById("nome-cliente");
+  var elCpf = document.getElementById("cliente-cpf");
+  var elTelefone = document.getElementById("cliente-telefone");
+  var elEndereco = document.getElementById("cliente-endereco");
+  var elLocal = document.getElementById("local-evento");
+  var elData = document.getElementById("data");
+  var elTotal = document.getElementById("valor-total");
+  var elSinal = document.getElementById("valor-sinal");
+  var elObs = document.getElementById("adicionais-festa");
+  var elValorFesta = document.getElementById("valor-festa");
+  var hidden = document.getElementById("busca-tema-input");
+  var filtro = document.getElementById("filtro-tema-input");
+  var cliente = elCliente ? elCliente.value.trim() : "";
+  var cpf = elCpf ? elCpf.value.trim() : "";
+  var telefone = elTelefone ? elTelefone.value.trim() : "";
+  var endereco = elEndereco ? elEndereco.value.trim() : "";
+  var local = elLocal ? elLocal.value.trim() : "";
+  var data = elData ? elData.value : "";
+  var total = elTotal ? elTotal.value || "0" : "0";
+  var sinal = elSinal ? elSinal.value || "0" : "0";
+  var obs = elObs ? elObs.value.trim() : "";
+  var valorFesta = elValorFesta ? (parseFloat(elValorFesta.value) || 0) : 0;
+  if (hidden && hidden.value.trim()) State.temaAtual = hidden.value.trim();
+  else if (filtro && filtro.value.trim()) State.temaAtual = filtro.value.trim();
+  if (!cliente || !data || !State.temaAtual || !State.kitAtual) return Utils.showToast("Preencha cliente, data, tema e selecione o kit!", "warning");
+  var disp = verificarDisponibilidadeTema(data, State.temaAtual);
+  if (!disp.livre) return Utils.showToast("🚫 Tema \"" + disp.tema + "\" já está alugado em " + Utils.formatDateBR(data) + " (" + disp.jaUsado + "/" + disp.disponivel + " já reservado). Escolha outra data ou outro tema.", "error");
+  abrirModalQtdPecas();
+}
+
+// ============================================================
+// MODAL QUANTIDADE DE PEÇAS
+// ============================================================
+function abrirModalQtdPecas() {
+  var container = document.getElementById("lista-qtd-pecas");
+  var pecas = State.pecasSelecionadasKit[State.kitAtual] || [];
+  if (pecas.length === 0) { salvarReservaFinal(null); return; }
+  var html = "";
+  pecas.forEach(function(nome) {
+    var item = State.estoqueMap[nome];
+    var disponivel = item ? (parseInt(item.quantidade) || 0) : 0;
+    var preco = item ? (parseFloat(item.preco) || 0) : 0;
+    var img = item && item.imagem ? '<img src="' + item.imagem + '" style="width:50px;height:50px;border-radius:6px;object-fit:cover;flex-shrink:0;">' : '<div style="width:50px;height:50px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#888;flex-shrink:0;">Sem Foto</div>';
+    html += '<div style="display:flex; gap:10px; align-items:center; padding:10px; border-bottom:1px solid #eee;">' +
+      img + '<div style="flex:1;">' +
+      '<div style="font-weight:600;">' + nome + '</div>' +
+      '<div style="font-size:11px; color:var(--text-muted);">Disponível: <b>' + disponivel + '</b> | ' + Utils.formatCurrency(preco) + '</div></div>' +
+      '<div><label style="font-size:11px;">Qtd:</label><input type="number" class="input-qtd-peca" data-peca="' + nome.replace(/"/g, '&quot;') + '" min="0" max="' + disponivel + '" value="1" style="width:70px; padding:6px; border:1.5px solid #ddd; border-radius:6px; text-align:center;"></div>' +
+      '</div>';
+  });
+  container.innerHTML = html;
+  document.getElementById("modal-qtd-pecas").classList.add("ativo");
+}
+
+function salvarReservaFinal(pecasQtd) {
+  var elCliente = document.getElementById("nome-cliente");
+  var elCpf = document.getElementById("cliente-cpf");
+  var elTelefone = document.getElementById("cliente-telefone");
+  var elEndereco = document.getElementById("cliente-endereco");
+  var elLocal = document.getElementById("local-evento");
+  var elData = document.getElementById("data");
+  var elTotal = document.getElementById("valor-total");
+  var elSinal = document.getElementById("valor-sinal");
+  var elObs = document.getElementById("adicionais-festa");
+  var elValorFesta = document.getElementById("valor-festa");
+  var hidden = document.getElementById("busca-tema-input");
+  var filtro = document.getElementById("filtro-tema-input");
+  var cliente = elCliente ? elCliente.value.trim() : "";
+  var cpf = elCpf ? elCpf.value.trim() : "";
+  var telefone = elTelefone ? elTelefone.value.trim() : "";
+  var endereco = elEndereco ? elEndereco.value.trim() : "";
+  var local = elLocal ? elLocal.value.trim() : "";
+  var data = elData ? elData.value : "";
+  var total = elTotal ? elTotal.value || "0" : "0";
+  var sinal = elSinal ? elSinal.value || "0" : "0";
+  var obs = elObs ? elObs.value.trim() : "";
+  var valorFesta = elValorFesta ? (parseFloat(elValorFesta.value) || 0) : 0;
+  var f = FreteCalc.calcular();
+  var pecasDoKit = State.pecasSelecionadasKit[State.kitAtual] || [];
+  var temaDoKit = State.temasSelecionadosKit[State.kitAtual] || State.temaAtual;
+  var modeloContrato = State.montarNoLocal ? "com-frete" : "pegue-monte";
+  var dadosReserva = {
+    cliente: safe(cliente), cpf: safe(cpf), telefone: safe(telefone),
+    endereco: safe(endereco), local: safe(local), data: safe(data),
+    tema: safe(temaDoKit), kit: safe(State.kitAtual),
+    pecas: Array.isArray(pecasDoKit) ? pecasDoKit : [],
+    pecasQtd: pecasQtd || null,
+    montarNoLocal: !!State.montarNoLocal,
+    total: safe(total), sinal: safe(sinal), valorFesta: valorFesta || 0,
+    frete: f.freteTotal || 0,
+    freteKmIda: f.kmIda || 0, freteKmTotal: f.kmTotal || 0,
+    freteSegundaViagem: !!f.segundaViagem,
+    fretePrecoCombustivel: f.precoCombustivel || 0, freteLitros: f.litros || 0,
+    freteCustoCombustivel: f.custoCombustivel || 0, freteManutencao: f.manutencao || 0,
+    freteTotal: f.freteTotal || 0,
+    modeloContrato: safe(modeloContrato), obs: safe(obs),
+    desconto: State.descontoAplicado || { tipo: "percent", valor: 0, totalOriginal: 0, totalFinal: 0 },
+    dataCriacao: Utils.getHojeDataString()
+  };
+  ModalStatus.exibir("SALVANDO RESERVA...", cliente);
+  Database.salvarReservaNuvem(dadosReserva).then(function() {
+    if (pecasQtd && Object.keys(pecasQtd).length > 0) {
+      Object.keys(pecasQtd).forEach(function(nomePeca) {
+        var item = State.estoqueMap[nomePeca];
+        if (item && item.idFirebase) {
+          var qtdUsada = pecasQtd[nomePeca];
+          var qtdAtual = parseInt(item.quantidade) || 0;
+          var novaQtd = Math.max(0, qtdAtual - qtdUsada);
+          Database.atualizarPecaNuvem(item.idFirebase, { quantidade: novaQtd });
+        }
+      });
+    }
+    ModalStatus.sucesso("✓ RESERVA SALVA");
+    var dadosContrato = {
+      nome: safe(cliente), cpf: safe(cpf), telefone: safe(telefone),
+      endereco: safe(endereco), local: safe(local), data: safe(data),
+      horario: "", dataRetirada: safe(data), dataDevolucao: safe(data),
+      valor: parseFloat(total) || 0,
+      pecas: Array.isArray(pecasDoKit) ? pecasDoKit : [],
+      pecasQtd: pecasQtd || null,
+      tema: safe(temaDoKit), obs: safe(obs)
+    };
+    var htmlContrato = modeloContrato === "com-frete" ? gerarContratoComFrete(dadosContrato) : gerarContratoPegueMonte(dadosContrato);
+    Database.salvarContratoNuvem({
+      nome: safe(cliente), cpf: safe(cpf), data: safe(data),
+      valor: parseFloat(total) || 0, modelo: safe(modeloContrato),
+      tema: safe(temaDoKit), pecas: Array.isArray(pecasDoKit) ? pecasDoKit : [],
+      obs: safe(obs), criadoEm: Date.now()
+    }).catch(function(err) { console.warn("Contrato não salvo:", err); });
+    var preview = document.getElementById("contrato-preview-content");
+    if (preview) { preview.innerHTML = htmlContrato; preview.contentEditable = "false"; }
+    document.getElementById("btn-editar-contrato").style.display = "inline-flex";
+    document.getElementById("btn-salvar-edicao-contrato").style.display = "none";
+    document.getElementById("btn-add-nota-promissoria").style.display = "none";
+    window.__contratoTipo = modeloContrato;
+    var modalVis = document.getElementById("modal-visualizar-contrato");
+    if (modalVis) modalVis.classList.add("ativo");
+    if (elCliente) elCliente.value = "";
+    if (elCpf) elCpf.value = "";
+    if (elTelefone) elTelefone.value = "";
+    if (elEndereco) elEndereco.value = "";
+    if (elLocal) elLocal.value = "";
+    if (elData) elData.value = "";
+    if (elTotal) elTotal.value = "";
+    if (elSinal) elSinal.value = "";
+    if (elObs) elObs.value = "";
+    if (elValorFesta) elValorFesta.value = "0.00";
+    State.temaAtual = ""; State.temaAtualObj = null; State.kitAtual = ""; State.montarNoLocal = false;
+    State.pecasSelecionadasKit = {};
+    State.temasSelecionadosKit = {};
+    State.pecasQtdKit = {};
+    State.descontoAplicado = { tipo: "percent", valor: 0, totalOriginal: 0, totalFinal: 0 };
+    if (hidden) hidden.value = "";
+    if (filtro) filtro.value = "";
+    document.querySelectorAll('.btn-kit-opcao').forEach(function(b) { b.classList.remove('ativo'); });
+    var kitBox = document.getElementById("kit-acoes-box");
+    if (kitBox) kitBox.classList.remove("ativo");
+    var painelMontagem = document.getElementById("painel-montagem-local");
+    if (painelMontagem) painelMontagem.style.display = "none";
+    var chk = document.getElementById("chk-montar-local");
+    if (chk) chk.checked = false;
+    var resumo = document.getElementById("resumo-selecao");
+    if (resumo) resumo.style.display = "none";
+    var detalhes = document.getElementById("detalhes-soma");
+    if (detalhes) detalhes.innerHTML = "";
+    var resultadoDesc = document.getElementById("resultado-desconto");
+    if (resultadoDesc) resultadoDesc.innerHTML = "";
+    var descValor = document.getElementById("desconto-valor");
+    if (descValor) descValor.value = "";
+    FreteCalc.limpar();
+  }).catch(function(err) {
+    console.error(err);
+    ModalStatus.erro("Erro ao salvar reserva.");
+  });
+}
+
+window.ConfirmarQtdPecas = function() {
+  var inputs = document.querySelectorAll(".input-qtd-peca");
+  var pecasQtd = {};
+  var valido = true;
+  inputs.forEach(function(input) {
+    var nome = input.getAttribute("data-peca");
+    var qtd = parseInt(input.value) || 0;
+    var max = parseInt(input.max) || 0;
+    if (qtd > max) {
+      Utils.showToast("❌ " + nome + ": você pediu " + qtd + " mas só tem " + max + " disponível.", "error");
+      valido = false;
+    }
+    if (qtd > 0) pecasQtd[nome] = qtd;
+  });
+  if (!valido) return;
+  document.getElementById("modal-qtd-pecas").classList.remove("ativo");
+  salvarReservaFinal(pecasQtd);
+};
+
+function handleSalvarOrcamento() {
+  var clienteEl = document.getElementById("nome-cliente");
+  var cpfEl = document.getElementById("cliente-cpf");
+  var totalEl = document.getElementById("valor-total");
+  var dataEl = document.getElementById("data");
+  var obsEl = document.getElementById("adicionais-festa");
+  var vfEl = document.getElementById("valor-festa");
+  var nomeCliente = clienteEl ? clienteEl.value.trim() : "";
+  if (!nomeCliente) return Utils.showToast("Preencha o nome do cliente.", "warning");
+  var f = FreteCalc.calcular();
+  Database.salvarOrcamentoNuvem({
+    cliente: safe(nomeCliente), cpf: safe(cpfEl ? cpfEl.value.trim() : ""),
+    tema: safe(State.temaAtual) || "Não selecionado", kit: safe(State.kitAtual),
+    pecas: Array.isArray(State.pecasSelecionadasKit[State.kitAtual]) ? State.pecasSelecionadasKit[State.kitAtual] : [],
+    montarNoLocal: !!State.montarNoLocal, total: safe(totalEl ? totalEl.value : "0"),
+    valorFesta: vfEl ? (parseFloat(vfEl.value) || 0) : 0,
+    frete: f.freteTotal || 0, freteKmIda: f.kmIda || 0, freteKmTotal: f.kmTotal || 0, freteSegundaViagem: !!f.segundaViagem,
+    fretePrecoCombustivel: f.precoCombustivel || 0, freteLitros: f.litros || 0,
+    freteCustoCombustivel: f.custoCombustivel || 0, freteManutencao: f.manutencao || 0, freteTotal: f.freteTotal || 0,
+    dataFesta: safe(dataEl ? dataEl.value : ""), obs: safe(obsEl ? obsEl.value.trim() : ""),
+    desconto: State.descontoAplicado, dataCriacao: Utils.getHojeDataString(), horaCriacao: Utils.getHoraString()
+  }).then(function() { Utils.showToast("Orçamento salvo!", "success"); })
+    .catch(function() { Utils.showToast("Erro ao salvar orçamento.", "error"); });
+}
+
+// ============================================================
+// BIND EVENTOS
+// ============================================================
+function bindTudo() {
+  var b;
+  b = document.getElementById("btn-login-direto");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleLogin(); };
+  b = document.getElementById("btn-logout-direto");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleLogout(); };
+  var senhaEl = document.getElementById("senha");
+  if (senhaEl) senhaEl.onkeypress = function(e) { if (e.key === "Enter") { var l = document.getElementById("btn-login-direto"); if (l) l.click(); } };
+  b = document.getElementById("btn-ponto-entrada");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); Database.registrarPonto('entrada'); };
+  b = document.getElementById("btn-ponto-saida");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); Database.registrarPonto('saida'); };
+  b = document.getElementById("btn-abrir-relatorio-pontos");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); var p = document.getElementById("painel-relatorio-pontos-geral"); if (p) p.style.display = (p.style.display === "none" || p.style.display === "") ? "block" : "none"; };
+  b = document.getElementById("btn-abrir-central-relatorios");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); var p = document.getElementById("secao-central-relatorios"); if (!p) return; var abrindo = (p.style.display === "none" || p.style.display === ""); p.style.display = abrindo ? "block" : "none"; if (abrindo) renderPlanilhaVendas(); };
+  b = document.getElementById("btn-fechar-central-relatorios");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); var p = document.getElementById("secao-central-relatorios"); if (p) p.style.display = "none"; };
+  b = document.getElementById("seletor-mes-planilha");
+  if (b) b.onchange = function() { renderPlanilhaVendas(); };
+  b = document.getElementById("btn-transformar-grafico");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); renderGraficoAnual(); };
+  b = document.getElementById("btn-toggle-grafico");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); var pg = document.getElementById("painel-grafico-faturamento"); if (pg) pg.style.display = pg.style.display === 'none' ? 'block' : 'none'; };
+  b = document.getElementById("btn-abrir-orcamentos");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); var p = document.getElementById("card-orcamentos-integrado"); if (!p) return; var abrindo = (p.style.display === "none" || p.style.display === ""); p.style.display = abrindo ? "block" : "none"; if (abrindo) renderOrcamentos(); };
+  b = document.getElementById("btn-abrir-reunioes-painel");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); var p = document.getElementById("painel-reunioes-exclusivo"); if (!p) return; var abrindo = (p.style.display === "none" || p.style.display === ""); p.style.display = abrindo ? "block" : "none"; if (abrindo) iniciarPainelReunioes(); };
+  b = document.getElementById("btn-fechar-reunioes");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); var p = document.getElementById("painel-reunioes-exclusivo"); if (p) p.style.display = "none"; };
+  b = document.getElementById("btn-salvar-reuniao-avulsa");
+  if (b) b.onclick = function(e) {
+    if (e) e.preventDefault();
+    var c = document.getElementById("reuniao-cliente"); var d = document.getElementById("reuniao-data-hora"); var pa = document.getElementById("reuniao-pauta");
+    var cliente = c ? c.value.trim() : ""; var dataHora = d ? d.value : ""; var pauta = pa ? pa.value.trim() : "";
+    if (!cliente || !dataHora) return Utils.showToast("Preencha cliente e data/hora.", "warning");
+    ModalStatus.exibir("AGENDANDO...", cliente);
+    Database.salvarReuniaoNuvem({ cliente, dataHora, pauta, criadoEm: Date.now() })
+      .then(function() { ModalStatus.sucesso("✓ REUNIÃO AGENDADA"); if (c) c.value = ""; if (d) d.value = ""; if (pa) pa.value = ""; })
+      .catch(function() { ModalStatus.erro("Erro ao agendar."); });
+  };
+  b = document.getElementById("btn-abrir-catalogo-temas");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); var p = document.getElementById("painel-catalogo-temas"); if (!p) return; var abrindo = (p.style.display === "none" || p.style.display === ""); p.style.display = abrindo ? "block" : "none"; if (abrindo) renderizarTemas(); };
+  b = document.getElementById("btn-abrir-gerador-kits");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); var p = document.getElementById("painel-gerador-kits"); if (!p) return; var abrindo = (p.style.display === "none" || p.style.display === ""); p.style.display = abrindo ? "block" : "none"; if (abrindo) renderKits(); };
+  b = document.getElementById("btn-fechar-gerador-kits");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); var p = document.getElementById("painel-gerador-kits"); if (p) p.style.display = "none"; };
+  b = document.getElementById("btn-kit-selecionar-pecas");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); abrirModalPecas("kit"); };
+  b = document.getElementById("btn-kit-selecionar-temas");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); abrirModalTema("kit"); };
+  b = document.getElementById("btn-salvar-kit");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); salvarKit(); };
+  b = document.getElementById("btn-abrir-gerador-contrato");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); var m = document.getElementById("modal-gerador-contrato"); if (m) m.classList.add("ativo"); carregarTemasNoContrato(); initContratoBusca(); };
+  b = document.getElementById("btn-fechar-modal-contrato");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); var m = document.getElementById("modal-gerador-contrato"); if (m) m.classList.remove("ativo"); };
+  var modalContrato = document.getElementById("modal-gerador-contrato");
+  if (modalContrato) { modalContrato.addEventListener('click', function(e) { if (e.target === modalContrato) modalContrato.classList.remove("ativo"); }); }
+  b = document.getElementById("btn-gerar-salvar-contrato");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); gerarContratoAvulso(false); };
+  b = document.getElementById("btn-gerar-pdf-contrato");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); gerarContratoAvulso(true); };
+  b = document.getElementById("btn-abrir-pecas-contrato");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); abrirModalPecas("contrato"); };
+  var modalVis = document.getElementById("modal-visualizar-contrato");
+  if (modalVis) {
+    var fv = document.getElementById("btn-fechar-visualizacao");
+    if (fv) fv.onclick = function() { modalVis.classList.remove("ativo"); };
+    modalVis.addEventListener('click', function(e) { if (e.target === modalVis) modalVis.classList.remove("ativo"); });
+  }
+  b = document.getElementById("btn-baixar-pdf-contrato");
+  if (b) b.onclick = function() { gerarContratoPDF(); };
+  b = document.getElementById("btn-imprimir-contrato");
+  if (b) b.onclick = function() { window.print(); };
+  b = document.getElementById("btn-editar-contrato");
+  if (b) b.onclick = function() { window.EditarContrato(); };
+  b = document.getElementById("btn-salvar-edicao-contrato");
+  if (b) b.onclick = function() { window.SalvarEdicaoContrato(); };
+  b = document.getElementById("btn-add-nota-promissoria");
+  if (b) b.onclick = function() { window.AbrirNotaPromissoria(); };
+  b = document.getElementById("btn-fechar-modal-nota");
+  if (b) b.onclick = function() { document.getElementById("modal-nota-promissoria").classList.remove("ativo"); };
+  b = document.getElementById("btn-cancelar-nota");
+  if (b) b.onclick = function() { document.getElementById("modal-nota-promissoria").classList.remove("ativo"); };
+  b = document.getElementById("btn-gerar-nota");
+  if (b) b.onclick = function() { window.GerarNotaPromissoria(); };
+  b = document.getElementById("btn-fechar-modal-qtd");
+  if (b) b.onclick = function() { document.getElementById("modal-qtd-pecas").classList.remove("ativo"); };
+  b = document.getElementById("btn-cancelar-qtd");
+  if (b) b.onclick = function() { document.getElementById("modal-qtd-pecas").classList.remove("ativo"); };
+  b = document.getElementById("btn-confirmar-qtd");
+  if (b) b.onclick = function() { window.ConfirmarQtdPecas(); };
+  var botoesKit = document.querySelectorAll('.btn-kit-opcao');
+  botoesKit.forEach(function(btn) {
+    btn.onclick = function(e) {
+      e.preventDefault();
+      botoesKit.forEach(function(x) { x.classList.remove('ativo'); });
+      btn.classList.add('ativo');
+      var nomeKit = btn.getAttribute('data-kit');
+      State.kitAtual = nomeKit;
+      var box = document.getElementById("kit-acoes-box");
+      var nome = document.getElementById("kit-acoes-nome");
+      if (box) box.classList.add("ativo");
+      if (nome) nome.textContent = nomeKit;
+      atualizarInfoKitFesta();
+      atualizarResumoSelecao();
+      Utils.showToast('Kit "' + nomeKit + '" selecionado!', "success");
+    };
+  });
+  b = document.getElementById("btn-esc-pecas");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); if (!State.kitAtual) return Utils.showToast("Selecione um kit.", "warning"); abrirModalPecas("kit-festa"); };
+  b = document.getElementById("btn-esc-tema");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); if (!State.kitAtual) return Utils.showToast("Selecione um kit.", "warning"); abrirModalTema("kit-festa"); };
+  b = document.getElementById("btn-fechar-modal-pecas");
+  if (b) b.onclick = function() { document.getElementById("modal-pecas").classList.remove("ativo"); };
+  b = document.getElementById("btn-cancelar-pecas");
+  if (b) b.onclick = function() { document.getElementById("modal-pecas").classList.remove("ativo"); };
+  b = document.getElementById("btn-confirmar-pecas");
+  if (b) b.onclick = function() { confirmarModalPecas(); };
+  var filtroPecas = document.getElementById("filtro-pecas");
+  if (filtroPecas) filtroPecas.oninput = function(e) { renderizarListaPecasModal(modalPecasContexto, e.target.value); };
+  b = document.getElementById("btn-fechar-modal-tema");
+  if (b) b.onclick = function() { document.getElementById("modal-tema-reserva").classList.remove("ativo"); };
+  b = document.getElementById("btn-cancelar-tema");
+  if (b) b.onclick = function() { document.getElementById("modal-tema-reserva").classList.remove("ativo"); };
+  b = document.getElementById("btn-confirmar-tema");
+  if (b) b.onclick = function() { confirmarModalTema(); };
+  var filtroTemaModal = document.getElementById("filtro-tema-modal");
+  if (filtroTemaModal) filtroTemaModal.oninput = function(e) { renderizarListaTemasModal(e.target.value); };
+  var chkMontar = document.getElementById("chk-montar-local");
+  if (chkMontar) {
+    chkMontar.onchange = function() {
+      State.montarNoLocal = !!chkMontar.checked;
+      var painel = document.getElementById("painel-montagem-local");
+      if (painel) painel.style.display = chkMontar.checked ? "block" : "none";
+    };
+  }
+  var kmEl = document.getElementById("calc-km");
+  var precoEl = document.getElementById("calc-valor-litro");
+  var chkSegunda = document.getElementById("chk-segunda-viagem");
+  if (kmEl) { kmEl.oninput = function() { FreteCalc.renderizar(); }; kmEl.onchange = function() { FreteCalc.renderizar(); }; }
+  if (precoEl) { precoEl.oninput = function() { FreteCalc.renderizar(); }; precoEl.onchange = function() { FreteCalc.renderizar(); }; }
+  if (chkSegunda) { chkSegunda.onchange = function() { FreteCalc.renderizar(); }; }
+  var vfEl = document.getElementById("valor-festa");
+  if (vfEl) vfEl.oninput = function() { recalcularTotais(); };
+  var sinalEl = document.getElementById("valor-sinal");
+  if (sinalEl) sinalEl.oninput = function() { recalcularTotais(); };
+  b = document.getElementById("btn-soma-automatica");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); calcularSomaAutomatica(); };
+  b = document.getElementById("btn-aplicar-desconto");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); aplicarDesconto(); };
+  b = document.getElementById("btn-confirmar-agendamento");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleSalvarFesta(); };
+  b = document.getElementById("btn-salvar-como-orcamento");
+  if (b) b.onclick = function(e) { if (e) e.preventDefault(); handleSalvarOrcamento(); };
+  b = document.getElementById("btn-adicionar-peca");
+  if (b) b.onclick = function(e) {
+    if (e) e.preventDefault();
+    var nome = (document.getElementById("catalogo-peca-nome") || {}).value || "";
+    var qtd = parseInt((document.getElementById("catalogo-peca-qtd") || {}).value) || 1;
+    var categoria = (document.getElementById("catalogo-peca-categoria") || {}).value || "Outros";
+    var modelo = (document.getElementById("catalogo-peca-modelo") || {}).value || "";
+    var preco = parseFloat((document.getElementById("catalogo-peca-preco") || {}).value) || 0;
+    var precoRep = parseFloat((document.getElementById("catalogo-peca-preco-reposicao") || {}).value) || 0;
+    var fileInput = document.getElementById("catalogo-peca-imagem");
+    nome = nome.trim();
+    if (!nome) return Utils.showToast("Preencha o nome do tema/peça!", "warning");
+    var executar = function(img) {
+      Database.salvarPecaNuvem({ nome, quantidade: qtd, categoria, modelo, preco, precoReposicao: precoRep, imagem: img || "" }).then(function() {
+        var nEl = document.getElementById("catalogo-peca-nome"); if (nEl) nEl.value = "";
+        var qEl = document.getElementById("catalogo-peca-qtd"); if (qEl) qEl.value = "1";
+        var mEl = document.getElementById("catalogo-peca-modelo"); if (mEl) mEl.value = "";
+        var pEl = document.getElementById("catalogo-peca-preco"); if (pEl) pEl.value = "0";
+        var prEl = document.getElementById("catalogo-peca-preco-reposicao"); if (prEl) prEl.value = "0";
+        var iEl = document.getElementById("catalogo-peca-imagem"); if (iEl) iEl.value = "";
+      });
+    };
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+      reduzirImagem(fileInput.files[0], 900, 0.82).then(executar).catch(function() { executar(""); });
+    } else { executar(""); }
+  };
+  b = document.getElementById("btn-adicionar-categoria");
+  if (b) b.onclick = function(e) {
+    if (e) e.preventDefault();
+    var input = document.getElementById("input-nova-categoria");
+    var nome = input ? input.value.trim() : "";
+    if (!nome) return Utils.showToast("Digite um nome.", "warning");
+    window.adicionarCategoria(nome).then(function() { Utils.showToast("Categoria adicionada!", "success"); if (input) { input.value = ""; input.focus(); } })
+      .catch(function(err) { Utils.showToast(String(err), "warning"); });
+  };
+  var inputCat = document.getElementById("input-nova-categoria");
+  if (inputCat) inputCat.onkeypress = function(e) { if (e.key === "Enter") { var bt = document.getElementById("btn-adicionar-categoria"); if (bt) bt.click(); } };
+  b = document.getElementById("btn-remover-categoria");
+  if (b) b.onclick = function(e) {
+    if (e) e.preventDefault();
+    var s = document.getElementById("select-remover-categoria"); var cat = s ? s.value : "";
+    if (!cat) return Utils.showToast("Selecione uma categoria.", "warning");
+    window.removerCategoria(cat).then(function() { Utils.showToast("Categoria removida!", "success"); })
+      .catch(function(err) { Utils.showToast(String(err), "warning"); });
+  };
+  b = document.getElementById("btn-remover-tema-admin");
+  if (b) b.onclick = function(e) {
+    if (e) e.preventDefault();
+    var s = document.getElementById("select-remover-tema"); var idx = s ? parseInt(s.value) : NaN;
+    if (isNaN(idx)) return Utils.showToast("Selecione um tema válido!", "warning");
+    window.removerTema(idx);
+  };
+  initModalEditar();
+}
+
+// ============================================================
+// INICIALIZAÇÃO
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+  carregarEstoque();
+  listenCategorias();
+  listenReservas();
+  listenOrcamentos();
+  listenKits();
+  bindTudo();
+  console.log("✅ Sistema Tralalá inicializado!");
+});
+
+// Reconecta botões da Nota Promissória (com data por extenso)
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    var btnNota = document.getElementById("btn-add-nota-promissoria");
+    if (btnNota) btnNota.onclick = window.AbrirNotaPromissoria;
+    var btnGerarNota = document.getElementById("btn-gerar-nota");
+    if (btnGerarNota) btnGerarNota.onclick = window.GerarNotaPromissoria;
+  }, 700);
+});
+
+console.log("✅ Tralalá Festas — versão com data por extenso na Nota Promissória!");
