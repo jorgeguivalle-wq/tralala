@@ -2789,3 +2789,261 @@ document.addEventListener('DOMContentLoaded', function() {
 
   console.log("✅ FIX: Retirada e Devolução no Contrato Avulso");
 })();
+
+
+// ============================================================
+// FIX FINAL — Nota Promissória em todos + Manter seleção modal
+// ============================================================
+(function() {
+  'use strict';
+
+  // ------------------------------------------------------------
+  // FIX 1: Nota Promissória em TODOS os contratos
+  // ------------------------------------------------------------
+
+  // Contrato 1 (Pegue e Monte) — adiciona o espaço pra Nota
+  var gerarPM_Original = window.gerarContratoPegueMonte;
+  window.gerarContratoPegueMonte = function(dados) {
+    var html = gerarPM_Original ? gerarPM_Original(dados) : "";
+    // Insere o espaço da Nota antes das assinaturas
+    html = html.replace(
+      '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div>',
+      '<div id="espaco-nota-promissoria-loja"></div>' +
+      '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div>'
+    );
+    return html;
+  };
+
+  // Contrato 2 (Com Frete) — adiciona o espaço pra Nota
+  var gerarCF_Original = window.gerarContratoComFrete;
+  window.gerarContratoComFrete = function(dados) {
+    var html = gerarCF_Original ? gerarCF_Original(dados) : "";
+    html = html.replace(
+      '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div>',
+      '<div id="espaco-nota-promissoria-loja"></div>' +
+      '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div>'
+    );
+    return html;
+  };
+
+  // Contrato 3 já tem o espaço, mas garante
+  var gerarPML_Original = window.gerarContratoPegueMonteLoja;
+  window.gerarContratoPegueMonteLoja = function(dados) {
+    var html = gerarPML_Original ? gerarPML_Original(dados) : "";
+    // Se não tiver o espaço, adiciona
+    if (html.indexOf('espaco-nota-promissoria-loja') === -1) {
+      html = html.replace(
+        '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div>',
+        '<div id="espaco-nota-promissoria-loja"></div>' +
+        '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div>'
+      );
+    }
+    return html;
+  };
+
+  // ------------------------------------------------------------
+  // Sobrescreve GerarContratoReserva — mostra botão Nota SEMPRE
+  // ------------------------------------------------------------
+  var gerarReserva_Original = window.GerarContratoReserva;
+  window.GerarContratoReserva = function(idReserva) {
+    var res = State.reservas.filter(function(r) { return r.id === idReserva; })[0];
+    if (!res) return Utils.showToast("Reserva não encontrada.", "error");
+
+    var resposta = prompt(
+      "Qual o modelo do contrato?\n\n" +
+      "Digite 1 para: 🏠 PEGUE E MONTE\n" +
+      "Digite 2 para: 📦 COM FRETE\n" +
+      "Digite 3 para: 🏬 PEGUE E MONTE (LOJA)\n\n" +
+      "(Padrão: 1)",
+      "1"
+    );
+    if (resposta === null) return;
+
+    var r = resposta.trim();
+    var tipoModelo = "pegue-monte";
+    if (r === "2") tipoModelo = "com-frete";
+    else if (r === "3") tipoModelo = "pegue-monte-loja";
+
+    var dadosContrato = {
+      nome: safe(res.cliente), cpf: safe(res.cpf), telefone: safe(res.telefone),
+      endereco: safe(res.endereco), local: safe(res.local), data: safe(res.data),
+      horario: "", valor: parseFloat(res.total) || 0,
+      pecas: Array.isArray(res.pecas) ? res.pecas : [],
+      pecasQtd: res.pecasQtd || null,
+      tema: safe(res.tema), obs: safe(res.obs)
+    };
+
+    var htmlContrato;
+    if (tipoModelo === "com-frete") htmlContrato = gerarContratoComFrete(dadosContrato);
+    else if (tipoModelo === "pegue-monte-loja") htmlContrato = gerarContratoPegueMonteLoja(dadosContrato);
+    else htmlContrato = gerarContratoPegueMonte(dadosContrato);
+
+    Database.salvarContratoNuvem({
+      nome: safe(res.cliente), cpf: safe(res.cpf), telefone: safe(res.telefone),
+      endereco: safe(res.endereco), local: safe(res.local), data: safe(res.data),
+      valor: parseFloat(res.total) || 0, modelo: tipoModelo,
+      tema: safe(res.tema), pecas: Array.isArray(res.pecas) ? res.pecas : [],
+      obs: safe(res.obs), criadoEm: Date.now()
+    }).catch(function(err) { console.warn("Contrato não salvo na nuvem:", err); });
+
+    var preview = document.getElementById("contrato-preview-content");
+    if (preview) {
+      preview.innerHTML = htmlContrato;
+      preview.contentEditable = "false";
+      preview.style.outline = "";
+      preview.style.padding = "";
+      preview.style.borderRadius = "";
+    }
+
+    document.getElementById("btn-editar-contrato").style.display = "inline-flex";
+    document.getElementById("btn-salvar-edicao-contrato").style.display = "none";
+    // 👇 SEMPRE mostra o botão de Nota Promissória
+    document.getElementById("btn-add-nota-promissoria").style.display = "inline-flex";
+    window.__contratoTipo = tipoModelo;
+    var modalVis = document.getElementById("modal-visualizar-contrato");
+    if (modalVis) modalVis.classList.add("ativo");
+    Utils.showToast("Contrato gerado!", "success");
+  };
+
+  // ------------------------------------------------------------
+  // Sobrescreve gerarContratoAvulso — mostra botão Nota SEMPRE
+  // ------------------------------------------------------------
+  var gerarAvulso_Original = window.gerarContratoAvulso;
+  window.gerarContratoAvulso = function(gerarPdf) {
+    var nome = (document.getElementById("c-nome") || {}).value || "";
+    var cpf = (document.getElementById("c-cpf") || {}).value || "";
+    var data = (document.getElementById("c-data") || {}).value || "";
+    var horario = (document.getElementById("c-horario") || {}).value || "";
+    var valor = parseFloat((document.getElementById("c-valor") || {}).value) || 0;
+    var endereco = (document.getElementById("c-endereco") || {}).value || "";
+    var telefone = (document.getElementById("c-telefone") || {}).value || "";
+    var local = (document.getElementById("c-local") || {}).value || "";
+    var modelo = (document.getElementById("c-modelo") || {}).value || "com-frete";
+    var obs = (document.getElementById("c-obs") || {}).value || "";
+    var tema = (document.getElementById("contrato-tema-selecionado") || {}).value || "";
+    var dataRetirada = (document.getElementById("c-data-retirada") || {}).value || "";
+    var dataDevolucao = (document.getElementById("c-data-devolucao") || {}).value || "";
+
+    var selectPecas = document.getElementById("c-pecas");
+    var pecas = [];
+    if (selectPecas) {
+      for (var i = 0; i < selectPecas.options.length; i++) {
+        if (selectPecas.options[i].selected) pecas.push(selectPecas.options[i].value);
+      }
+    }
+
+    if (!nome.trim()) { Utils.showToast("Preencha o nome do contratante!", "warning"); return; }
+
+    var dados = {
+      nome: nome, cpf: cpf, data: data, horario: horario, valor: valor,
+      endereco: endereco, telefone: telefone, local: local,
+      dataRetirada: dataRetirada || data,
+      dataDevolucao: dataDevolucao || data,
+      tema: tema, pecas: pecas, obs: obs
+    };
+
+    var html;
+    if (modelo === "com-frete") html = gerarContratoComFrete(dados);
+    else if (modelo === "pegue-monte-loja") html = gerarContratoPegueMonteLoja(dados);
+    else html = gerarContratoPegueMonte(dados);
+
+    Database.salvarContratoNuvem({
+      nome: nome, cpf: cpf, data: data, horario: horario, valor: valor,
+      endereco: endereco, telefone: telefone, local: local, modelo: modelo,
+      dataRetirada: dataRetirada || data, dataDevolucao: dataDevolucao || data,
+      tema: tema, pecas: pecas, obs: obs, criadoEm: Date.now()
+    }).then(function() {
+      Utils.showToast("✅ Contrato salvo!", "success");
+    }).catch(function(err) {
+      console.warn("Erro ao salvar contrato (não bloqueia):", err);
+      Utils.showToast("⚠️ Contrato gerado, mas não foi salvo na nuvem.", "warning");
+    });
+
+    var preview = document.getElementById("contrato-preview-content");
+    if (preview) {
+      preview.innerHTML = html;
+      preview.contentEditable = "false";
+      preview.style.outline = "";
+      preview.style.padding = "";
+      preview.style.borderRadius = "";
+    }
+
+    document.getElementById("btn-editar-contrato").style.display = "inline-flex";
+    document.getElementById("btn-salvar-edicao-contrato").style.display = "none";
+    // 👇 SEMPRE mostra o botão de Nota Promissória
+    document.getElementById("btn-add-nota-promissoria").style.display = "inline-flex";
+    window.__contratoTipo = modelo;
+    var modalVis = document.getElementById("modal-visualizar-contrato");
+    if (modalVis) modalVis.classList.add("ativo");
+    if (gerarPdf) setTimeout(function() { gerarContratoPDF(); }, 300);
+  };
+
+  // ------------------------------------------------------------
+  // FIX 2: Manter seleção no modal de peças ao filtrar
+  // ------------------------------------------------------------
+  var selecaoPecasTemp = {};
+
+  // Sobrescreve renderizarListaPecasModal pra preservar seleção
+  var renderOriginal = window.renderizarListaPecasModal;
+  window.renderizarListaPecasModal = function(contexto, filtro) {
+    // 1) Antes de renderizar: salva TODAS as seleções visíveis + já salvas
+    var container = document.getElementById("lista-pecas-checkbox");
+    if (container) {
+      container.querySelectorAll('.chk-peca-modal').forEach(function(cb) {
+        var inpQtd = container.querySelector('.qtd-peca-modal[data-peca="' + cb.value.replace(/"/g, '\\"') + '"]');
+        selecaoPecasTemp[cb.value] = {
+          checked: cb.checked,
+          qtd: inpQtd ? (parseInt(inpQtd.value) || 1) : 1
+        };
+      });
+    }
+
+    // 2) Chama a função original (que renderiza)
+    if (renderOriginal) {
+      renderOriginal.call(this, contexto, filtro);
+    }
+
+    // 3) Depois de renderizar: reaplica as seleções salvas
+    var novoContainer = document.getElementById("lista-pecas-checkbox");
+    if (novoContainer) {
+      novoContainer.querySelectorAll('.chk-peca-modal').forEach(function(cb) {
+        var salvo = selecaoPecasTemp[cb.value];
+        if (salvo) {
+          cb.checked = salvo.checked;
+          var inp = novoContainer.querySelector('.qtd-peca-modal[data-peca="' + cb.value.replace(/"/g, '\\"') + '"]');
+          if (inp) {
+            inp.disabled = !salvo.checked;
+            inp.style.background = salvo.checked ? "#fff" : "#f0f0f0";
+            if (salvo.qtd) inp.value = salvo.qtd;
+          }
+        }
+      });
+
+      // Atualiza contador
+      var contador = document.getElementById("contador-pecas-selecionadas");
+      if (contador) {
+        var count = novoContainer.querySelectorAll('.chk-peca-modal:checked').length;
+        contador.textContent = count + " selecionadas";
+      }
+    }
+  };
+
+  // Limpa a seleção temporária quando FECHAR o modal
+  var fecharOriginal = function() {
+    selecaoPecasTemp = {};
+    var modal = document.getElementById("modal-pecas");
+    if (modal) modal.classList.remove("ativo");
+  };
+
+  // Reconecta os botões de fechar do modal de peças
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+      var btnFechar = document.getElementById("btn-fechar-modal-pecas");
+      if (btnFechar) btnFechar.onclick = fecharOriginal;
+      var btnCancelar = document.getElementById("btn-cancelar-pecas");
+      if (btnCancelar) btnCancelar.onclick = fecharOriginal;
+    }, 800);
+  });
+
+  console.log("✅ FIX FINAL: Nota Promissória em todos + Seleção preservada no modal");
+})();
