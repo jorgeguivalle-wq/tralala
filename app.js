@@ -1405,7 +1405,7 @@ function gerarContratoPegueMonte(dados) {
   var pecasDetalhadas = descricaoPecasDetalhada(dados.pecas, dados.pecasQtd);
 
   return '<div class="pagina-contrato">' +
-    '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
+    '<div class="logo-container"><img src="tralala-logo.png" class="logo-contrato"></div>' +
     '<div class="titulo-contrato">CONTRATO DE PRESTAÇÃO DE SERVIÇOS PARA LOCAÇÃO</div>' +
     '<div class="dados-contratada"><span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS CNPJ: 21.918.863/0001-12</div>' +
     '<div class="dados-contratante"><span class="negrito">CONTRATANTE:</span> ' + nome + '</div>' +
