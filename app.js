@@ -2663,3 +2663,129 @@ document.addEventListener('DOMContentLoaded', function() {
 
   console.log("✅ FIX: Imprimir e PDF sem cabeçalho, sem botões, sem Lalá");
 })();
+
+
+// ============================================================
+// FIX — Retirada e Devolução no Contrato Avulso
+// ============================================================
+(function() {
+  'use strict';
+
+  // Sobrescreve gerarContratoAvulso para capturar as datas
+  var gerarAvulsoOriginal = window.gerarContratoAvulso;
+
+  window.gerarContratoAvulso = function(gerarPdf) {
+    var nome = (document.getElementById("c-nome") || {}).value || "";
+    var cpf = (document.getElementById("c-cpf") || {}).value || "";
+    var data = (document.getElementById("c-data") || {}).value || "";
+    var horario = (document.getElementById("c-horario") || {}).value || "";
+    var valor = parseFloat((document.getElementById("c-valor") || {}).value) || 0;
+    var endereco = (document.getElementById("c-endereco") || {}).value || "";
+    var telefone = (document.getElementById("c-telefone") || {}).value || "";
+    var local = (document.getElementById("c-local") || {}).value || "";
+    var modelo = (document.getElementById("c-modelo") || {}).value || "com-frete";
+    var obs = (document.getElementById("c-obs") || {}).value || "";
+    var tema = (document.getElementById("contrato-tema-selecionado") || {}).value || "";
+
+    // NOVOS CAMPOS
+    var dataRetirada = (document.getElementById("c-data-retirada") || {}).value || "";
+    var dataDevolucao = (document.getElementById("c-data-devolucao") || {}).value || "";
+
+    var selectPecas = document.getElementById("c-pecas");
+    var pecas = [];
+    if (selectPecas) {
+      for (var i = 0; i < selectPecas.options.length; i++) {
+        if (selectPecas.options[i].selected) pecas.push(selectPecas.options[i].value);
+      }
+    }
+
+    if (!nome.trim()) { Utils.showToast("Preencha o nome do contratante!", "warning"); return; }
+
+    var dados = {
+      nome: nome, cpf: cpf, data: data, horario: horario, valor: valor,
+      endereco: endereco, telefone: telefone, local: local,
+      dataRetirada: dataRetirada || data,
+      dataDevolucao: dataDevolucao || data,
+      tema: tema, pecas: pecas, obs: obs
+    };
+
+    var html;
+    if (modelo === "com-frete") html = gerarContratoComFrete(dados);
+    else if (modelo === "pegue-monte-loja") html = gerarContratoPegueMonteLoja(dados);
+    else html = gerarContratoPegueMonte(dados);
+
+    Database.salvarContratoNuvem({
+      nome: nome, cpf: cpf, data: data, horario: horario, valor: valor,
+      endereco: endereco, telefone: telefone, local: local, modelo: modelo,
+      dataRetirada: dataRetirada || data, dataDevolucao: dataDevolucao || data,
+      tema: tema, pecas: pecas, obs: obs, criadoEm: Date.now()
+    }).then(function() {
+      Utils.showToast("✅ Contrato salvo!", "success");
+    }).catch(function(err) {
+      console.warn("Erro ao salvar contrato (não bloqueia):", err);
+      Utils.showToast("⚠️ Contrato gerado, mas não foi salvo na nuvem.", "warning");
+    });
+
+    var preview = document.getElementById("contrato-preview-content");
+    if (preview) {
+      preview.innerHTML = html;
+      preview.contentEditable = "false";
+      preview.style.outline = "";
+      preview.style.padding = "";
+      preview.style.borderRadius = "";
+    }
+    document.getElementById("btn-editar-contrato").style.display = "inline-flex";
+    document.getElementById("btn-salvar-edicao-contrato").style.display = "none";
+    document.getElementById("btn-add-nota-promissoria").style.display = (modelo === "pegue-monte-loja") ? "inline-flex" : "none";
+    window.__contratoTipo = modelo;
+    var modalVis = document.getElementById("modal-visualizar-contrato");
+    if (modalVis) modalVis.classList.add("active");
+    if (modalVis) modalVis.classList.add("ativo");
+    if (gerarPdf) setTimeout(function() { gerarContratoPDF(); }, 300);
+  };
+
+  // ------------------------------------------------------------
+  // Sobrescreve gerarContratoPegueMonteLoja para usar as datas
+  // ------------------------------------------------------------
+  var gerarLojaOriginal = window.gerarContratoPegueMonteLoja;
+
+  window.gerarContratoPegueMonteLoja = function(dados) {
+    // Monta o HTML original
+    var html = gerarLojaOriginal ? gerarLojaOriginal(dados) : "";
+
+    // Formata as datas
+    var dataRetFmt = dados.dataRetirada
+      ? String(dados.dataRetirada).split("-").reverse().join("/")
+      : "____/____/______";
+    var dataDevFmt = dados.dataDevolucao
+      ? String(dados.dataDevolucao).split("-").reverse().join("/")
+      : "____/____/______";
+
+    // Substitui a linha RETIRADA DOS ITENS
+    html = html.replace(
+      /<div class="dados-contratante"><span class="negrito">RETIRADA DOS ITENS:<\/span>[^<]*<\/div>/,
+      '<div class="dados-contratante"><span class="negrito">RETIRADA DOS ITENS:</span> ' + dataRetFmt + ', ATÉ AS 11H00</div>'
+    );
+
+    // Substitui a linha DEVOLUÇÃO DOS ITENS
+    html = html.replace(
+      /<div class="dados-contratante"><span class="negrito">DEVOLUÇÃO DOS ITENS:<\/span>[^<]*<\/div>/,
+      '<div class="dados-contratante"><span class="negrito">DEVOLUÇÃO DOS ITENS:</span> ' + dataDevFmt + ', ATÉ AS 11H00 (caso não seja entregue na data e horário combinado será cobrado o valor de uma locação para cada dia de atraso).</div>'
+    );
+
+    return html;
+  };
+
+  // ------------------------------------------------------------
+  // Sobrescreve gerarContratoPegueMonte para usar as datas
+  // ------------------------------------------------------------
+  var gerarPMOriginal = window.gerarContratoPegueMonte;
+
+  window.gerarContratoPegueMonte = function(dados) {
+    var html = gerarPMOriginal ? gerarPMOriginal(dados) : "";
+    // O contrato Pegue e Monte simples não tem retirada/devolução destacados, então não mexe
+    return html;
+  };
+
+  console.log("✅ FIX: Retirada e Devolução no Contrato Avulso");
+})();
