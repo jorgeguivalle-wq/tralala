@@ -57,25 +57,8 @@
     .nota-promissoria .assinatura-nota { margin-top: 30px; text-align: center; }
     .nota-promissoria .linha-assinatura-nota { border-top: 1px solid #000; width: 70%; margin: 20px auto 4px auto; }
 
-    /* ========== MODAL DE PEÇAS POR CATEGORIA ========== */
-    .categoria-header-modal {
-      background: linear-gradient(90deg, var(--primary), var(--primary-dark));
-      color: #fff;
-      font-weight: 700;
-      padding: 8px 12px;
-      border-radius: 6px;
-      margin: 10px 0 6px 0;
-      font-size: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .categoria-header-modal .badge-cat-modal {
-      background: rgba(255,255,255,0.3);
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 11px;
-    }
+    .categoria-header-modal { background: linear-gradient(90deg, var(--primary), var(--primary-dark)); color: #fff; font-weight: 700; padding: 8px 12px; border-radius: 6px; margin: 10px 0 6px 0; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .categoria-header-modal .badge-cat-modal { background: rgba(255,255,255,0.3); padding: 2px 8px; border-radius: 10px; font-size: 11px; }
   </style>
 </head>
 <body>
@@ -84,7 +67,6 @@
       <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" alt="Logo Tralalá" class="logo-imagem">
     </header>
 
-    <!-- ================= LOGIN ================= -->
     <section id="secao-login">
       <h2 style="text-align: center;">Acesso ao Sistema</h2>
       <p class="instrucao">Faça login para gerenciar reservas e estoque.</p>
@@ -99,7 +81,6 @@
       <button type="button" id="btn-login-direto" class="btn btn-primary">Entrar no Painel</button>
     </section>
 
-    <!-- ================= PAINEL PRINCIPAL ================= -->
     <section id="secao-verificador" style="display: none;">
       <div class="usuario-logado">
         <span id="nome-usuario"> 👤 Administrador (Tralalá)</span>
@@ -143,7 +124,6 @@
         <button type="button" id="btn-abrir-gerador-contrato" class="btn btn-outline" style="flex: 1; min-width: 130px; border-color: #e67e22; color: #e67e22;">✍️ Gerar Contrato</button>
       </div>
 
-      <!-- PAINEL DE REUNIÕES -->
       <div id="painel-reunioes-exclusivo" class="painel-central-relatorios" style="display: none; border-color: #27ae60;">
         <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center; color: #27ae60;">
           <span>📅 Painel de Reuniões com Clientes</span>
@@ -173,7 +153,6 @@
         </div>
       </div>
 
-      <!-- PAINEL CATÁLOGO -->
       <div id="painel-catalogo-temas" class="painel-relatorio-pontos" style="border-color: var(--primary); background: #ffffff; display: none;">
         <h3 style="margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 5px; color: var(--primary); display: flex; justify-content: space-between; align-items: center;">
           <span>🎨 Catálogo de Temas & Peças</span>
@@ -230,16 +209,16 @@
             <span>📂 Gerenciar Categorias</span>
             <span id="contador-categorias" style="font-size:12px; background:var(--primary); color:#fff; padding:2px 10px; border-radius:12px;">0</span>
           </h4>
-          <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 200px; display: flex; gap: 8px;">
-              <input type="text" id="input-nova-categoria" placeholder="Nome da nova categoria" style="flex:1; padding:8px 12px; border:1.5px solid var(--border-color); border-radius:8px;">
-              <button type="button" id="btn-adicionar-categoria" class="btn btn-primary" style="padding:8px 16px; width:auto; font-size:13px;">➕ Adicionar</button>
+          <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 15px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <input type="text" id="input-nova-categoria" placeholder="Nome da nova categoria" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid var(--border-color); border-radius:8px;">
+              <button type="button" id="btn-adicionar-categoria" class="btn btn-primary" style="padding:10px 16px; width:auto; font-size:13px; white-space:nowrap;">➕ Adicionar</button>
             </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <select id="select-remover-categoria" style="padding:8px 12px; border:1.5px solid var(--border-color); border-radius:8px; min-width:150px;">
-                <option value="">Selecione...</option>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <select id="select-remover-categoria" style="flex:1; min-width:180px; padding:10px 12px; border:1.5px solid var(--border-color); border-radius:8px;">
+                <option value="">Selecione a categoria para remover...</option>
               </select>
-              <button type="button" id="btn-remover-categoria" class="btn btn-danger" style="padding:8px 16px; width:auto; font-size:13px;">🗑️ Remover</button>
+              <button type="button" id="btn-remover-categoria" class="btn btn-danger" style="padding:10px 16px; width:auto; font-size:13px; white-space:nowrap;">🗑️ Remover</button>
             </div>
           </div>
           <div id="lista-categorias-admin" style="display:flex; flex-wrap:wrap; gap:6px; padding:8px; background:#fff; border-radius:8px; min-height:40px; border:1px solid var(--border-color);"></div>
@@ -271,7 +250,6 @@
         </div>
       </div>
 
-      <!-- PAINEL KITS -->
       <div id="painel-gerador-kits" class="painel-central-relatorios" style="display: none; border-color: #9b59b6;">
         <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center; color: #9b59b6;">
           <span>🎁 Gerador de Kits Personalizados</span>
@@ -314,7 +292,6 @@
         </div>
       </div>
 
-      <!-- PAINEL RELATÓRIOS -->
       <div id="secao-central-relatorios" class="painel-central-relatorios" style="display: none;">
         <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: center;">
           <span>📊 Relatório de Vendas & Faturamento</span>
@@ -362,7 +339,6 @@
         </div>
       </div>
 
-      <!-- FORMULÁRIO DE RESERVA -->
       <h2 id="titulo-form-reserva">Agendar Nova Festa</h2>
 
       <div class="grid-2">
@@ -580,6 +556,19 @@
           </div>
         </div>
         <div class="input-group"><label>Local do Evento:</label><input type="text" id="c-local" placeholder="Endereço do evento"></div>
+
+        <!-- NOVOS CAMPOS: RETIRADA E DEVOLUÇÃO -->
+        <div class="grid-2">
+          <div class="input-group">
+            <label>📅 Retirada dos Itens:</label>
+            <input type="date" id="c-data-retirada">
+          </div>
+          <div class="input-group">
+            <label>📅 Devolução dos Itens:</label>
+            <input type="date" id="c-data-devolucao">
+          </div>
+        </div>
+
         <div class="input-group">
           <label>🔍 Tema do Contrato:</label>
           <div class="sugestoes-wrapper">
@@ -744,7 +733,7 @@
     </div>
   </div>
 
-  <!-- MODAL EDITAR RESERVA (NOVO) -->
+  <!-- MODAL EDITAR RESERVA -->
   <div id="modal-editar-reserva" class="modal-contrato" style="z-index:20000;">
     <div class="modal-conteudo" style="max-width:700px;">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #3498db; padding-bottom:10px; margin-bottom:20px;">
