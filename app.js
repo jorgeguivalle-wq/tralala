@@ -1827,12 +1827,33 @@ function gerarContratoAvulso(gerarPdf) {
   console.log("✅ FIX: PDF com html2canvas + jsPDF puro (sem html2pdf)");
 })();
 
-    // ============= CLONE FORA DO MODAL =============
-    // 1. Clone do contrato
-    var clone = pagina.cloneNode(true);
+   
 
-    // 2. Força estilos inline no clone (garante que vai sair formatado)
-    clone.style.width = "794px";        // A4 em pixels (96dpi)
+// ============================================================
+// FIX FINAL — PDF com logo (html2canvas + jsPDF puro)
+// ============================================================
+(function() {
+  'use strict';
+
+  window.BaixarPDFContrato = function() {
+    var preview = document.getElementById("contrato-preview-content");
+    if (!preview) return Utils.showToast("Nenhum contrato aberto.", "warning");
+    var pagina = preview.querySelector('.pagina-contrato');
+    if (!pagina) return Utils.showToast("Contrato não encontrado.", "warning");
+
+    if (typeof html2canvas === 'undefined') {
+      return Utils.showToast("Erro: html2canvas não carregou.", "error");
+    }
+
+    var nome = (document.getElementById("c-nome") || {}).value
+      || (document.getElementById("nome-cliente") || {}).value
+      || "contrato";
+    nome = nome.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
+
+    Utils.showToast("⏳ Gerando PDF...", "info");
+
+    var clone = pagina.cloneNode(true);
+    clone.style.width = "794px";
     clone.style.minHeight = "auto";
     clone.style.padding = "60px 55px";
     clone.style.margin = "0";
@@ -1844,79 +1865,82 @@ function gerarContratoAvulso(gerarPdf) {
     clone.style.fontSize = "11pt";
     clone.style.lineHeight = "1.4";
     clone.style.color = "#000000";
-    clone.style.display = "block";
     clone.style.position = "static";
     clone.style.transform = "none";
-    clone.style.pageBreakAfter = "avoid";
 
-    // 3. Cria container temporário VISÍVEL (pra html2canvas capturar)
     var temp = document.createElement("div");
-    temp.id = "temp-pdf-container";
+    temp.id = "temp-pdf-render";
     temp.style.position = "fixed";
     temp.style.left = "0";
     temp.style.top = "0";
     temp.style.width = "794px";
     temp.style.background = "#ffffff";
-    temp.style.zIndex = "9999999";
-    temp.style.opacity = "0.01";        // quase invisível mas o html2canvas enxerga
-    temp.style.pointerEvents = "none";
+    temp.style.zIndex = "99999";
     temp.style.overflow = "visible";
     temp.appendChild(clone);
     document.body.appendChild(temp);
 
-    // 4. Dá um tempinho pro DOM renderizar
     setTimeout(function() {
-      var opt = {
-        margin: [0, 0, 0, 0],
-        filename: 'contrato-' + nome + '.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: "#ffffff",
-          logging: false,
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: 794,
-          width: 794,
-          height: clone.scrollHeight
-        },
-        jsPDF: {
-          unit: 'mm',
-          format: 'a4',
-          orientation: 'portrait',
-          compress: true
-        },
-        pagebreak: { mode: ['css', 'legacy'] }
-      };
+      html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        allowTaint: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 794,
+        width: 794,
+        height: clone.scrollHeight
+      }).then(function(canvas) {
+        if (temp.parentNode) temp.parentNode.removeChild(temp);
 
-      html2pdf().from(clone).set(opt).save().then(function() {
-        // Remove o container temporário
-        if (temp.parentNode) temp.parentNode.removeChild(temp);
+        if (!canvas || canvas.width === 0) {
+          Utils.showToast("❌ Erro: canvas vazio", "error");
+          return;
+        }
+
+        var jsPDFClass = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+        var pdf = new jsPDFClass({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+
+        var imgData = canvas.toDataURL('image/jpeg', 0.95);
+        var pdfWidth = 210;
+        var pdfHeight = 297;
+        var imgWidth = pdfWidth;
+        var imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        var position = 0;
+        var heightLeft = imgHeight;
+
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pdfHeight;
+        }
+
+        pdf.save('contrato-' + nome + '.pdf');
         Utils.showToast("✅ PDF baixado!", "success");
+
       }).catch(function(err) {
-        // Remove mesmo se der erro
         if (temp.parentNode) temp.parentNode.removeChild(temp);
-        console.error("Erro ao gerar PDF:", err);
-        Utils.showToast("❌ Erro ao gerar PDF. Tente novamente.", "error");
+        console.error("❌ Erro:", err);
+        Utils.showToast("❌ Erro: " + (err.message || err), "error");
       });
-    }, 500);
+    }, 400);
   };
 
-  // Reconecta o botão
   document.addEventListener('DOMContentLoaded', function() {
     setTimeout(function() {
-      var btnBaixar = document.getElementById("btn-baixar-pdf-contrato");
-      if (btnBaixar) {
-        btnBaixar.onclick = function(e) {
-          if (e) e.preventDefault();
-          window.BaixarPDFContrato();
-        };
-      }
-    }, 900);
+      var btn = document.getElementById("btn-baixar-pdf-contrato");
+      if (btn) btn.onclick = function(e) { if (e) e.preventDefault(); window.BaixarPDFContrato(); };
+    }, 1000);
   });
 
-  console.log("✅ FIX: PDF baixa DIRETO sem janela nova");
+  console.log("✅ FIX: PDF com html2canvas + jsPDF puro");
 })();
 
 // ============================================================
