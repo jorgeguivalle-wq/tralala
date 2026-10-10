@@ -51,6 +51,10 @@
         resposta: 'Ah, isso é uma proteção do sistema! 🔒<br><br>Quando você tenta agendar uma festa com um <b>tema que já está alugado</b> no mesmo dia, o sistema bloqueia pra evitar conflito.<br><br>Exemplo: se você tem só <b>1 maquete Star Wars</b> e já reservou ela pro dia 15/10, ninguém mais pode alugar no dia 15/10.<br><br><b>Soluções:</b><br>🔹 Escolher outra data<br>🔹 Escolher outro tema<br>🔹 Aumentar a quantidade do tema no catálogo (se você tiver mais de um)',
         atalho: { texto: '🎨 Ir para o catálogo', destino: 'btn-abrir-catalogo-temas' }
       },
+      {
+        palavras: ['cancelar reserva', 'cancelar agendamento', 'excluir reserva', 'excluir agendamento', 'deletar reserva', 'apagar reserva', 'cancelar festa'],
+        resposta: 'Pra <b>cancelar uma reserva</b>, é bem rapidinho: 🗑️<br><br>1️⃣ Desça até o <b>📋 Relatório de Agendamentos Ativos</b><br>2️⃣ Encontre o <b>card do agendamento</b> que você quer cancelar<br>3️⃣ Clique no botão <b>🗑️</b> no canto do card<br>4️⃣ Confirme o cancelamento<br><br>Pronto! A reserva sai da lista. ⚠️ Fica ligado: essa ação não pode ser desfeita.'
+      },
 
       // ============ ORÇAMENTO ============
       {
@@ -94,6 +98,26 @@
         palavras: ['gerar contrato reserva', 'contrato da reserva', 'contrato de agendamento'],
         resposta: 'Você pode gerar o contrato direto de uma <b>reserva já existente</b>:<br><br>1️⃣ Desça até <b>📋 Relatório de Agendamentos Ativos</b><br>2️⃣ Encontre a reserva desejada<br>3️⃣ Clique em <b>✍️ Gerar Contrato</b><br>4️⃣ Escolha o modelo (1, 2 ou 3)<br><br>O contrato abre automaticamente preenchido! 🎉'
       },
+      {
+        palavras: ['baixar pdf', 'baixar o pdf', 'baixar pdf do contrato', 'download pdf', 'download do contrato', 'salvar pdf', 'como baixar pdf'],
+        resposta: 'Pra <b>baixar o PDF do contrato</b>: 📥<br><br>1️⃣ Gere ou abra o contrato<br>2️⃣ Clique em <b>📄 Gerar PDF</b><br>3️⃣ Vai abrir uma <b>janelinha de impressão</b> do navegador<br>4️⃣ No destino, escolha <b>Salvar como PDF</b><br>5️⃣ Clique em <b>Salvar</b> e escolha onde guardar<br><br>Pronto! O arquivo fica salvo no seu computador. 💾'
+      },
+      {
+        palavras: ['pdf nao abre', 'pdf não abre', 'pdf em branco', 'pdf ta em branco', 'pdf tá em branco', 'pdf vazio', 'contrato em branco'],
+        resposta: 'Se o <b>PDF não abre ou está em branco</b>, tenta isso: 📄<br><br>1️⃣ <b>Recarregue a página</b> e gere o PDF de novo (F5 ou Ctrl+F5)<br>2️⃣ Confirme se o contrato tem <b>dados preenchidos</b> antes de gerar<br>3️⃣ Teste em <b>outro navegador</b> (Chrome, Edge, Firefox)<br>4️⃣ Se estiver no celular, tente pelo <b>computador</b><br>5️⃣ Desative <b>bloqueador de pop-up</b> — ele pode impedir a janelinha de abrir<br><br>Se continuar, avisa o suporte. 🔧'
+      },
+      {
+        palavras: ['salvar como pdf', 'como salvar pdf', 'salvar em pdf', 'imprimir em pdf'],
+        resposta: 'Pra <b>salvar o contrato como PDF</b>: 💾<br><br>1️⃣ Clique em <b>📄 Gerar PDF</b><br>2️⃣ Na janelinha que abrir, procure o campo <b>Destino</b> ou <b>Impressora</b><br>3️⃣ Troque por <b>Salvar como PDF</b><br>4️⃣ Clique em <b>Salvar</b><br>5️⃣ Escolha a pasta e o nome do arquivo<br><br>Prontinho! Fica salvo no seu computador. 📥'
+      },
+      {
+        palavras: ['imprimir contrato', 'como imprimir', 'imprimir o contrato', 'imprimir pdf'],
+        resposta: 'Pra <b>imprimir o contrato</b>: 🖨️<br><br>1️⃣ Abra o contrato<br>2️⃣ Clique em <b>📄 Gerar PDF</b><br>3️⃣ Na janelinha, escolha sua <b>impressora</b> no campo de destino<br>4️⃣ Ajuste as opções (cor, frente e verso, etc.)<br>5️⃣ Clique em <b>Imprimir</b><br><br>Se quiser só salvar em vez de imprimir, escolha <b>Salvar como PDF</b>. 💾'
+      },
+      {
+        palavras: ['editar contrato', 'editar um contrato', 'alterar contrato', 'modificar contrato', 'editar manualmente', 'corrigir contrato'],
+        resposta: 'Pra <b>editar um contrato</b> manualmente: ✏️<br><br>1️⃣ Abra o <b>modal do contrato</b><br>2️⃣ Clique no botão <b>✏️ Editar Manualmente</b><br>3️⃣ Faça as alterações que precisar<br>4️⃣ Salve pra confirmar<br><br>Depois é só gerar o PDF de novo com as mudanças. 📄'
+      },
 
       // ============ FRETE ============
       {
@@ -121,8 +145,18 @@
         atalho: { texto: '🎨 Abrir catálogo', destino: 'btn-abrir-catalogo-temas' }
       },
       {
+        palavras: ['adicionar peca', 'adicionar peça', 'adicionar uma peca', 'adicionar uma peça', 'nova peca no catalogo', 'cadastrar peca no catalogo', 'como adicionar peca'],
+        resposta: 'Pra <b>adicionar uma peça no catálogo</b>: 🎨<br><br>1️⃣ Clique em <b>🎨 Ver Catálogo</b><br>2️⃣ Vá até a seção de cadastro<br>3️⃣ Preencha os campos:<br>&nbsp;&nbsp;• Nome da peça<br>&nbsp;&nbsp;• Quantidade<br>&nbsp;&nbsp;• Categoria<br>&nbsp;&nbsp;• Modelo/Estilo<br>&nbsp;&nbsp;• Preço de locação<br>&nbsp;&nbsp;• Preço de reposição<br>&nbsp;&nbsp;• Foto (opcional)<br>4️⃣ Clique em <b>Salvar</b><br><br>Pronto! A peça já aparece na lista. ✅',
+        atalho: { texto: '🎨 Abrir catálogo', destino: 'btn-abrir-catalogo-temas' }
+      },
+      {
         palavras: ['categoria', 'categorias', 'criar categoria', 'nova categoria', 'gerenciar categoria'],
         resposta: 'As <b>categorias</b> servem pra organizar o catálogo (Maquete, Infantil, Casamento, etc.). 📂<br><br><b>Como criar:</b><br>1️⃣ Abra o <b>🎨 Ver Catálogo</b><br>2️⃣ Vá em <b>📂 Gerenciar Categorias</b><br>3️⃣ Digite o nome da nova categoria<br>4️⃣ Clique em <b>➕ Adicionar</b><br><br>Pra remover, escolha na lista e clique em <b>🗑️ Remover</b>.',
+        atalho: { texto: '📂 Ver categorias', destino: 'input-nova-categoria' }
+      },
+      {
+        palavras: ['criar uma categoria', 'criar nova categoria', 'adicionar categoria', 'como criar categoria', 'nova categoria no catalogo'],
+        resposta: 'Pra <b>criar uma categoria</b>: 📂<br><br>1️⃣ Abra o <b>🎨 Ver Catálogo</b><br>2️⃣ Clique em <b>📂 Gerenciar Categorias</b><br>3️⃣ Digite o nome da nova categoria<br>4️⃣ Clique em <b>➕ Adicionar</b><br><br>Pronto! A categoria já fica disponível pra usar no cadastro de peças. ✅',
         atalho: { texto: '📂 Ver categorias', destino: 'input-nova-categoria' }
       },
       {
