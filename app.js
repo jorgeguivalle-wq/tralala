@@ -3232,3 +3232,69 @@ document.addEventListener('DOMContentLoaded', function() {
 
   console.log("✅ FIX FINAL: Nota Promissória em todos + Seleção preservada no modal");
 })();
+
+
+// ============================================================
+// FIX — Forçar scroll no topo quando abre o contrato
+// ============================================================
+(function() {
+  'use strict';
+
+  // Função que reseta o scroll do modal de contrato
+  function resetarScrollContrato() {
+    var scroll = document.querySelector('.visualizador-contrato-scroll');
+    if (scroll) {
+      scroll.scrollTop = 0;
+      // Reduz o espaçamento interno que tava empurrando
+      scroll.style.paddingTop = "20px";
+    }
+  }
+
+  // Observa quando o modal de contrato abre
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.attributeName === 'class') {
+        var modal = document.getElementById('modal-visualizar-contrato');
+        if (modal && modal.classList.contains('ativo')) {
+          // Aguarda um tiquinho pro DOM atualizar
+          setTimeout(resetarScrollContrato, 50);
+          setTimeout(resetarScrollContrato, 200);
+          setTimeout(resetarScrollContrato, 500);
+        }
+      }
+    });
+  });
+
+  // Aplica o observer no modal
+  document.addEventListener('DOMContentLoaded', function() {
+    var modal = document.getElementById('modal-visualizar-contrato');
+    if (modal) {
+      observer.observe(modal, { attributes: true });
+
+      // Bônus: sempre que clicar em qualquer botão que abre contrato, reseta scroll
+      var btnVerContrato = document.getElementById('btn-visualizar-contrato');
+      if (btnVerContrato) {
+        btnVerContrato.addEventListener('click', function() {
+          setTimeout(resetarScrollContrato, 100);
+        });
+      }
+    }
+  });
+
+  // Sobrescreve as funções que abrem o modal pra resetar o scroll
+  var fnOriginalGerarReserva = window.GerarContratoReserva;
+  window.GerarContratoReserva = function(id) {
+    if (fnOriginalGerarReserva) fnOriginalGerarReserva(id);
+    setTimeout(resetarScrollContrato, 100);
+    setTimeout(resetarScrollContrato, 300);
+  };
+
+  var fnOriginalAvulso = window.gerarContratoAvulso;
+  window.gerarContratoAvulso = function(pdf) {
+    if (fnOriginalAvulso) fnOriginalAvulso(pdf);
+    setTimeout(resetarScrollContrato, 100);
+    setTimeout(resetarScrollContrato, 300);
+  };
+
+  console.log("✅ FIX: Scroll do contrato reseta pro topo automaticamente");
+})();
