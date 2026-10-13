@@ -379,7 +379,6 @@ const Database = {
 
 window.adicionarCategoria = function(nome) { return Database.salvarCategoriaNuvem(nome); };
 window.removerCategoria = function(nome) { return Database.removerCategoriaNuvem(nome); };
-
 // ============================================================
 // LISTENERS
 // ============================================================
@@ -730,22 +729,25 @@ function abrirModalPecas(contexto) {
 }
 
 function renderizarListaPecasModal(contexto, filtro) {
- var selecionadasAtuais = [];
-var qtdAtuais = {};
+  var container = document.getElementById("lista-pecas-checkbox");
+  if (!container) return;
 
-if (contexto === "kit") {
-  selecionadasAtuais = State.kitCriando.pecas || [];
-  qtdAtuais = State.kitCriando.pecasQtd || {};
-} else if (contexto === "contrato") {
-  selecionadasAtuais = State.pecasSelecionadasContrato || [];
-  qtdAtuais = State.pecasQtdContrato || {};
-} else if (contexto === "reserva") {
-  selecionadasAtuais = State.pecasSelecionadasContrato || [];
-  qtdAtuais = State.pecasQtdContrato || {};
-} else if (contexto === "kit-festa" && State.kitAtual) {
-  selecionadasAtuais = State.pecasSelecionadasKit[State.kitAtual] || [];
-  qtdAtuais = State.pecasQtdKit[State.kitAtual] || {};
-}
+  var selecionadasAtuais = [];
+  var qtdAtuais = {};
+
+  if (contexto === "kit") {
+    selecionadasAtuais = State.kitCriando.pecas || [];
+    qtdAtuais = State.kitCriando.pecasQtd || {};
+  } else if (contexto === "contrato") {
+    selecionadasAtuais = State.pecasSelecionadasContrato || [];
+    qtdAtuais = State.pecasQtdContrato || {};
+  } else if (contexto === "reserva") {
+    selecionadasAtuais = State.pecasSelecionadasContrato || [];
+    qtdAtuais = State.pecasQtdContrato || {};
+  } else if (contexto === "kit-festa" && State.kitAtual) {
+    selecionadasAtuais = State.pecasSelecionadasKit[State.kitAtual] || [];
+    qtdAtuais = State.pecasQtdKit[State.kitAtual] || {};
+  }
 
   var fNorm = Utils.normalizar(filtro);
   var pecas = State.estoqueArray.filter(function(item) {
@@ -758,7 +760,6 @@ if (contexto === "kit") {
     return;
   }
 
-  // Agrupa por categoria
   var grupos = {};
   pecas.forEach(function(item) {
     var cat = (item.categoria && String(item.categoria).trim()) || "Sem Categoria";
@@ -777,7 +778,6 @@ if (contexto === "kit") {
   var html = "";
   catsOrdenadas.forEach(function(cat) {
     var itens = grupos[cat];
-    // Cabeçalho da categoria
     html += '<div class="categoria-header-modal">' +
       '<span>📁 ' + cat + '</span>' +
       '<span class="badge-cat-modal">' + itens.length + ' peça' + (itens.length > 1 ? 's' : '') + '</span>' +
@@ -853,50 +853,50 @@ function confirmarModalPecas() {
   }
 
   if (modalPecasContexto === "kit") {
-  State.kitCriando.pecas = selecionadas;
-  State.kitCriando.pecasQtd = qtdSelecionadas;
-  atualizarInfoKitCriando();
-  Utils.showToast("✅ " + selecionadas.length + " peça(s) selecionada(s)", "success");
-} else if (modalPecasContexto === "contrato") {
-  State.pecasSelecionadasContrato = selecionadas;
-  State.pecasQtdContrato = qtdSelecionadas;
-  var selectPecas = document.getElementById("c-pecas");
-  if (selectPecas) {
-    for (var i = 0; i < selectPecas.options.length; i++) {
-      selectPecas.options[i].selected = selecionadas.indexOf(selectPecas.options[i].value) !== -1;
+    State.kitCriando.pecas = selecionadas;
+    State.kitCriando.pecasQtd = qtdSelecionadas;
+    atualizarInfoKitCriando();
+    Utils.showToast("✅ " + selecionadas.length + " peça(s) selecionada(s)", "success");
+  } else if (modalPecasContexto === "contrato") {
+    State.pecasSelecionadasContrato = selecionadas;
+    State.pecasQtdContrato = qtdSelecionadas;
+    var selectPecas = document.getElementById("c-pecas");
+    if (selectPecas) {
+      for (var i = 0; i < selectPecas.options.length; i++) {
+        selectPecas.options[i].selected = selecionadas.indexOf(selectPecas.options[i].value) !== -1;
+      }
     }
+    var info = document.getElementById("c-pecas-info");
+    if (info) info.textContent = selecionadas.length + " peça(s) selecionada(s).";
+    Utils.showToast("✅ " + selecionadas.length + " peça(s) no contrato", "success");
+  } else if (modalPecasContexto === "reserva") {
+    var idReserva = window.__reservaEditandoPecas;
+    if (!idReserva) {
+      Utils.showToast("Reserva não identificada.", "error");
+    } else {
+      ModalStatus.exibir("ATUALIZANDO PEÇAS...", "Salvando no agendamento.");
+      Database.atualizarReservaNuvem(idReserva, {
+        pecas: selecionadas,
+        pecasQtd: qtdSelecionadas,
+        atualizadoEm: Date.now()
+      }).then(function() {
+        ModalStatus.sucesso("✓ PEÇAS ATUALIZADAS");
+        window.__reservaEditandoPecas = null;
+      }).catch(function(err) {
+        console.error(err);
+        ModalStatus.erro("Erro ao atualizar peças.");
+      });
+    }
+  } else if (modalPecasContexto === "kit-festa" && State.kitAtual) {
+    State.pecasSelecionadasKit[State.kitAtual] = selecionadas;
+    State.pecasQtdKit[State.kitAtual] = qtdSelecionadas;
+    atualizarInfoKitFesta();
+    atualizarResumoSelecao();
+    Utils.showToast("✅ " + selecionadas.length + " peça(s) salva(s) no " + State.kitAtual, "success");
   }
-  var info = document.getElementById("c-pecas-info");
-  if (info) info.textContent = selecionadas.length + " peça(s) selecionada(s).";
-  Utils.showToast("✅ " + selecionadas.length + " peça(s) no contrato", "success");
-} else if (modalPecasContexto === "reserva") {
-  var idReserva = window.__reservaEditandoPecas;
-  if (!idReserva) return Utils.showToast("Reserva não identificada.", "error");
 
-  ModalStatus.exibir("ATUALIZANDO PEÇAS...", "Salvando no agendamento.");
-
-  Database.atualizarReservaNuvem(idReserva, {
-    pecas: selecionadas,
-    pecasQtd: qtdSelecionadas,
-    atualizadoEm: Date.now()
-  }).then(function() {
-    ModalStatus.sucesso("✓ PEÇAS ATUALIZADAS");
-    window.__reservaEditandoPecas = null;
-  }).catch(function(err) {
-    console.error(err);
-    ModalStatus.erro("Erro ao atualizar peças.");
-  });
-} else if (modalPecasContexto === "kit-festa" && State.kitAtual) {
-  State.pecasSelecionadasKit[State.kitAtual] = selecionadas;
-  State.pecasQtdKit[State.kitAtual] = qtdSelecionadas;
-  atualizarInfoKitFesta();
-  atualizarResumoSelecao();
-  Utils.showToast("✅ " + selecionadas.length + " peça(s) salva(s) no " + State.kitAtual, "success");
+  document.getElementById("modal-pecas").classList.remove("ativo");
 }
-
-document.getElementById("modal-pecas").classList.remove("ativo");
-}
-  
 // ============================================================
 // MODAL DE TEMA
 // ============================================================
@@ -1067,7 +1067,7 @@ function aplicarDesconto() {
 }
 
 // ============================================================
-// RESERVAS — COM BOTÃO EDITAR
+// RESERVAS — COM BOTÕES EDITAR/PEÇAS
 // ============================================================
 function renderReservas(filtro) {
   if (!filtro) filtro = "";
@@ -1116,12 +1116,12 @@ function renderReservas(filtro) {
       '<p>💵 Sinal: <b>' + Utils.formatCurrency(sinal) + '</b></p>' +
       '<p style="color:' + (quitado ? 'green' : 'red') + '">⚠️ Falta: <b>' + Utils.formatCurrency(devedor) + '</b></p>' +
       pecasHtml + '</div>' +
-     '<div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">' +
-'<button type="button" style="flex:2; min-width:120px; padding:11px; background:#e67e22; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.GerarContratoReserva(\'' + res.id + '\')">✍️ Gerar Contrato</button>' +
-'<button type="button" style="flex:1; min-width:90px; padding:11px; background:#9b59b6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.EditarPecasReserva(\'' + res.id + '\')" title="Editar Peças">🍽️ Peças</button>' +
-'<button type="button" style="flex:1; min-width:70px; padding:11px; background:#3498db; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.AbrirEditarReserva(\'' + res.id + '\')" title="Editar">✏️ Editar</button>' +
-'<button type="button" style="flex:1; min-width:70px; padding:11px; background:var(--error); color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.DeletarReserva(\'' + res.id + '\')" title="Excluir">🗑️</button>' +
-'</div>';
+      '<div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">' +
+      '<button type="button" style="flex:2; min-width:120px; padding:11px; background:#e67e22; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.GerarContratoReserva(\'' + res.id + '\')">✍️ Gerar Contrato</button>' +
+      '<button type="button" style="flex:1; min-width:90px; padding:11px; background:#9b59b6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.EditarPecasReserva(\'' + res.id + '\')" title="Editar Peças">🍽️ Peças</button>' +
+      '<button type="button" style="flex:1; min-width:70px; padding:11px; background:#3498db; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.AbrirEditarReserva(\'' + res.id + '\')" title="Editar">✏️ Editar</button>' +
+      '<button type="button" style="flex:1; min-width:70px; padding:11px; background:var(--error); color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.DeletarReserva(\'' + res.id + '\')" title="Excluir">🗑️</button>' +
+      '</div>';
     container.appendChild(card);
   });
 }
@@ -1183,7 +1183,6 @@ window.SalvarEditarReserva = function() {
       ModalStatus.erro("Erro ao salvar.");
     });
 };
-
 // ============================================================
 // GERAR CONTRATO DA RESERVA
 // ============================================================
@@ -1411,7 +1410,6 @@ function renderRelatorioGeralPontos(dadosPontos) {
   }
   container.innerHTML = tem ? html : '<tr><td colspan="4" style="text-align:center; color:#999;">Nenhum ponto registrado.</td></tr>';
 }
-
 // ============================================================
 // CONTRATO 1 — PEGUE E MONTE
 // ============================================================
@@ -1596,7 +1594,7 @@ function gerarContratoPegueMonteLoja(dados) {
     '<div class="clausula-texto"><span class="negrito">Clausula 1ª.</span> É objeto do presente contrato a prestação de serviço de Locação de:</div>' +
     '<table class="tabela-itens"><thead><tr><th style="width:60px;">QTDE.</th><th>DESCRIÇÃO DO PRODUTO</th><th style="width:110px;">VALOR UNITÁRIO</th><th style="width:110px;">VALOR TOTAL</th></tr></thead><tbody>' + linhasTabela + '</tbody></table>' +
 
-    // ===== CLÁUSULA DE PAGAMENTO (NOVO) =====
+    // ===== CLÁUSULA DE PAGAMENTO =====
     '<div class="clausula-titulo" style="margin-top: 12px;">DO PAGAMENTO</div>' +
     '<div class="clausula-texto">' +
       'O serviço contratado no presente instrumento será remunerado pela quantia total de ' +
@@ -1634,7 +1632,6 @@ function gerarContratoPegueMonteLoja(dados) {
     '<div class="rodape-loja">TRALALÁ DECORAÇÕES DE FESTAS — QN 508 CONJUNTO 03 LOJA 06, SAMAMBAIA SUL. (61) 9. 8191-9559</div>' +
   '</div>';
 }
-
 // ============================================================
 // CONTRATO 2 — COM FRETE
 // ============================================================
@@ -1800,365 +1797,6 @@ function gerarContratoAvulso(gerarPdf) {
   if (modalVis) modalVis.classList.add("ativo");
   if (gerarPdf) setTimeout(function() { gerarContratoPDF(); }, 300);
 }
-
-
-
-
-// ============================================================
-// FIX DEFINITIVO — PDF com html2canvas + jsPDF puro
-// (abandona o html2pdf que tá bugado)
-// ============================================================
-(function() {
-  'use strict';
-
-  window.BaixarPDFContrato = function() {
-    var preview = document.getElementById("contrato-preview-content");
-    if (!preview) return Utils.showToast("Nenhum contrato aberto.", "warning");
-    var pagina = preview.querySelector('.pagina-contrato');
-    if (!pagina) return Utils.showToast("Contrato não encontrado.", "warning");
-
-    if (typeof html2canvas === 'undefined') {
-      return Utils.showToast("Erro: html2canvas não carregou.", "error");
-    }
-    if (typeof window.jspdf === 'undefined' && typeof jsPDF === 'undefined') {
-      return Utils.showToast("Erro: jsPDF não carregou.", "error");
-    }
-
-    var nome = (document.getElementById("c-nome") || {}).value
-      || (document.getElementById("nome-cliente") || {}).value
-      || "contrato";
-    nome = nome.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
-
-    Utils.showToast("⏳ Gerando PDF...", "info");
-
-    // 1) Clone do contrato
-    var clone = pagina.cloneNode(true);
-    clone.style.width = "794px";
-    clone.style.minHeight = "auto";
-    clone.style.padding = "60px 55px";
-    clone.style.margin = "0";
-    clone.style.background = "#ffffff";
-    clone.style.boxSizing = "border-box";
-    clone.style.boxShadow = "none";
-    clone.style.borderRadius = "0";
-    clone.style.fontFamily = "'Times New Roman', Times, serif";
-    clone.style.fontSize = "11pt";
-    clone.style.lineHeight = "1.4";
-    clone.style.color = "#000000";
-    clone.style.position = "static";
-    clone.style.transform = "none";
-
-    // 2) Container temporário VISÍVEL (não escondido) — html2canvas precisa
-    var temp = document.createElement("div");
-    temp.id = "temp-pdf-render";
-    temp.style.position = "fixed";
-    temp.style.left = "0";
-    temp.style.top = "0";
-    temp.style.width = "794px";
-    temp.style.background = "#ffffff";
-    temp.style.zIndex = "99999";
-    temp.style.overflow = "visible";
-    temp.appendChild(clone);
-    document.body.appendChild(temp);
-
-    // 3) Espera um tiquinho e captura
-    setTimeout(function() {
-      html2canvas(clone, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-        allowTaint: false,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 794,
-        width: 794,
-        height: clone.scrollHeight
-      }).then(function(canvas) {
-        // 4) Remove container temporário
-        if (temp.parentNode) temp.parentNode.removeChild(temp);
-
-        if (!canvas || canvas.width === 0) {
-          Utils.showToast("❌ Erro: canvas vazio", "error");
-          return;
-        }
-
-        // 5) Gera PDF com jsPDF
-        var jsPDFClass = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
-        var pdf = new jsPDFClass({
-          unit: 'mm',
-          format: 'a4',
-          orientation: 'portrait',
-          compress: true
-        });
-
-        var imgData = canvas.toDataURL('image/jpeg', 0.95);
-        var pdfWidth = 210;      // A4 em mm
-        var pdfHeight = 297;     // A4 em mm
-        var imgWidth = pdfWidth;
-        var imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        var position = 0;
-        var heightLeft = imgHeight;
-
-        // Primeira página
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
-
-        // Páginas adicionais (se o contrato for maior que 1 A4)
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pdfHeight;
-        }
-
-        // 6) Salva o PDF
-        pdf.save('contrato-' + nome + '.pdf');
-        Utils.showToast("✅ PDF baixado!", "success");
-
-      }).catch(function(err) {
-        if (temp.parentNode) temp.parentNode.removeChild(temp);
-        console.error("❌ Erro html2canvas:", err);
-        Utils.showToast("❌ Erro ao gerar PDF: " + (err.message || err), "error");
-      });
-    }, 400);
-  };
-
-  // Reconecta o botão
-  document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-      var btn = document.getElementById("btn-baixar-pdf-contrato");
-      if (btn) {
-        btn.onclick = function(e) {
-          if (e) e.preventDefault();
-          window.BaixarPDFContrato();
-        };
-      }
-    }, 1000);
-  });
-
-  console.log("✅ FIX: PDF com html2canvas + jsPDF puro (sem html2pdf)");
-})();
-
-   
-
-// ============================================================
-// FIX FINAL — PDF com logo (html2canvas + jsPDF puro)
-// ============================================================
-(function() {
-  'use strict';
-
-  window.BaixarPDFContrato = function() {
-    var preview = document.getElementById("contrato-preview-content");
-    if (!preview) return Utils.showToast("Nenhum contrato aberto.", "warning");
-    var pagina = preview.querySelector('.pagina-contrato');
-    if (!pagina) return Utils.showToast("Contrato não encontrado.", "warning");
-
-    if (typeof html2canvas === 'undefined') {
-      return Utils.showToast("Erro: html2canvas não carregou.", "error");
-    }
-
-    var nome = (document.getElementById("c-nome") || {}).value
-      || (document.getElementById("nome-cliente") || {}).value
-      || "contrato";
-    nome = nome.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
-
-    Utils.showToast("⏳ Gerando PDF...", "info");
-
-    var clone = pagina.cloneNode(true);
-    clone.style.width = "794px";
-    clone.style.minHeight = "auto";
-    clone.style.padding = "60px 55px";
-    clone.style.margin = "0";
-    clone.style.background = "#ffffff";
-    clone.style.boxSizing = "border-box";
-    clone.style.boxShadow = "none";
-    clone.style.borderRadius = "0";
-    clone.style.fontFamily = "'Times New Roman', Times, serif";
-    clone.style.fontSize = "11pt";
-    clone.style.lineHeight = "1.4";
-    clone.style.color = "#000000";
-    clone.style.position = "static";
-    clone.style.transform = "none";
-
-    var temp = document.createElement("div");
-    temp.id = "temp-pdf-render";
-    temp.style.position = "fixed";
-    temp.style.left = "0";
-    temp.style.top = "0";
-    temp.style.width = "794px";
-    temp.style.background = "#ffffff";
-    temp.style.zIndex = "99999";
-    temp.style.overflow = "visible";
-    temp.appendChild(clone);
-    document.body.appendChild(temp);
-
-    setTimeout(function() {
-      html2canvas(clone, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-        allowTaint: false,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 794,
-        width: 794,
-        height: clone.scrollHeight
-      }).then(function(canvas) {
-        if (temp.parentNode) temp.parentNode.removeChild(temp);
-
-        if (!canvas || canvas.width === 0) {
-          Utils.showToast("❌ Erro: canvas vazio", "error");
-          return;
-        }
-
-        var jsPDFClass = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
-        var pdf = new jsPDFClass({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
-
-        var imgData = canvas.toDataURL('image/jpeg', 0.95);
-        var pdfWidth = 210;
-        var pdfHeight = 297;
-        var imgWidth = pdfWidth;
-        var imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        var position = 0;
-        var heightLeft = imgHeight;
-
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
-
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pdfHeight;
-        }
-
-        pdf.save('contrato-' + nome + '.pdf');
-        Utils.showToast("✅ PDF baixado!", "success");
-
-      }).catch(function(err) {
-        if (temp.parentNode) temp.parentNode.removeChild(temp);
-        console.error("❌ Erro:", err);
-        Utils.showToast("❌ Erro: " + (err.message || err), "error");
-      });
-    }, 400);
-  };
-
-  document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-      var btn = document.getElementById("btn-baixar-pdf-contrato");
-      if (btn) btn.onclick = function(e) { if (e) e.preventDefault(); window.BaixarPDFContrato(); };
-    }, 1000);
-  });
-
-  console.log("✅ FIX: PDF com html2canvas + jsPDF puro");
-})();
-
-// ============================================================
-// EDITAR CONTRATO MANUALMENTE
-// ============================================================
-window.EditarContrato = function() {
-  var preview = document.getElementById("contrato-preview-content");
-  if (!preview) return;
-  preview.contentEditable = "true";
-  preview.style.outline = "2px dashed #3498db";
-  preview.style.padding = "10px";
-  preview.style.borderRadius = "8px";
-  document.getElementById("btn-editar-contrato").style.display = "none";
-  document.getElementById("btn-salvar-edicao-contrato").style.display = "inline-flex";
-  Utils.showToast("✏️ Contrato liberado para edição", "info");
-};
-
-window.SalvarEdicaoContrato = function() {
-  if (!confirm("⚠️ Tem certeza que deseja salvar essas alterações?\n\nO contrato será salvo permanentemente.")) return;
-  var preview = document.getElementById("contrato-preview-content");
-  if (!preview) return;
-  var htmlEditado = preview.innerHTML;
-  ModalStatus.exibir("SALVANDO EDIÇÃO...", "Aguarde, estamos salvando.");
-  Database.salvarContratoNuvem({
-    nome: "EDIÇÃO MANUAL",
-    contratoEditado: htmlEditado,
-    modelo: window.__contratoTipo || "pegue-monte",
-    criadoEm: Date.now(),
-    editadoManualmente: true
-  }).then(function() {
-    preview.contentEditable = "false";
-    preview.style.outline = "";
-    preview.style.padding = "";
-    preview.style.borderRadius = "";
-    document.getElementById("btn-editar-contrato").style.display = "inline-flex";
-    document.getElementById("btn-salvar-edicao-contrato").style.display = "none";
-    ModalStatus.sucesso("✓ EDIÇÃO SALVA COM SUCESSO");
-  }).catch(function(err) {
-    console.error(err);
-    ModalStatus.erro("Erro ao salvar edição.");
-  });
-};
-
-// ============================================================
-// NOTA PROMISSÓRIA — DATA POR EXTENSO
-// ============================================================
-window.AbrirNotaPromissoria = function() {
-  var hoje = new Date();
-  var dataEmitISO = hoje.toISOString().split("T")[0];
-  var elEmissao = document.getElementById("nota-data-emissao");
-  if (elEmissao) elEmissao.value = dataEmitISO;
-  var elDia = document.getElementById("nota-dia");
-  if (elDia) elDia.value = hoje.getDate();
-  var elMes = document.getElementById("nota-mes");
-  if (elMes) elMes.value = mesesExtenso[hoje.getMonth()];
-  var elAno = document.getElementById("nota-ano");
-  if (elAno) elAno.value = hoje.getFullYear();
-  var elNum = document.getElementById("nota-numero"); if (elNum) elNum.value = "";
-  var elValor = document.getElementById("nota-valor"); if (elValor) elValor.value = "";
-  var elVenc = document.getElementById("nota-vencimento"); if (elVenc) elVenc.value = "";
-  var elEvento = document.getElementById("nota-data-evento"); if (elEvento) elEvento.value = "";
-  var modal = document.getElementById("modal-nota-promissoria");
-  if (modal) modal.classList.add("ativo");
-};
-
-window.GerarNotaPromissoria = function() {
-  var venc = (document.getElementById("nota-vencimento") || {}).value || "";
-  var num = (document.getElementById("nota-numero") || {}).value || "____";
-  var valor = parseFloat((document.getElementById("nota-valor") || {}).value) || 0;
-  var dataEvento = (document.getElementById("nota-data-evento") || {}).value || "";
-  var dia = (document.getElementById("nota-dia") || {}).value || "____";
-  var mes = (document.getElementById("nota-mes") || {}).value || "__________________";
-  var ano = (document.getElementById("nota-ano") || {}).value || "20____";
-  var vencFmt = venc ? venc.split("-").reverse().join("/") : "____/____/______";
-  var valorFmt = valor ? valor.toFixed(2).replace('.', ',') : "______,00";
-  var eventoFmt = dataEvento ? dataEvento.split("-").reverse().join("/") : "____/____/______";
-  var dataExtenso = dia + " de " + mes + " de " + ano;
-  var notaHTML = '<div class="nota-promissoria">' +
-    '<h2>NOTA PROMISSÓRIA</h2>' +
-    '<div style="display:flex; justify-content:space-between;">' +
-      '<div><b>Vencimento:</b> ' + vencFmt + '</div>' +
-      '<div><b>Número:</b> ' + num + '</div>' +
-    '</div>' +
-    '<div style="text-align:right; margin-top:6px;"><b>Valor:</b> R$ ' + valorFmt + '</div>' +
-    '<div class="linha-nota" style="margin-top:15px;">' +
-      'A(os) <b>' + dataExtenso + '</b>, pagarei a <b>Tralalá Decorações de Festas</b>, CNPJ <b>21.918.863/0001-12</b>, a quantia de <b>R$ ' + valorFmt + '</b>. Caso não seja entregue os itens alugados, conforme descrito no contrato, a festa se realizará no dia ' + eventoFmt + '. Em caso de extravio ou quebra de peças me comprometo a pagar valor de mercado por cada peça em moeda corrente.' +
-    '</div>' +
-    '<div style="text-align:center; margin-top:25px;">' +
-      'Brasília-DF, <b>' + dataExtenso + '</b>.' +
-    '</div>' +
-    '<div class="assinatura-nota">' +
-      '<div class="linha-assinatura-nota"></div>' +
-      '<div style="font-weight:bold;">CONTRATANTE:</div>' +
-      '<div>CPF:</div>' +
-      '<div>ENDEREÇO CLIENTE:</div>' +
-    '</div>' +
-  '</div>';
-  var espaco = document.getElementById("espaco-nota-promissoria-loja");
-  if (!espaco) { Utils.showToast("Contrato Loja não está aberto.", "warning"); return; }
-  espaco.innerHTML = notaHTML;
-  document.getElementById("modal-nota-promissoria").classList.remove("ativo");
-  Utils.showToast("✅ Nota Promissória adicionada!", "success");
-};
-
 // ============================================================
 // KITS
 // ============================================================
@@ -2490,7 +2128,6 @@ function handleSalvarOrcamento() {
   }).then(function() { Utils.showToast("Orçamento salvo!", "success"); })
     .catch(function() { Utils.showToast("Erro ao salvar orçamento.", "error"); });
 }
-
 // ============================================================
 // BIND EVENTOS
 // ============================================================
@@ -2566,9 +2203,9 @@ function bindTudo() {
     modalVis.addEventListener('click', function(e) { if (e.target === modalVis) modalVis.classList.remove("ativo"); });
   }
   b = document.getElementById("btn-baixar-pdf-contrato");
-  if (b) b.onclick = function() { gerarContratoPDF(); };
+  if (b) b.onclick = function() { window.BaixarPDFContrato(); };
   b = document.getElementById("btn-imprimir-contrato");
-  if (b) b.onclick = function() { window.print(); };
+  if (b) b.onclick = function() { window.ImprimirContrato(); };
   b = document.getElementById("btn-editar-contrato");
   if (b) b.onclick = function() { window.EditarContrato(); };
   b = document.getElementById("btn-salvar-edicao-contrato");
@@ -2615,9 +2252,9 @@ function bindTudo() {
   b = document.getElementById("btn-esc-tema");
   if (b) b.onclick = function(e) { if (e) e.preventDefault(); if (!State.kitAtual) return Utils.showToast("Selecione um kit.", "warning"); abrirModalTema("kit-festa"); };
   b = document.getElementById("btn-fechar-modal-pecas");
-  if (b) b.onclick = function() { document.getElementById("modal-pecas").classList.remove("ativo"); };
+  if (b) b.onclick = function() { window.fecharModalPecas(); };
   b = document.getElementById("btn-cancelar-pecas");
-  if (b) b.onclick = function() { document.getElementById("modal-pecas").classList.remove("ativo"); };
+  if (b) b.onclick = function() { window.fecharModalPecas(); };
   b = document.getElementById("btn-confirmar-pecas");
   if (b) b.onclick = function() { confirmarModalPecas(); };
   var filtroPecas = document.getElementById("filtro-pecas");
@@ -2712,6 +2349,284 @@ function bindTudo() {
 }
 
 // ============================================================
+// FUNÇÃO GLOBAL DE FECHAR MODAL DE PEÇAS
+// ============================================================
+window.fecharModalPecas = function() {
+  window.__reservaEditandoPecas = null;
+  var titulo = document.getElementById("titulo-modal-pecas");
+  if (titulo) titulo.textContent = "🍽️ Escolher Peças";
+  var modal = document.getElementById("modal-pecas");
+  if (modal) modal.classList.remove("ativo");
+};
+
+// ============================================================
+// EDITAR PEÇAS DA RESERVA DIRETO NO CARD
+// ============================================================
+window.EditarPecasReserva = function(idReserva) {
+  var res = State.reservas.filter(function(r) { return r.id === idReserva; })[0];
+  if (!res) return Utils.showToast("Reserva não encontrada.", "error");
+
+  window.__reservaEditandoPecas = idReserva;
+  modalPecasContexto = "reserva";
+
+  State.pecasSelecionadasContrato = Array.isArray(res.pecas) ? res.pecas.slice() : [];
+  State.pecasQtdContrato = res.pecasQtd ? Object.assign({}, res.pecasQtd) : {};
+
+  var modal = document.getElementById("modal-pecas");
+  if (!modal) return Utils.showToast("Modal não encontrado.", "error");
+  modal.classList.add("ativo");
+
+  var titulo = document.getElementById("titulo-modal-pecas");
+  if (titulo) titulo.textContent = "🍽️ Editar Peças — " + (res.cliente || "Reserva");
+
+  renderizarListaPecasModal("reserva", "");
+
+  setTimeout(function() {
+    var f = document.getElementById("filtro-pecas");
+    if (f) f.value = "";
+  }, 50);
+};
+
+// ============================================================
+// IMPRESSÃO — só o contrato
+// ============================================================
+window.ImprimirContrato = function() {
+  var preview = document.getElementById("contrato-preview-content");
+  if (!preview) return Utils.showToast("Nenhum contrato aberto.", "warning");
+  var pagina = preview.querySelector('.pagina-contrato');
+  if (!pagina) return Utils.showToast("Contrato não encontrado.", "warning");
+
+  var janelaPrint = window.open('', '_blank', 'width=900,height=700');
+  if (!janelaPrint) return Utils.showToast("Permita popups para imprimir.", "warning");
+
+  var estilos = "";
+  try {
+    document.querySelectorAll('style, link[rel="stylesheet"]').forEach(function(el) {
+      if (el.tagName === 'STYLE') {
+        estilos += '<style>' + el.innerHTML + '</style>';
+      } else if (el.tagName === 'LINK') {
+        estilos += '<link rel="stylesheet" href="' + el.href + '">';
+      }
+    });
+  } catch (e) { console.warn(e); }
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Contrato</title>' +
+    estilos +
+    '<style>' +
+    '@page { size: A4 portrait; margin: 0; }' +
+    'body { margin: 0; padding: 0; background: white; }' +
+    '.pagina-contrato { box-shadow: none !important; margin: 0 auto !important; page-break-after: avoid !important; }' +
+    '</style>' +
+    '</head><body>' +
+    pagina.outerHTML +
+    '</body></html>';
+
+  janelaPrint.document.open();
+  janelaPrint.document.write(html);
+  janelaPrint.document.close();
+  janelaPrint.focus();
+  setTimeout(function() { janelaPrint.print(); }, 500);
+};
+
+// ============================================================
+// PDF — com html2canvas + jsPDF puro
+// ============================================================
+window.BaixarPDFContrato = function() {
+  var preview = document.getElementById("contrato-preview-content");
+  if (!preview) return Utils.showToast("Nenhum contrato aberto.", "warning");
+  var pagina = preview.querySelector('.pagina-contrato');
+  if (!pagina) return Utils.showToast("Contrato não encontrado.", "warning");
+
+  if (typeof html2canvas === 'undefined') {
+    return Utils.showToast("Erro: html2canvas não carregou.", "error");
+  }
+
+  var nome = (document.getElementById("c-nome") || {}).value
+    || (document.getElementById("nome-cliente") || {}).value
+    || "contrato";
+  nome = nome.trim().replace(/[^a-z0-9]/gi, '-').toLowerCase();
+
+  Utils.showToast("⏳ Gerando PDF...", "info");
+
+  var clone = pagina.cloneNode(true);
+  clone.style.width = "794px";
+  clone.style.minHeight = "auto";
+  clone.style.padding = "60px 55px";
+  clone.style.margin = "0";
+  clone.style.background = "#ffffff";
+  clone.style.boxSizing = "border-box";
+  clone.style.boxShadow = "none";
+  clone.style.borderRadius = "0";
+  clone.style.fontFamily = "'Times New Roman', Times, serif";
+  clone.style.fontSize = "11pt";
+  clone.style.lineHeight = "1.4";
+  clone.style.color = "#000000";
+  clone.style.position = "static";
+  clone.style.transform = "none";
+
+  var temp = document.createElement("div");
+  temp.id = "temp-pdf-render";
+  temp.style.position = "fixed";
+  temp.style.left = "0";
+  temp.style.top = "0";
+  temp.style.width = "794px";
+  temp.style.background = "#ffffff";
+  temp.style.zIndex = "99999";
+  temp.style.overflow = "visible";
+  temp.appendChild(clone);
+  document.body.appendChild(temp);
+
+  setTimeout(function() {
+    html2canvas(clone, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      logging: false,
+      allowTaint: false,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: 794,
+      width: 794,
+      height: clone.scrollHeight
+    }).then(function(canvas) {
+      if (temp.parentNode) temp.parentNode.removeChild(temp);
+      if (!canvas || canvas.width === 0) {
+        Utils.showToast("❌ Erro: canvas vazio", "error");
+        return;
+      }
+      var jsPDFClass = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+      var pdf = new jsPDFClass({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+      var imgData = canvas.toDataURL('image/jpeg', 0.95);
+      var pdfWidth = 210;
+      var pdfHeight = 297;
+      var imgWidth = pdfWidth;
+      var imgHeight = (canvas.height * imgWidth) / canvas.width;
+      var position = 0;
+      var heightLeft = imgHeight;
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+      pdf.save('contrato-' + nome + '.pdf');
+      Utils.showToast("✅ PDF baixado!", "success");
+    }).catch(function(err) {
+      if (temp.parentNode) temp.parentNode.removeChild(temp);
+      console.error("❌ Erro:", err);
+      Utils.showToast("❌ Erro: " + (err.message || err), "error");
+    });
+  }, 400);
+};
+
+// Aliases para compatibilidade
+window.gerarContratoPDF = window.BaixarPDFContrato;
+
+// ============================================================
+// EDITAR CONTRATO MANUALMENTE
+// ============================================================
+window.EditarContrato = function() {
+  var preview = document.getElementById("contrato-preview-content");
+  if (!preview) return;
+  preview.contentEditable = "true";
+  preview.style.outline = "2px dashed #3498db";
+  preview.style.padding = "10px";
+  preview.style.borderRadius = "8px";
+  document.getElementById("btn-editar-contrato").style.display = "none";
+  document.getElementById("btn-salvar-edicao-contrato").style.display = "inline-flex";
+  Utils.showToast("✏️ Contrato liberado para edição", "info");
+};
+
+window.SalvarEdicaoContrato = function() {
+  if (!confirm("⚠️ Tem certeza que deseja salvar essas alterações?\n\nO contrato será salvo permanentemente.")) return;
+  var preview = document.getElementById("contrato-preview-content");
+  if (!preview) return;
+  var htmlEditado = preview.innerHTML;
+  ModalStatus.exibir("SALVANDO EDIÇÃO...", "Aguarde, estamos salvando.");
+  Database.salvarContratoNuvem({
+    nome: "EDIÇÃO MANUAL",
+    contratoEditado: htmlEditado,
+    modelo: window.__contratoTipo || "pegue-monte",
+    criadoEm: Date.now(),
+    editadoManualmente: true
+  }).then(function() {
+    preview.contentEditable = "false";
+    preview.style.outline = "";
+    preview.style.padding = "";
+    preview.style.borderRadius = "";
+    document.getElementById("btn-editar-contrato").style.display = "inline-flex";
+    document.getElementById("btn-salvar-edicao-contrato").style.display = "none";
+    ModalStatus.sucesso("✓ EDIÇÃO SALVA COM SUCESSO");
+  }).catch(function(err) {
+    console.error(err);
+    ModalStatus.erro("Erro ao salvar edição.");
+  });
+};
+
+// ============================================================
+// NOTA PROMISSÓRIA
+// ============================================================
+window.AbrirNotaPromissoria = function() {
+  var hoje = new Date();
+  var dataEmitISO = hoje.toISOString().split("T")[0];
+  var elEmissao = document.getElementById("nota-data-emissao");
+  if (elEmissao) elEmissao.value = dataEmitISO;
+  var elDia = document.getElementById("nota-dia");
+  if (elDia) elDia.value = hoje.getDate();
+  var elMes = document.getElementById("nota-mes");
+  if (elMes) elMes.value = mesesExtenso[hoje.getMonth()];
+  var elAno = document.getElementById("nota-ano");
+  if (elAno) elAno.value = hoje.getFullYear();
+  var elNum = document.getElementById("nota-numero"); if (elNum) elNum.value = "";
+  var elValor = document.getElementById("nota-valor"); if (elValor) elValor.value = "";
+  var elVenc = document.getElementById("nota-vencimento"); if (elVenc) elVenc.value = "";
+  var elEvento = document.getElementById("nota-data-evento"); if (elEvento) elEvento.value = "";
+  var modal = document.getElementById("modal-nota-promissoria");
+  if (modal) modal.classList.add("ativo");
+};
+
+window.GerarNotaPromissoria = function() {
+  var venc = (document.getElementById("nota-vencimento") || {}).value || "";
+  var num = (document.getElementById("nota-numero") || {}).value || "____";
+  var valor = parseFloat((document.getElementById("nota-valor") || {}).value) || 0;
+  var dataEvento = (document.getElementById("nota-data-evento") || {}).value || "";
+  var dia = (document.getElementById("nota-dia") || {}).value || "____";
+  var mes = (document.getElementById("nota-mes") || {}).value || "__________________";
+  var ano = (document.getElementById("nota-ano") || {}).value || "20____";
+  var vencFmt = venc ? venc.split("-").reverse().join("/") : "____/____/______";
+  var valorFmt = valor ? valor.toFixed(2).replace('.', ',') : "______,00";
+  var eventoFmt = dataEvento ? dataEvento.split("-").reverse().join("/") : "____/____/______";
+  var dataExtenso = dia + " de " + mes + " de " + ano;
+  var notaHTML = '<div class="nota-promissoria">' +
+    '<h2>NOTA PROMISSÓRIA</h2>' +
+    '<div style="display:flex; justify-content:space-between;">' +
+      '<div><b>Vencimento:</b> ' + vencFmt + '</div>' +
+      '<div><b>Número:</b> ' + num + '</div>' +
+    '</div>' +
+    '<div style="text-align:right; margin-top:6px;"><b>Valor:</b> R$ ' + valorFmt + '</div>' +
+    '<div class="linha-nota" style="margin-top:15px;">' +
+      'A(os) <b>' + dataExtenso + '</b>, pagarei a <b>Tralalá Decorações de Festas</b>, CNPJ <b>21.918.863/0001-12</b>, a quantia de <b>R$ ' + valorFmt + '</b>. Caso não seja entregue os itens alugados, conforme descrito no contrato, a festa se realizará no dia ' + eventoFmt + '. Em caso de extravio ou quebra de peças me comprometo a pagar valor de mercado por cada peça em moeda corrente.' +
+    '</div>' +
+    '<div style="text-align:center; margin-top:25px;">' +
+      'Brasília-DF, <b>' + dataExtenso + '</b>.' +
+    '</div>' +
+    '<div class="assinatura-nota">' +
+      '<div class="linha-assinatura-nota"></div>' +
+      '<div style="font-weight:bold;">CONTRATANTE:</div>' +
+      '<div>CPF:</div>' +
+      '<div>ENDEREÇO CLIENTE:</div>' +
+    '</div>' +
+  '</div>';
+  var espaco = document.getElementById("espaco-nota-promissoria-loja");
+  if (!espaco) { Utils.showToast("Contrato Loja não está aberto.", "warning"); return; }
+  espaco.innerHTML = notaHTML;
+  document.getElementById("modal-nota-promissoria").classList.remove("ativo");
+  Utils.showToast("✅ Nota Promissória adicionada!", "success");
+};
+
+// ============================================================
 // INICIALIZAÇÃO
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
@@ -2722,732 +2637,5 @@ document.addEventListener('DOMContentLoaded', function() {
   listenKits();
   bindTudo();
   console.log("✅ Sistema Tralalá inicializado!");
-  console.log("✅ PARTE 3 carregada — Editar Reserva, Peças por Categoria, PDF corrigido, Festa na Mesa");
+  console.log("✅ app.js COMPLETO carregado com sucesso");
 });
-
-
-// ============================================================
-// FIX — Impressão correta (só o contrato)
-// ============================================================
-(function() {
-  'use strict';
-
-  window.ImprimirContrato = function() {
-    var preview = document.getElementById("contrato-preview-content");
-    if (!preview) return Utils.showToast("Nenhum contrato aberto.", "warning");
-
-    var pagina = preview.querySelector('.pagina-contrato');
-    if (!pagina) return Utils.showToast("Contrato não encontrado.", "warning");
-
-    // Abre uma nova janela só com o contrato
-    var janelaPrint = window.open('', '_blank', 'width=900,height=700');
-    if (!janelaPrint) return Utils.showToast("Permita popups para imprimir.", "warning");
-
-    // Copia os estilos
-    var estilos = "";
-    try {
-      // Pega todos os style tags
-      document.querySelectorAll('style, link[rel="stylesheet"]').forEach(function(el) {
-        if (el.tagName === 'STYLE') {
-          estilos += '<style>' + el.innerHTML + '</style>';
-        } else if (el.tagName === 'LINK') {
-          estilos += '<link rel="stylesheet" href="' + el.href + '">';
-        }
-      });
-    } catch (e) { console.warn(e); }
-
-    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Contrato</title>' +
-      estilos +
-      '<style>' +
-      '@page { size: A4 portrait; margin: 0; }' +
-      'body { margin: 0; padding: 0; background: white; }' +
-      '.pagina-contrato { box-shadow: none !important; margin: 0 auto !important; page-break-after: avoid !important; }' +
-      '</style>' +
-      '</head><body>' +
-      pagina.outerHTML +
-      '</body></html>';
-
-    janelaPrint.document.open();
-    janelaPrint.document.write(html);
-    janelaPrint.document.close();
-
-    janelaPrint.focus();
-    setTimeout(function() {
-      janelaPrint.print();
-    }, 500);
-  };
-
-  // Reconecta o botão de imprimir
-  document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-      var btnImprimir = document.getElementById("btn-imprimir-contrato");
-      if (btnImprimir) {
-        btnImprimir.onclick = function() { window.ImprimirContrato(); };
-      }
-    }, 800);
-  });
-
-  console.log("✅ FIX: Impressão abre só o contrato em nova janela");
-})();
-
-
-// ============================================================
-// FIX — PDF: ajusta largura corretamente
-// ============================================================
-(function() {
-  'use strict';
-
-  window.gerarContratoPDF = function() {
-    var elemento = document.getElementById("contrato-preview-content");
-    if (!elemento) return;
-    if (typeof html2pdf === 'undefined') { alert("Biblioteca PDF não carregada."); return; }
-
-    var pagina = elemento.querySelector('.pagina-contrato');
-    if (!pagina) { Utils.showToast("Nenhum contrato gerado ainda.", "warning"); return; }
-
-    var nome = (document.getElementById("c-nome") || {}).value
-      || (document.getElementById("nome-cliente") || {}).value
-      || "contrato";
-
-    // Clona o conteúdo
-    var clone = pagina.cloneNode(true);
-
-    // Container temporário FORA do modal, INVISÍVEL mas RENDERIZÁVEL
-    var temp = document.createElement("div");
-    temp.style.position = "absolute";
-    temp.style.left = "-10000px";
-    temp.style.top = "0";
-    temp.style.background = "white";
-    temp.style.width = "210mm";
-    temp.style.margin = "0";
-    temp.style.padding = "0";
-
-    // Aplica estilos inline
-    clone.style.width = "210mm";
-    clone.style.minHeight = "297mm";
-    clone.style.padding = "18mm 16mm";
-    clone.style.boxShadow = "none";
-    clone.style.margin = "0";
-    clone.style.background = "white";
-    clone.style.boxSizing = "border-box";
-    clone.style.fontFamily = "'Times New Roman', Times, serif";
-    clone.style.display = "block";
-
-    temp.appendChild(clone);
-    document.body.appendChild(temp);
-
-    Utils.showToast("⏳ Gerando PDF, aguarde...", "info");
-
-    setTimeout(function() {
-      var opt = {
-        margin: 0,
-        filename: 'contrato-' + nome.replace(/\s+/g, '-').toLowerCase() + '.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: "#ffffff",
-          logging: false,
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: 794,
-          width: 794,
-          height: clone.scrollHeight
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
-        pagebreak: { mode: ['avoid-all', 'css'] }
-      };
-
-      html2pdf().from(clone).set(opt).save().then(function() {
-        if (temp.parentNode) temp.parentNode.removeChild(temp);
-        Utils.showToast("PDF baixado!", "success");
-      }).catch(function(err) {
-        if (temp.parentNode) temp.parentNode.removeChild(temp);
-        console.error(err);
-        Utils.showToast("Erro ao gerar PDF.", "error");
-      });
-    }, 400);
-  };
-
-  console.log("✅ FIX: PDF com largura correta");
-})();
-
-
-// ============================================================
-// FIX — Imprimir e Baixar PDF (SÓ O CONTRATO)
-// ============================================================
-(function() {
-  'use strict';
-
-  // Botão Imprimir: usa window.print() nativo
-  // O CSS @media print cuida de esconder tudo que não é contrato
-  window.ImprimirContrato = function() {
-    var preview = document.getElementById("contrato-preview-content");
-    if (!preview || !preview.querySelector('.pagina-contrato')) {
-      return Utils.showToast("Nenhum contrato aberto para imprimir.", "warning");
-    }
-    setTimeout(function() { window.print(); }, 200);
-  };
-
-  // Botão Baixar PDF: abre janela nova com só o contrato e dispara print
-  window.BaixarPDFContrato = function() {
-    var preview = document.getElementById("contrato-preview-content");
-    if (!preview) return Utils.showToast("Nenhum contrato aberto.", "warning");
-    var pagina = preview.querySelector('.pagina-contrato');
-    if (!pagina) return Utils.showToast("Contrato não encontrado.", "warning");
-
-    var nome = (document.getElementById("c-nome") || {}).value
-      || (document.getElementById("nome-cliente") || {}).value
-      || "contrato";
-
-    var w = window.open('', '_blank', 'width=900,height=700');
-    if (!w) {
-      Utils.showToast("⚠️ Permita popups para baixar o PDF.", "warning");
-      return;
-    }
-
-    // Copia estilos
-    var estilos = '';
-    try {
-      document.querySelectorAll('style').forEach(function(s) {
-        estilos += '<style>' + s.innerHTML + '</style>';
-      });
-      document.querySelectorAll('link[rel="stylesheet"]').forEach(function(l) {
-        estilos += '<link rel="stylesheet" href="' + l.href + '">';
-      });
-    } catch(e) {}
-
-    // Só o .pagina-contrato puro — sem cabeçalho, sem botões, sem Lalá
-    var html = '<!DOCTYPE html><html><head>' +
-      '<meta charset="UTF-8">' +
-      '<title>Contrato - ' + nome + '</title>' +
-      estilos +
-      '<style>' +
-      '  @page { size: A4 portrait; margin: 0; }' +
-      '  html, body { margin: 0 !important; padding: 0 !important; background: white !important; }' +
-      '  body { padding: 0 !important; }' +
-      '  .pagina-contrato {' +
-      '    box-shadow: none !important;' +
-      '    margin: 0 auto !important;' +
-      '    padding: 15mm 16mm !important;' +
-      '    width: 210mm !important;' +
-      '    min-height: 297mm !important;' +
-      '    box-sizing: border-box !important;' +
-      '    page-break-after: avoid !important;' +
-      '    break-after: avoid !important;' +
-      '  }' +
-      '  .nota-promissoria { page-break-inside: avoid !important; }' +
-      '</style>' +
-      '</head><body>' +
-      pagina.outerHTML +
-      '</body></html>';
-
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-
-    setTimeout(function() { w.print(); }, 600);
-  };
-
-  // Reconecta os botões
-  document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-      var b1 = document.getElementById("btn-imprimir-contrato");
-      if (b1) b1.onclick = function(e) { if (e) e.preventDefault(); window.ImprimirContrato(); };
-      var b2 = document.getElementById("btn-baixar-pdf-contrato");
-      if (b2) b2.onclick = function(e) { if (e) e.preventDefault(); window.BaixarPDFContrato(); };
-    }, 800);
-  });
-
-  console.log("✅ FIX: Imprimir e PDF sem cabeçalho, sem botões, sem Lalá");
-})();
-
-
-// ============================================================
-// FIX — Retirada e Devolução no Contrato Avulso
-// ============================================================
-(function() {
-  'use strict';
-
-  // Sobrescreve gerarContratoAvulso para capturar as datas
-  var gerarAvulsoOriginal = window.gerarContratoAvulso;
-
-  window.gerarContratoAvulso = function(gerarPdf) {
-    var nome = (document.getElementById("c-nome") || {}).value || "";
-    var cpf = (document.getElementById("c-cpf") || {}).value || "";
-    var data = (document.getElementById("c-data") || {}).value || "";
-    var horario = (document.getElementById("c-horario") || {}).value || "";
-    var valor = parseFloat((document.getElementById("c-valor") || {}).value) || 0;
-    var endereco = (document.getElementById("c-endereco") || {}).value || "";
-    var telefone = (document.getElementById("c-telefone") || {}).value || "";
-    var local = (document.getElementById("c-local") || {}).value || "";
-    var modelo = (document.getElementById("c-modelo") || {}).value || "com-frete";
-    var obs = (document.getElementById("c-obs") || {}).value || "";
-    var tema = (document.getElementById("contrato-tema-selecionado") || {}).value || "";
-
-    // NOVOS CAMPOS
-    var dataRetirada = (document.getElementById("c-data-retirada") || {}).value || "";
-    var dataDevolucao = (document.getElementById("c-data-devolucao") || {}).value || "";
-
-    var selectPecas = document.getElementById("c-pecas");
-    var pecas = [];
-    if (selectPecas) {
-      for (var i = 0; i < selectPecas.options.length; i++) {
-        if (selectPecas.options[i].selected) pecas.push(selectPecas.options[i].value);
-      }
-    }
-
-    if (!nome.trim()) { Utils.showToast("Preencha o nome do contratante!", "warning"); return; }
-
-    var dados = {
-      nome: nome, cpf: cpf, data: data, horario: horario, valor: valor,
-      endereco: endereco, telefone: telefone, local: local,
-      dataRetirada: dataRetirada || data,
-      dataDevolucao: dataDevolucao || data,
-      tema: tema, pecas: pecas, obs: obs
-    };
-
-    var html;
-    if (modelo === "com-frete") html = gerarContratoComFrete(dados);
-    else if (modelo === "pegue-monte-loja") html = gerarContratoPegueMonteLoja(dados);
-    else html = gerarContratoPegueMonte(dados);
-
-    Database.salvarContratoNuvem({
-      nome: nome, cpf: cpf, data: data, horario: horario, valor: valor,
-      endereco: endereco, telefone: telefone, local: local, modelo: modelo,
-      dataRetirada: dataRetirada || data, dataDevolucao: dataDevolucao || data,
-      tema: tema, pecas: pecas, obs: obs, criadoEm: Date.now()
-    }).then(function() {
-      Utils.showToast("✅ Contrato salvo!", "success");
-    }).catch(function(err) {
-      console.warn("Erro ao salvar contrato (não bloqueia):", err);
-      Utils.showToast("⚠️ Contrato gerado, mas não foi salvo na nuvem.", "warning");
-    });
-
-    var preview = document.getElementById("contrato-preview-content");
-    if (preview) {
-      preview.innerHTML = html;
-      preview.contentEditable = "false";
-      preview.style.outline = "";
-      preview.style.padding = "";
-      preview.style.borderRadius = "";
-    }
-    document.getElementById("btn-editar-contrato").style.display = "inline-flex";
-    document.getElementById("btn-salvar-edicao-contrato").style.display = "none";
-    document.getElementById("btn-add-nota-promissoria").style.display = (modelo === "pegue-monte-loja") ? "inline-flex" : "none";
-    window.__contratoTipo = modelo;
-    var modalVis = document.getElementById("modal-visualizar-contrato");
-    if (modalVis) modalVis.classList.add("active");
-    if (modalVis) modalVis.classList.add("ativo");
-    if (gerarPdf) setTimeout(function() { gerarContratoPDF(); }, 300);
-  };
-
-  // ------------------------------------------------------------
-  // Sobrescreve gerarContratoPegueMonteLoja para usar as datas
-  // ------------------------------------------------------------
-  var gerarLojaOriginal = window.gerarContratoPegueMonteLoja;
-
-  window.gerarContratoPegueMonteLoja = function(dados) {
-    // Monta o HTML original
-    var html = gerarLojaOriginal ? gerarLojaOriginal(dados) : "";
-
-    // Formata as datas
-    var dataRetFmt = dados.dataRetirada
-      ? String(dados.dataRetirada).split("-").reverse().join("/")
-      : "____/____/______";
-    var dataDevFmt = dados.dataDevolucao
-      ? String(dados.dataDevolucao).split("-").reverse().join("/")
-      : "____/____/______";
-
-    // Substitui a linha RETIRADA DOS ITENS
-    html = html.replace(
-      /<div class="dados-contratante"><span class="negrito">RETIRADA DOS ITENS:<\/span>[^<]*<\/div>/,
-      '<div class="dados-contratante"><span class="negrito">RETIRADA DOS ITENS:</span> ' + dataRetFmt + ', ATÉ AS 11H00</div>'
-    );
-
-    // Substitui a linha DEVOLUÇÃO DOS ITENS
-    html = html.replace(
-      /<div class="dados-contratante"><span class="negrito">DEVOLUÇÃO DOS ITENS:<\/span>[^<]*<\/div>/,
-      '<div class="dados-contratante"><span class="negrito">DEVOLUÇÃO DOS ITENS:</span> ' + dataDevFmt + ', ATÉ AS 11H00 (caso não seja entregue na data e horário combinado será cobrado o valor de uma locação para cada dia de atraso).</div>'
-    );
-
-    return html;
-  };
-
-  // ------------------------------------------------------------
-  // Sobrescreve gerarContratoPegueMonte para usar as datas
-  // ------------------------------------------------------------
-  var gerarPMOriginal = window.gerarContratoPegueMonte;
-
-  window.gerarContratoPegueMonte = function(dados) {
-    var html = gerarPMOriginal ? gerarPMOriginal(dados) : "";
-    // O contrato Pegue e Monte simples não tem retirada/devolução destacados, então não mexe
-    return html;
-  };
-
-  console.log("✅ FIX: Retirada e Devolução no Contrato Avulso");
-})();
-
-
-// ============================================================
-// FIX FINAL — Nota Promissória em todos + Manter seleção modal
-// ============================================================
-(function() {
-  'use strict';
-
-  // ------------------------------------------------------------
-  // FIX 1: Nota Promissória em TODOS os contratos
-  // ------------------------------------------------------------
-
-  // Contrato 1 (Pegue e Monte) — adiciona o espaço pra Nota
-  var gerarPM_Original = window.gerarContratoPegueMonte;
-  window.gerarContratoPegueMonte = function(dados) {
-    var html = gerarPM_Original ? gerarPM_Original(dados) : "";
-    // Insere o espaço da Nota antes das assinaturas
-    html = html.replace(
-      '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div>',
-      '<div id="espaco-nota-promissoria-loja"></div>' +
-      '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div>'
-    );
-    return html;
-  };
-
-  // Contrato 2 (Com Frete) — adiciona o espaço pra Nota
-  var gerarCF_Original = window.gerarContratoComFrete;
-  window.gerarContratoComFrete = function(dados) {
-    var html = gerarCF_Original ? gerarCF_Original(dados) : "";
-    html = html.replace(
-      '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div>',
-      '<div id="espaco-nota-promissoria-loja"></div>' +
-      '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div>'
-    );
-    return html;
-  };
-
-  // Contrato 3 já tem o espaço, mas garante
-  var gerarPML_Original = window.gerarContratoPegueMonteLoja;
-  window.gerarContratoPegueMonteLoja = function(dados) {
-    var html = gerarPML_Original ? gerarPML_Original(dados) : "";
-    // Se não tiver o espaço, adiciona
-    if (html.indexOf('espaco-nota-promissoria-loja') === -1) {
-      html = html.replace(
-        '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div>',
-        '<div id="espaco-nota-promissoria-loja"></div>' +
-        '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div>'
-      );
-    }
-    return html;
-  };
-
-  // ------------------------------------------------------------
-  // Sobrescreve GerarContratoReserva — mostra botão Nota SEMPRE
-  // ------------------------------------------------------------
-  var gerarReserva_Original = window.GerarContratoReserva;
-  window.GerarContratoReserva = function(idReserva) {
-    var res = State.reservas.filter(function(r) { return r.id === idReserva; })[0];
-    if (!res) return Utils.showToast("Reserva não encontrada.", "error");
-
-    var resposta = prompt(
-      "Qual o modelo do contrato?\n\n" +
-      "Digite 1 para: 🏠 PEGUE E MONTE\n" +
-      "Digite 2 para: 📦 COM FRETE\n" +
-      "Digite 3 para: 🏬 PEGUE E MONTE (LOJA)\n\n" +
-      "(Padrão: 1)",
-      "1"
-    );
-    if (resposta === null) return;
-
-    var r = resposta.trim();
-    var tipoModelo = "pegue-monte";
-    if (r === "2") tipoModelo = "com-frete";
-    else if (r === "3") tipoModelo = "pegue-monte-loja";
-
-    var dadosContrato = {
-      nome: safe(res.cliente), cpf: safe(res.cpf), telefone: safe(res.telefone),
-      endereco: safe(res.endereco), local: safe(res.local), data: safe(res.data),
-      horario: "", valor: parseFloat(res.total) || 0,
-      pecas: Array.isArray(res.pecas) ? res.pecas : [],
-      pecasQtd: res.pecasQtd || null,
-      tema: safe(res.tema), obs: safe(res.obs)
-    };
-
-    var htmlContrato;
-    if (tipoModelo === "com-frete") htmlContrato = gerarContratoComFrete(dadosContrato);
-    else if (tipoModelo === "pegue-monte-loja") htmlContrato = gerarContratoPegueMonteLoja(dadosContrato);
-    else htmlContrato = gerarContratoPegueMonte(dadosContrato);
-
-    Database.salvarContratoNuvem({
-      nome: safe(res.cliente), cpf: safe(res.cpf), telefone: safe(res.telefone),
-      endereco: safe(res.endereco), local: safe(res.local), data: safe(res.data),
-      valor: parseFloat(res.total) || 0, modelo: tipoModelo,
-      tema: safe(res.tema), pecas: Array.isArray(res.pecas) ? res.pecas : [],
-      obs: safe(res.obs), criadoEm: Date.now()
-    }).catch(function(err) { console.warn("Contrato não salvo na nuvem:", err); });
-
-    var preview = document.getElementById("contrato-preview-content");
-    if (preview) {
-      preview.innerHTML = htmlContrato;
-      preview.contentEditable = "false";
-      preview.style.outline = "";
-      preview.style.padding = "";
-      preview.style.borderRadius = "";
-    }
-
-    document.getElementById("btn-editar-contrato").style.display = "inline-flex";
-    document.getElementById("btn-salvar-edicao-contrato").style.display = "none";
-    // 👇 SEMPRE mostra o botão de Nota Promissória
-    document.getElementById("btn-add-nota-promissoria").style.display = "inline-flex";
-    window.__contratoTipo = tipoModelo;
-    var modalVis = document.getElementById("modal-visualizar-contrato");
-    if (modalVis) modalVis.classList.add("ativo");
-    Utils.showToast("Contrato gerado!", "success");
-  };
-
-  // ------------------------------------------------------------
-  // Sobrescreve gerarContratoAvulso — mostra botão Nota SEMPRE
-  // ------------------------------------------------------------
-  var gerarAvulso_Original = window.gerarContratoAvulso;
-  window.gerarContratoAvulso = function(gerarPdf) {
-    var nome = (document.getElementById("c-nome") || {}).value || "";
-    var cpf = (document.getElementById("c-cpf") || {}).value || "";
-    var data = (document.getElementById("c-data") || {}).value || "";
-    var horario = (document.getElementById("c-horario") || {}).value || "";
-    var valor = parseFloat((document.getElementById("c-valor") || {}).value) || 0;
-    var endereco = (document.getElementById("c-endereco") || {}).value || "";
-    var telefone = (document.getElementById("c-telefone") || {}).value || "";
-    var local = (document.getElementById("c-local") || {}).value || "";
-    var modelo = (document.getElementById("c-modelo") || {}).value || "com-frete";
-    var obs = (document.getElementById("c-obs") || {}).value || "";
-    var tema = (document.getElementById("contrato-tema-selecionado") || {}).value || "";
-    var dataRetirada = (document.getElementById("c-data-retirada") || {}).value || "";
-    var dataDevolucao = (document.getElementById("c-data-devolucao") || {}).value || "";
-
-    var selectPecas = document.getElementById("c-pecas");
-    var pecas = [];
-    if (selectPecas) {
-      for (var i = 0; i < selectPecas.options.length; i++) {
-        if (selectPecas.options[i].selected) pecas.push(selectPecas.options[i].value);
-      }
-    }
-
-    if (!nome.trim()) { Utils.showToast("Preencha o nome do contratante!", "warning"); return; }
-
-    var dados = {
-      nome: nome, cpf: cpf, data: data, horario: horario, valor: valor,
-      endereco: endereco, telefone: telefone, local: local,
-      dataRetirada: dataRetirada || data,
-      dataDevolucao: dataDevolucao || data,
-      tema: tema, pecas: pecas, obs: obs
-    };
-
-    var html;
-    if (modelo === "com-frete") html = gerarContratoComFrete(dados);
-    else if (modelo === "pegue-monte-loja") html = gerarContratoPegueMonteLoja(dados);
-    else html = gerarContratoPegueMonte(dados);
-
-    Database.salvarContratoNuvem({
-      nome: nome, cpf: cpf, data: data, horario: horario, valor: valor,
-      endereco: endereco, telefone: telefone, local: local, modelo: modelo,
-      dataRetirada: dataRetirada || data, dataDevolucao: dataDevolucao || data,
-      tema: tema, pecas: pecas, obs: obs, criadoEm: Date.now()
-    }).then(function() {
-      Utils.showToast("✅ Contrato salvo!", "success");
-    }).catch(function(err) {
-      console.warn("Erro ao salvar contrato (não bloqueia):", err);
-      Utils.showToast("⚠️ Contrato gerado, mas não foi salvo na nuvem.", "warning");
-    });
-
-    var preview = document.getElementById("contrato-preview-content");
-    if (preview) {
-      preview.innerHTML = html;
-      preview.contentEditable = "false";
-      preview.style.outline = "";
-      preview.style.padding = "";
-      preview.style.borderRadius = "";
-    }
-
-    document.getElementById("btn-editar-contrato").style.display = "inline-flex";
-    document.getElementById("btn-salvar-edicao-contrato").style.display = "none";
-    // 👇 SEMPRE mostra o botão de Nota Promissória
-    document.getElementById("btn-add-nota-promissoria").style.display = "inline-flex";
-    window.__contratoTipo = modelo;
-    var modalVis = document.getElementById("modal-visualizar-contrato");
-    if (modalVis) modalVis.classList.add("ativo");
-    if (gerarPdf) setTimeout(function() { gerarContratoPDF(); }, 300);
-  };
-
-  // ------------------------------------------------------------
-  // FIX 2: Manter seleção no modal de peças ao filtrar
-  // ------------------------------------------------------------
-  var selecaoPecasTemp = {};
-
-  // Sobrescreve renderizarListaPecasModal pra preservar seleção
-  var renderOriginal = window.renderizarListaPecasModal;
-  window.renderizarListaPecasModal = function(contexto, filtro) {
-    // 1) Antes de renderizar: salva TODAS as seleções visíveis + já salvas
-    var container = document.getElementById("lista-pecas-checkbox");
-    if (container) {
-      container.querySelectorAll('.chk-peca-modal').forEach(function(cb) {
-        var inpQtd = container.querySelector('.qtd-peca-modal[data-peca="' + cb.value.replace(/"/g, '\\"') + '"]');
-        selecaoPecasTemp[cb.value] = {
-          checked: cb.checked,
-          qtd: inpQtd ? (parseInt(inpQtd.value) || 1) : 1
-        };
-      });
-    }
-
-    // 2) Chama a função original (que renderiza)
-    if (renderOriginal) {
-      renderOriginal.call(this, contexto, filtro);
-    }
-
-    // 3) Depois de renderizar: reaplica as seleções salvas
-    var novoContainer = document.getElementById("lista-pecas-checkbox");
-    if (novoContainer) {
-      novoContainer.querySelectorAll('.chk-peca-modal').forEach(function(cb) {
-        var salvo = selecaoPecasTemp[cb.value];
-        if (salvo) {
-          cb.checked = salvo.checked;
-          var inp = novoContainer.querySelector('.qtd-peca-modal[data-peca="' + cb.value.replace(/"/g, '\\"') + '"]');
-          if (inp) {
-            inp.disabled = !salvo.checked;
-            inp.style.background = salvo.checked ? "#fff" : "#f0f0f0";
-            if (salvo.qtd) inp.value = salvo.qtd;
-          }
-        }
-      });
-
-      // Atualiza contador
-      var contador = document.getElementById("contador-pecas-selecionadas");
-      if (contador) {
-        var count = novoContainer.querySelectorAll('.chk-peca-modal:checked').length;
-        contador.textContent = count + " selecionadas";
-      }
-    }
-  };
-
-  // Limpa a seleção temporária quando FECHAR o modal
- var fecharOriginal = function() {
-  selecaoPecasTemp = {};
-  window.__reservaEditandoPecas = null;
-  var titulo = document.getElementById("titulo-modal-pecas");
-  if (titulo) titulo.textContent = "🍽️ Escolher Peças";
-  var modal = document.getElementById("modal-pecas");
-  if (modal) modal.classList.remove("ativo");
-};
-
-  // Reconecta os botões de fechar do modal de peças
-  document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-      var btnFechar = document.getElementById("btn-fechar-modal-pecas");
-      if (btnFechar) btnFechar.onclick = fecharOriginal;
-      var btnCancelar = document.getElementById("btn-cancelar-pecas");
-      if (btnCancelar) btnCancelar.onclick = fecharOriginal;
-    }, 800);
-  });
-
-  console.log("✅ FIX FINAL: Nota Promissória em todos + Seleção preservada no modal");
-})();
-
-
-// ============================================================
-// FIX — Forçar scroll no topo quando abre o contrato
-// ============================================================
-(function() {
-  'use strict';
-
-  // Função que reseta o scroll do modal de contrato
-  function resetarScrollContrato() {
-    var scroll = document.querySelector('.visualizador-contrato-scroll');
-    if (scroll) {
-      scroll.scrollTop = 0;
-      // Reduz o espaçamento interno que tava empurrando
-      scroll.style.paddingTop = "20px";
-    }
-  }
-
-  // Observa quando o modal de contrato abre
-  var observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-      if (mutation.attributeName === 'class') {
-        var modal = document.getElementById('modal-visualizar-contrato');
-        if (modal && modal.classList.contains('ativo')) {
-          // Aguarda um tiquinho pro DOM atualizar
-          setTimeout(resetarScrollContrato, 50);
-          setTimeout(resetarScrollContrato, 200);
-          setTimeout(resetarScrollContrato, 500);
-        }
-      }
-    });
-  });
-
-  // Aplica o observer no modal
-  document.addEventListener('DOMContentLoaded', function() {
-    var modal = document.getElementById('modal-visualizar-contrato');
-    if (modal) {
-      observer.observe(modal, { attributes: true });
-
-      // Bônus: sempre que clicar em qualquer botão que abre contrato, reseta scroll
-      var btnVerContrato = document.getElementById('btn-visualizar-contrato');
-      if (btnVerContrato) {
-        btnVerContrato.addEventListener('click', function() {
-          setTimeout(resetarScrollContrato, 100);
-        });
-      }
-    }
-  });
-
-  // Sobrescreve as funções que abrem o modal pra resetar o scroll
-  var fnOriginalGerarReserva = window.GerarContratoReserva;
-  window.GerarContratoReserva = function(id) {
-    if (fnOriginalGerarReserva) fnOriginalGerarReserva(id);
-    setTimeout(resetarScrollContrato, 100);
-    setTimeout(resetarScrollContrato, 300);
-  };
-
-  var fnOriginalAvulso = window.gerarContratoAvulso;
-  window.gerarContratoAvulso = function(pdf) {
-    if (fnOriginalAvulso) fnOriginalAvulso(pdf);
-    setTimeout(resetarScrollContrato, 100);
-    setTimeout(resetarScrollContrato, 300);
-  };
-
-  console.log("✅ FIX: Scroll do contrato reseta pro topo automaticamente");
-})();
-// ============================================================
-// EDITAR PEÇAS DA RESERVA DIRETO NO CARD
-// ============================================================
-window.EditarPecasReserva = function(idReserva) {
-  var res = State.reservas.filter(function(r) { return r.id === idReserva; })[0];
-  if (!res) return Utils.showToast("Reserva não encontrada.", "error");
-
-  // Guarda o ID da reserva que está sendo editada
-  window.__reservaEditandoPecas = idReserva;
-
-  // Define o contexto do modal como "reserva"
-  modalPecasContexto = "reserva";
-
-  // Carrega as peças já salvas nessa reserva
-  State.pecasSelecionadasContrato = Array.isArray(res.pecas) ? res.pecas.slice() : [];
-  State.pecasQtdContrato = res.pecasQtd ? Object.assign({}, res.pecasQtd) : {};
-
-  // Abre o modal
-  var modal = document.getElementById("modal-pecas");
-  if (!modal) return Utils.showToast("Modal não encontrado.", "error");
-  modal.classList.add("ativo");
-
-  // Muda o título do modal
-  var titulo = document.getElementById("titulo-modal-pecas");
-  if (titulo) titulo.textContent = "🍽️ Editar Peças — " + (res.cliente || "Reserva");
-
-  // Renderiza a lista
-  renderizarListaPecasModal("reserva", "");
-
-  // Limpa o filtro
-  setTimeout(function() {
-    var f = document.getElementById("filtro-pecas");
-    if (f) f.value = "";
-  }, 50);
-};
-
