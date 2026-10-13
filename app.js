@@ -730,23 +730,22 @@ function abrirModalPecas(contexto) {
 }
 
 function renderizarListaPecasModal(contexto, filtro) {
-  var container = document.getElementById("lista-pecas-checkbox");
-  if (!container) return;
-  if (!filtro) filtro = "";
+ var selecionadasAtuais = [];
+var qtdAtuais = {};
 
-  var selecionadasAtuais = [];
-  var qtdAtuais = {};
-
-  if (contexto === "kit") {
-    selecionadasAtuais = State.kitCriando.pecas || [];
-    qtdAtuais = State.kitCriando.pecasQtd || {};
-  } else if (contexto === "contrato") {
-    selecionadasAtuais = State.pecasSelecionadasContrato || [];
-    qtdAtuais = State.pecasQtdContrato || {};
-  } else if (contexto === "kit-festa" && State.kitAtual) {
-    selecionadasAtuais = State.pecasSelecionadasKit[State.kitAtual] || [];
-    qtdAtuais = State.pecasQtdKit[State.kitAtual] || {};
-  }
+if (contexto === "kit") {
+  selecionadasAtuais = State.kitCriando.pecas || [];
+  qtdAtuais = State.kitCriando.pecasQtd || {};
+} else if (contexto === "contrato") {
+  selecionadasAtuais = State.pecasSelecionadasContrato || [];
+  qtdAtuais = State.pecasQtdContrato || {};
+} else if (contexto === "reserva") {
+  selecionadasAtuais = State.pecasSelecionadasContrato || [];
+  qtdAtuais = State.pecasQtdContrato || {};
+} else if (contexto === "kit-festa" && State.kitAtual) {
+  selecionadasAtuais = State.pecasSelecionadasKit[State.kitAtual] || [];
+  qtdAtuais = State.pecasQtdKit[State.kitAtual] || {};
+}
 
   var fNorm = Utils.normalizar(filtro);
   var pecas = State.estoqueArray.filter(function(item) {
@@ -854,29 +853,49 @@ function confirmarModalPecas() {
   }
 
   if (modalPecasContexto === "kit") {
-    State.kitCriando.pecas = selecionadas;
-    State.kitCriando.pecasQtd = qtdSelecionadas;
-    atualizarInfoKitCriando();
-    Utils.showToast("✅ " + selecionadas.length + " peça(s) selecionada(s)", "success");
-  } else if (modalPecasContexto === "contrato") {
-    State.pecasSelecionadasContrato = selecionadas;
-    State.pecasQtdContrato = qtdSelecionadas;
-    var selectPecas = document.getElementById("c-pecas");
-    if (selectPecas) { for (var i = 0; i < selectPecas.options.length; i++) { selectPecas.options[i].selected = selecionadas.indexOf(selectPecas.options[i].value) !== -1; } }
-    var info = document.getElementById("c-pecas-info");
-    if (info) info.textContent = selecionadas.length + " peça(s) selecionada(s).";
-    Utils.showToast("✅ " + selecionadas.length + " peça(s) no contrato", "success");
-  } else if (modalPecasContexto === "kit-festa" && State.kitAtual) {
-    State.pecasSelecionadasKit[State.kitAtual] = selecionadas;
-    State.pecasQtdKit[State.kitAtual] = qtdSelecionadas;
-    atualizarInfoKitFesta();
-    atualizarResumoSelecao();
-    Utils.showToast("✅ " + selecionadas.length + " peça(s) salva(s) no " + State.kitAtual, "success");
+  State.kitCriando.pecas = selecionadas;
+  State.kitCriando.pecasQtd = qtdSelecionadas;
+  atualizarInfoKitCriando();
+  Utils.showToast("✅ " + selecionadas.length + " peça(s) selecionada(s)", "success");
+} else if (modalPecasContexto === "contrato") {
+  State.pecasSelecionadasContrato = selecionadas;
+  State.pecasQtdContrato = qtdSelecionadas;
+  var selectPecas = document.getElementById("c-pecas");
+  if (selectPecas) {
+    for (var i = 0; i < selectPecas.options.length; i++) {
+      selectPecas.options[i].selected = selecionadas.indexOf(selectPecas.options[i].value) !== -1;
+    }
   }
+  var info = document.getElementById("c-pecas-info");
+  if (info) info.textContent = selecionadas.length + " peça(s) selecionada(s).";
+  Utils.showToast("✅ " + selecionadas.length + " peça(s) no contrato", "success");
+} else if (modalPecasContexto === "reserva") {
+  var idReserva = window.__reservaEditandoPecas;
+  if (!idReserva) return Utils.showToast("Reserva não identificada.", "error");
 
-  document.getElementById("modal-pecas").classList.remove("ativo");
+  ModalStatus.exibir("ATUALIZANDO PEÇAS...", "Salvando no agendamento.");
+
+  Database.atualizarReservaNuvem(idReserva, {
+    pecas: selecionadas,
+    pecasQtd: qtdSelecionadas,
+    atualizadoEm: Date.now()
+  }).then(function() {
+    ModalStatus.sucesso("✓ PEÇAS ATUALIZADAS");
+    window.__reservaEditandoPecas = null;
+  }).catch(function(err) {
+    console.error(err);
+    ModalStatus.erro("Erro ao atualizar peças.");
+  });
+} else if (modalPecasContexto === "kit-festa" && State.kitAtual) {
+  State.pecasSelecionadasKit[State.kitAtual] = selecionadas;
+  State.pecasQtdKit[State.kitAtual] = qtdSelecionadas;
+  atualizarInfoKitFesta();
+  atualizarResumoSelecao();
+  Utils.showToast("✅ " + selecionadas.length + " peça(s) salva(s) no " + State.kitAtual, "success");
 }
 
+document.getElementById("modal-pecas").classList.remove("ativo");
+  
 // ============================================================
 // MODAL DE TEMA
 // ============================================================
@@ -1096,11 +1115,12 @@ function renderReservas(filtro) {
       '<p>💵 Sinal: <b>' + Utils.formatCurrency(sinal) + '</b></p>' +
       '<p style="color:' + (quitado ? 'green' : 'red') + '">⚠️ Falta: <b>' + Utils.formatCurrency(devedor) + '</b></p>' +
       pecasHtml + '</div>' +
-      '<div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">' +
-      '<button type="button" style="flex:2; min-width:120px; padding:11px; background:#e67e22; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.GerarContratoReserva(\'' + res.id + '\')">✍️ Gerar Contrato</button>' +
-      '<button type="button" style="flex:1; min-width:70px; padding:11px; background:#3498db; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.AbrirEditarReserva(\'' + res.id + '\')" title="Editar">✏️ Editar</button>' +
-      '<button type="button" style="flex:1; min-width:70px; padding:11px; background:var(--error); color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.DeletarReserva(\'' + res.id + '\')" title="Excluir">🗑️</button>' +
-      '</div>';
+     '<div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">' +
+'<button type="button" style="flex:2; min-width:120px; padding:11px; background:#e67e22; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.GerarContratoReserva(\'' + res.id + '\')">✍️ Gerar Contrato</button>' +
+'<button type="button" style="flex:1; min-width:90px; padding:11px; background:#9b59b6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.EditarPecasReserva(\'' + res.id + '\')" title="Editar Peças">🍽️ Peças</button>' +
+'<button type="button" style="flex:1; min-width:70px; padding:11px; background:#3498db; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.AbrirEditarReserva(\'' + res.id + '\')" title="Editar">✏️ Editar</button>' +
+'<button type="button" style="flex:1; min-width:70px; padding:11px; background:var(--error); color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.DeletarReserva(\'' + res.id + '\')" title="Excluir">🗑️</button>' +
+'</div>';
     container.appendChild(card);
   });
 }
@@ -3307,11 +3327,14 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   // Limpa a seleção temporária quando FECHAR o modal
-  var fecharOriginal = function() {
-    selecaoPecasTemp = {};
-    var modal = document.getElementById("modal-pecas");
-    if (modal) modal.classList.remove("ativo");
-  };
+ var fecharOriginal = function() {
+  selecaoPecasTemp = {};
+  window.__reservaEditandoPecas = null;
+  var titulo = document.getElementById("titulo-modal-pecas");
+  if (titulo) titulo.textContent = "🍽️ Escolher Peças";
+  var modal = document.getElementById("modal-pecas");
+  if (modal) modal.classList.remove("ativo");
+};
 
   // Reconecta os botões de fechar do modal de peças
   document.addEventListener('DOMContentLoaded', function() {
@@ -3391,5 +3414,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
   console.log("✅ FIX: Scroll do contrato reseta pro topo automaticamente");
 })();
+// ============================================================
+// EDITAR PEÇAS DA RESERVA DIRETO NO CARD
+// ============================================================
+window.EditarPecasReserva = function(idReserva) {
+  var res = State.reservas.filter(function(r) { return r.id === idReserva; })[0];
+  if (!res) return Utils.showToast("Reserva não encontrada.", "error");
 
+  // Guarda o ID da reserva que está sendo editada
+  window.__reservaEditandoPecas = idReserva;
+
+  // Define o contexto do modal como "reserva"
+  modalPecasContexto = "reserva";
+
+  // Carrega as peças já salvas nessa reserva
+  State.pecasSelecionadasContrato = Array.isArray(res.pecas) ? res.pecas.slice() : [];
+  State.pecasQtdContrato = res.pecasQtd ? Object.assign({}, res.pecasQtd) : {};
+
+  // Abre o modal
+  var modal = document.getElementById("modal-pecas");
+  if (!modal) return Utils.showToast("Modal não encontrado.", "error");
+  modal.classList.add("ativo");
+
+  // Muda o título do modal
+  var titulo = document.getElementById("titulo-modal-pecas");
+  if (titulo) titulo.textContent = "🍽️ Editar Peças — " + (res.cliente || "Reserva");
+
+  // Renderiza a lista
+  renderizarListaPecasModal("reserva", "");
+
+  // Limpa o filtro
+  setTimeout(function() {
+    var f = document.getElementById("filtro-pecas");
+    if (f) f.value = "";
+  }, 50);
+};
 
