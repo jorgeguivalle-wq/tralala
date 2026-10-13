@@ -895,6 +895,7 @@ function confirmarModalPecas() {
 }
 
 document.getElementById("modal-pecas").classList.remove("ativo");
+}
   
 // ============================================================
 // MODAL DE TEMA
