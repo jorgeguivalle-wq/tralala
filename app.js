@@ -1439,7 +1439,7 @@ function gerarContratoPegueMonte(dados) {
 }
 
 // ============================================================
-// CONTRATO 3 — PEGUE E MONTE (LOJA)
+// CONTRATO 3 — PEGUE E MONTE (LOJA) — COM CLÁUSULA DE PAGAMENTO
 // ============================================================
 function gerarContratoPegueMonteLoja(dados) {
   var dataFmt = dados.data ? String(dados.data).split("-").reverse().join("/") : "____/____/______";
@@ -1451,6 +1451,86 @@ function gerarContratoPegueMonteLoja(dados) {
   var endereco = dados.endereco || "_________________________";
   var telefone = dados.telefone || "(61) ________________";
 
+  // ============================================================
+  // FUNÇÃO INTERNA — VALOR POR EXTENSO
+  // ============================================================
+  function valorPorExtenso(valor) {
+    if (!valor || valor === 0) return "zero reais";
+
+    var unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"];
+    var especiais = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
+    var dezenas = ["", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+    var centenas = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
+
+    function extensoAte999(n) {
+      if (n === 0) return "";
+      if (n === 100) return "cem";
+      var partes = [];
+      var c = Math.floor(n / 100);
+      var resto = n % 100;
+      if (c > 0) partes.push(centenas[c]);
+      if (resto > 0) {
+        if (resto < 10) {
+          partes.push(unidades[resto]);
+        } else if (resto < 20) {
+          partes.push(especiais[resto - 10]);
+        } else {
+          var d = Math.floor(resto / 10);
+          var u = resto % 10;
+          if (u > 0) partes.push(dezenas[d] + " e " + unidades[u]);
+          else partes.push(dezenas[d]);
+        }
+      }
+      return partes.join(" e ");
+    }
+
+    var reais = Math.floor(valor);
+    var centavos = Math.round((valor - reais) * 100);
+    var partes = [];
+
+    if (reais > 0) {
+      var milhoes = Math.floor(reais / 1000000);
+      var milhares = Math.floor((reais % 1000000) / 1000);
+      var resto = reais % 1000;
+
+      if (milhoes > 0) {
+        partes.push(extensoAte999(milhoes) + (milhoes === 1 ? " milhão" : " milhões"));
+      }
+      if (milhares > 0) {
+        partes.push(extensoAte999(milhares) + " mil");
+      }
+      if (resto > 0) {
+        partes.push(extensoAte999(resto));
+      }
+    }
+
+    var texto = partes.join(" e ");
+    if (reais > 0) {
+      texto += (reais === 1 ? " real" : " reais");
+    }
+
+    if (centavos > 0) {
+      if (reais > 0) texto += " e ";
+      var c = Math.floor(centavos / 10);
+      var u = centavos % 10;
+      var textoCentavos = "";
+      if (centavos < 10) {
+        textoCentavos = unidades[centavos];
+      } else if (centavos < 20) {
+        textoCentavos = especiais[centavos - 10];
+      } else {
+        if (u > 0) textoCentavos = dezenas[c] + " e " + unidades[u];
+        else textoCentavos = dezenas[c];
+      }
+      texto += textoCentavos + (centavos === 1 ? " centavo" : " centavos");
+    }
+
+    return texto;
+  }
+
+  // ============================================================
+  // TABELA DE ITENS
+  // ============================================================
   var linhasTabela = "";
   if (dados.pecas && dados.pecas.length > 0) {
     dados.pecas.forEach(function(nomePeca) {
@@ -1474,6 +1554,9 @@ function gerarContratoPegueMonteLoja(dados) {
     }
   }
 
+  // ============================================================
+  // HTML DO CONTRATO
+  // ============================================================
   return '<div class="pagina-contrato">' +
     '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
     '<div class="titulo-contrato">CONTRATO DE LOCAÇÃO PEGUE & MONTE</div>' +
@@ -1491,6 +1574,16 @@ function gerarContratoPegueMonteLoja(dados) {
     '<div class="clausula-titulo">DO OBJETO DO CONTRATO</div>' +
     '<div class="clausula-texto"><span class="negrito">Clausula 1ª.</span> É objeto do presente contrato a prestação de serviço de Locação de:</div>' +
     '<table class="tabela-itens"><thead><tr><th style="width:60px;">QTDE.</th><th>DESCRIÇÃO DO PRODUTO</th><th style="width:110px;">VALOR UNITÁRIO</th><th style="width:110px;">VALOR TOTAL</th></tr></thead><tbody>' + linhasTabela + '</tbody></table>' +
+
+    // ===== CLÁUSULA DE PAGAMENTO (NOVO) =====
+    '<div class="clausula-titulo" style="margin-top: 12px;">DO PAGAMENTO</div>' +
+    '<div class="clausula-texto">' +
+      'O serviço contratado no presente instrumento será remunerado pela quantia total de ' +
+      '<b>R$ ' + valorFmt + ' (' + valorPorExtenso(valorNum) + ')</b>, referente à locação dos itens e serviços descritos neste contrato. ' +
+      'A CONTRATANTE declara estar ciente do valor acordado e compromete-se a efetuar o pagamento conforme as condições previamente estabelecidas entre as partes.' +
+    '</div>' +
+    // ===== FIM DA CLÁUSULA DE PAGAMENTO =====
+
     '<div class="paragrafo">Parágrafo primeiro. A CONTRATANTE não poderá, sem prévia autorização da CONTRATADA, sublocar, emprestar, ou ceder os móveis locados.</div>' +
     '<div class="clausula-titulo">OBRIGAÇÃO DA CONTRATADA</div>' +
     '<div class="clausula-texto"><span class="negrito">Clausula 2ª.</span> O serviço contratado no presente instrumento deverá ser pago no ato da reserva.</div>' +
