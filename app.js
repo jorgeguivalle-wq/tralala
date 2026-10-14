@@ -907,6 +907,87 @@ function renderizarListaPecasModal(contexto, filtro) {
     };
   });
 }
+function confirmarModalPecas() {
+  var container = document.getElementById("lista-pecas-checkbox");
+  var selecionadas = [];
+  var qtdSelecionadas = {};
+
+  // ====== USA O TEMP COMO BASE (pega tudo que foi marcado, mesmo fora do filtro atual) ======
+  var temp = window.__selecaoTempModalPecas;
+
+  // Atualiza o temp com o que está visível na tela agora
+  if (container) {
+    container.querySelectorAll('.chk-peca-modal').forEach(function(cb) {
+      var nome = cb.value;
+      var inp = container.querySelector('.qtd-peca-modal[data-peca="' + nome.replace(/"/g, '\\"') + '"]');
+      var qtd = inp ? (parseInt(inp.value) || 1) : 1;
+
+      if (cb.checked) {
+        if (temp.selecionadas.indexOf(nome) === -1) {
+          temp.selecionadas.push(nome);
+        }
+        temp.quantidades[nome] = qtd;
+      } else {
+        var idx = temp.selecionadas.indexOf(nome);
+        if (idx !== -1) temp.selecionadas.splice(idx, 1);
+        delete temp.quantidades[nome];
+      }
+    });
+  }
+
+  // Agora usa o temp como fonte da verdade
+  selecionadas = temp.selecionadas.slice();
+  qtdSelecionadas = Object.assign({}, temp.quantidades);
+
+  // ====== APLICA NOS STATES CONFORME O CONTEXTO ======
+  if (modalPecasContexto === "kit") {
+    State.kitCriando.pecas = selecionadas;
+    State.kitCriando.pecasQtd = qtdSelecionadas;
+    atualizarInfoKitCriando();
+    Utils.showToast("✅ " + selecionadas.length + " peça(s) selecionada(s)", "success");
+  } else if (modalPecasContexto === "contrato") {
+    State.pecasSelecionadasContrato = selecionadas;
+    State.pecasQtdContrato = qtdSelecionadas;
+    var selectPecas = document.getElementById("c-pecas");
+    if (selectPecas) {
+      for (var i = 0; i < selectPecas.options.length; i++) {
+        selectPecas.options[i].selected = selecionadas.indexOf(selectPecas.options[i].value) !== -1;
+      }
+    }
+    var info = document.getElementById("c-pecas-info");
+    if (info) info.textContent = selecionadas.length + " peça(s) selecionada(s).";
+    Utils.showToast("✅ " + selecionadas.length + " peça(s) no contrato", "success");
+  } else if (modalPecasContexto === "reserva") {
+    var idReserva = window.__reservaEditandoPecas;
+    if (!idReserva) {
+      Utils.showToast("Reserva não identificada.", "error");
+    } else {
+      ModalStatus.exibir("ATUALIZANDO PEÇAS...", "Salvando no agendamento.");
+      Database.atualizarReservaNuvem(idReserva, {
+        pecas: selecionadas,
+        pecasQtd: qtdSelecionadas,
+        atualizadoEm: Date.now()
+      }).then(function() {
+        ModalStatus.sucesso("✓ PEÇAS ATUALIZADAS");
+        window.__reservaEditandoPecas = null;
+      }).catch(function(err) {
+        console.error(err);
+        ModalStatus.erro("Erro ao atualizar peças.");
+      });
+    }
+  } else if (modalPecasContexto === "kit-festa" && State.kitAtual) {
+    State.pecasSelecionadasKit[State.kitAtual] = selecionadas;
+    State.pecasQtdKit[State.kitAtual] = qtdSelecionadas;
+    atualizarInfoKitFesta();
+    atualizarResumoSelecao();
+    Utils.showToast("✅ " + selecionadas.length + " peça(s) salva(s) no " + State.kitAtual, "success");
+  }
+
+  // ====== LIMPA O TEMP AO FECHAR ======
+  window.__selecaoTempModalPecas = { selecionadas: [], quantidades: {} };
+
+  document.getElementById("modal-pecas").classList.remove("ativo");
+}
 // ============================================================
 // MODAL DE TEMA
 // ============================================================
@@ -2363,6 +2444,7 @@ function bindTudo() {
 // ============================================================
 window.fecharModalPecas = function() {
   window.__reservaEditandoPecas = null;
+  window.__selecaoTempModalPecas = { selecionadas: [], quantidades: {} };
   var titulo = document.getElementById("titulo-modal-pecas");
   if (titulo) titulo.textContent = "🍽️ Escolher Peças";
   var modal = document.getElementById("modal-pecas");
@@ -2646,6 +2728,45 @@ document.addEventListener('DOMContentLoaded', function() {
   listenOrcamentos();
   listenKits();
   bindTudo();
+
+  // ============================================================
+  // CAMPO DE BUSCA DE CLIENTE NO RELATÓRIO DE AGENDAMENTOS
+  // ============================================================
+  var listaReservas = document.getElementById("lista-reservas-render");
+  if (listaReservas && !document.getElementById("busca-cliente-reservas")) {
+    var buscaWrapper = document.createElement("div");
+    buscaWrapper.id = "busca-cliente-wrapper";
+    buscaWrapper.style.cssText = "margin-bottom: 15px; display: flex; gap: 8px; align-items: center;";
+
+    buscaWrapper.innerHTML =
+      '<div style="flex: 1; position: relative;">' +
+        '<input type="text" id="busca-cliente-reservas" placeholder="🔍 Buscar cliente por nome..." ' +
+          'style="width: 100%; padding: 12px 16px 12px 44px; border: 1.5px solid var(--border-color); ' +
+          'border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s;" ' +
+          'onfocus="this.style.borderColor=\'var(--primary)\'" ' +
+          'onblur="this.style.borderColor=\'var(--border-color)\'">' +
+        '<span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); ' +
+          'font-size: 16px; pointer-events: none; color: var(--text-muted);">🔍</span>' +
+      '</div>' +
+      '<button type="button" id="btn-limpar-busca-cliente" ' +
+        'style="padding: 12px 16px; background: var(--border-color); color: var(--text-main); ' +
+        'border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 13px;">✕ Limpar</button>';
+
+    listaReservas.parentNode.insertBefore(buscaWrapper, listaReservas);
+
+    var inputBusca = document.getElementById("busca-cliente-reservas");
+    inputBusca.addEventListener("input", function(e) {
+      renderReservas(e.target.value);
+    });
+
+    var btnLimpar = document.getElementById("btn-limpar-busca-cliente");
+    btnLimpar.addEventListener("click", function() {
+      inputBusca.value = "";
+      renderReservas("");
+      inputBusca.focus();
+    });
+  }
+
   console.log("✅ Sistema Tralalá inicializado!");
   console.log("✅ app.js COMPLETO carregado com sucesso");
 });
