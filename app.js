@@ -728,10 +728,20 @@ function abrirModalPecas(contexto) {
   setTimeout(function() { var f = document.getElementById("filtro-pecas"); if (f) f.value = ""; }, 50);
 }
 
+// ============================================================
+// OBJETO GLOBAL QUE GUARDA A SELEÇÃO TEMPORÁRIA DO MODAL
+// (evita perder peças marcadas ao trocar o filtro)
+// ============================================================
+window.__selecaoTempModalPecas = {
+  selecionadas: [],   // array de nomes marcados
+  quantidades: {}     // { nomePeca: qtd }
+};
+
 function renderizarListaPecasModal(contexto, filtro) {
   var container = document.getElementById("lista-pecas-checkbox");
   if (!container) return;
 
+  // ====== 1. CARREGA O QUE JÁ ESTAVA SALVO NO STATE ======
   var selecionadasAtuais = [];
   var qtdAtuais = {};
 
@@ -749,6 +759,48 @@ function renderizarListaPecasModal(contexto, filtro) {
     qtdAtuais = State.pecasQtdKit[State.kitAtual] || {};
   }
 
+  // ====== 2. SE JÁ TEM SELEÇÃO TEMPORÁRIA, USA ELA COMO BASE ======
+  // (isso preserva o que foi marcado em filtros anteriores)
+  var temp = window.__selecaoTempModalPecas;
+  if (temp.selecionadas && temp.selecionadas.length > 0) {
+    // Mescla: mantém tudo que estava no state + tudo que foi marcado no temp
+    selecionadasAtuais.forEach(function(nome) {
+      if (temp.selecionadas.indexOf(nome) === -1) {
+        temp.selecionadas.push(nome);
+      }
+    });
+    // Mantém as quantidades mais recentes
+    Object.keys(qtdAtuais).forEach(function(k) {
+      if (!temp.quantidades[k]) temp.quantidades[k] = qtdAtuais[k];
+    });
+    selecionadasAtuais = temp.selecionadas;
+    qtdAtuais = temp.quantidades;
+  } else {
+    // Primeira abertura: inicializa o temp com o state
+    temp.selecionadas = selecionadasAtuais.slice();
+    temp.quantidades = Object.assign({}, qtdAtuais);
+  }
+
+  // ====== 3. ANTES DE RE-RENDERIZAR, SALVA O QUE ESTÁ NA TELA ======
+  // (checkbox marcados agora, mesmo os que vão sumir com o filtro)
+  var checkboxesAtuais = container.querySelectorAll('.chk-peca-modal');
+  checkboxesAtuais.forEach(function(cb) {
+    var nome = cb.value;
+    var inpQtd = container.querySelector('.qtd-peca-modal[data-peca="' + nome.replace(/"/g, '\\"') + '"]');
+    if (cb.checked) {
+      if (temp.selecionadas.indexOf(nome) === -1) {
+        temp.selecionadas.push(nome);
+      }
+      temp.quantidades[nome] = inpQtd ? (parseInt(inpQtd.value) || 1) : 1;
+    } else {
+      // Se desmarcou, remove do temp
+      var idx = temp.selecionadas.indexOf(nome);
+      if (idx !== -1) temp.selecionadas.splice(idx, 1);
+      delete temp.quantidades[nome];
+    }
+  });
+
+  // ====== 4. FILTRA E MONTA A LISTA ======
   var fNorm = Utils.normalizar(filtro);
   var pecas = State.estoqueArray.filter(function(item) {
     if (!filtro.trim()) return true;
@@ -785,11 +837,12 @@ function renderizarListaPecasModal(contexto, filtro) {
 
     itens.forEach(function(item) {
       var nome = item.nome || "Sem nome";
-      var checked = selecionadasAtuais.indexOf(nome) !== -1 ? "checked" : "";
+      // Verifica se está marcado no temp (mesmo se veio de outro filtro)
+      var checked = temp.selecionadas.indexOf(nome) !== -1 ? "checked" : "";
       var preco = Utils.formatCurrency(item.preco || 0);
       var categoria = item.categoria || "Geral";
       var disponivel = parseInt(item.quantidade) || 0;
-      var qtdAtual = qtdAtuais[nome] || 1;
+      var qtdAtual = temp.quantidades[nome] || 1;
       var img = item.imagem
         ? '<img src="' + item.imagem + '" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">'
         : '<div style="width:48px;height:48px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#888;flex-shrink:0;">Sem Foto</div>';
@@ -814,18 +867,29 @@ function renderizarListaPecasModal(contexto, filtro) {
 
   var checkboxes = container.querySelectorAll('.chk-peca-modal');
   var contador = document.getElementById("contador-pecas-selecionadas");
-  if (contador) contador.textContent = selecionadasAtuais.length + " selecionadas";
+  if (contador) contador.textContent = temp.selecionadas.length + " selecionadas";
 
   checkboxes.forEach(function(cb) {
     var nomePeca = cb.value;
     var inputQtd = container.querySelector('.qtd-peca-modal[data-peca="' + nomePeca.replace(/"/g, '\\"') + '"]');
     cb.onchange = function() {
+      // ====== ATUALIZA O TEMP ======
+      if (cb.checked) {
+        if (temp.selecionadas.indexOf(nomePeca) === -1) {
+          temp.selecionadas.push(nomePeca);
+        }
+        temp.quantidades[nomePeca] = inputQtd ? (parseInt(inputQtd.value) || 1) : 1;
+      } else {
+        var idx = temp.selecionadas.indexOf(nomePeca);
+        if (idx !== -1) temp.selecionadas.splice(idx, 1);
+        delete temp.quantidades[nomePeca];
+      }
+
       if (inputQtd) {
         inputQtd.disabled = !cb.checked;
         inputQtd.style.background = cb.checked ? "#fff" : "#f0f0f0";
       }
-      var count = container.querySelectorAll('.chk-peca-modal:checked').length;
-      if (contador) contador.textContent = count + " selecionadas";
+      if (contador) contador.textContent = temp.selecionadas.length + " selecionadas";
     };
   });
 
@@ -835,67 +899,13 @@ function renderizarListaPecasModal(contexto, filtro) {
       var val = parseInt(inp.value) || 0;
       if (val > max) { inp.value = max; Utils.showToast("⚠️ Máximo disponível: " + max, "warning"); }
       if (val < 1) inp.value = 1;
+      // Atualiza o temp
+      var nomePeca = inp.getAttribute("data-peca");
+      if (temp.selecionadas.indexOf(nomePeca) !== -1) {
+        temp.quantidades[nomePeca] = parseInt(inp.value) || 1;
+      }
     };
   });
-}
-
-function confirmarModalPecas() {
-  var container = document.getElementById("lista-pecas-checkbox");
-  var selecionadas = [];
-  var qtdSelecionadas = {};
-  if (container) {
-    container.querySelectorAll('.chk-peca-modal:checked').forEach(function(cb) {
-      var nome = cb.value;
-      selecionadas.push(nome);
-      var inp = container.querySelector('.qtd-peca-modal[data-peca="' + nome.replace(/"/g, '\\"') + '"]');
-      qtdSelecionadas[nome] = inp ? (parseInt(inp.value) || 1) : 1;
-    });
-  }
-
-  if (modalPecasContexto === "kit") {
-    State.kitCriando.pecas = selecionadas;
-    State.kitCriando.pecasQtd = qtdSelecionadas;
-    atualizarInfoKitCriando();
-    Utils.showToast("✅ " + selecionadas.length + " peça(s) selecionada(s)", "success");
-  } else if (modalPecasContexto === "contrato") {
-    State.pecasSelecionadasContrato = selecionadas;
-    State.pecasQtdContrato = qtdSelecionadas;
-    var selectPecas = document.getElementById("c-pecas");
-    if (selectPecas) {
-      for (var i = 0; i < selectPecas.options.length; i++) {
-        selectPecas.options[i].selected = selecionadas.indexOf(selectPecas.options[i].value) !== -1;
-      }
-    }
-    var info = document.getElementById("c-pecas-info");
-    if (info) info.textContent = selecionadas.length + " peça(s) selecionada(s).";
-    Utils.showToast("✅ " + selecionadas.length + " peça(s) no contrato", "success");
-  } else if (modalPecasContexto === "reserva") {
-    var idReserva = window.__reservaEditandoPecas;
-    if (!idReserva) {
-      Utils.showToast("Reserva não identificada.", "error");
-    } else {
-      ModalStatus.exibir("ATUALIZANDO PEÇAS...", "Salvando no agendamento.");
-      Database.atualizarReservaNuvem(idReserva, {
-        pecas: selecionadas,
-        pecasQtd: qtdSelecionadas,
-        atualizadoEm: Date.now()
-      }).then(function() {
-        ModalStatus.sucesso("✓ PEÇAS ATUALIZADAS");
-        window.__reservaEditandoPecas = null;
-      }).catch(function(err) {
-        console.error(err);
-        ModalStatus.erro("Erro ao atualizar peças.");
-      });
-    }
-  } else if (modalPecasContexto === "kit-festa" && State.kitAtual) {
-    State.pecasSelecionadasKit[State.kitAtual] = selecionadas;
-    State.pecasQtdKit[State.kitAtual] = qtdSelecionadas;
-    atualizarInfoKitFesta();
-    atualizarResumoSelecao();
-    Utils.showToast("✅ " + selecionadas.length + " peça(s) salva(s) no " + State.kitAtual, "success");
-  }
-
-  document.getElementById("modal-pecas").classList.remove("ativo");
 }
 // ============================================================
 // MODAL DE TEMA
