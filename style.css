@@ -260,6 +260,41 @@ h4 { color: var(--primary-dark); font-size: 15px; font-weight: 600; }
 .pagina-contrato .tabela-itens th, .pagina-contrato .tabela-itens td { border: 1px solid #000; padding: 4px 6px; text-align: left; }
 .pagina-contrato .tabela-itens th { background: #f0f0f0; font-weight: bold; text-align: center; }
 
+/* ============================================================
+   RESUMO DE PAGAMENTO NO CONTRATO
+   ============================================================ */
+.resumo-pagamento {
+  background: #f8f4ff;
+  border: 1.5px solid #c084fc;
+  border-left: 5px solid #7c3aed;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+.linha-pagamento {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 11pt;
+  border-bottom: 1px dashed #d8b4fe;
+}
+.linha-pagamento:last-child { border-bottom: none; }
+.linha-pagamento.linha-total {
+  border-top: 2px solid #7c3aed;
+  margin-top: 4px;
+  padding-top: 10px;
+  font-size: 12pt;
+}
+.label-pag { color: #4c2b8a; }
+.valor-pag {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #2d1b4e;
+}
+
 .btn-pdf { background-color: #e67e22; color: #fff; }
 .btn-pdf:hover { background-color: #d35400; transform: translateY(-2px); }
 
@@ -345,100 +380,50 @@ h4 { color: var(--primary-dark); font-size: 15px; font-weight: 600; }
 .card-kit .btn-remover-kit { background: var(--error); color: white; }
 .card-kit .btn-remover-kit:hover { background: #c0392b; }
 
-@media print {
-  .pagina-contrato { box-shadow: none; margin: 0; padding: 18mm 16mm; width: 100%; min-height: 297mm; page-break-after: always; break-after: page; border-radius: 0; }
-  .visualizador-contrato-scroll { max-height: none; overflow-y: visible; padding: 0; background: white; }
-  .no-print { display: none !important; }
-}
-
+/* ============================================================
+   RESPONSIVO
+   ============================================================ */
 @media (max-width: 600px) {
   .site-container { padding: 25px 20px; }
   .grid-2, .grid-3, .grid-4, .grid-kits { grid-template-columns: 1fr; }
   .pagina-contrato { width: 100%; min-height: 297mm; padding: 15mm 12mm; margin: 5px auto; }
 }
 
-/* ============ CORREÇÃO DA IMPRESSÃO/PDF ============ */
+/* ============================================================
+   IMPRESSÃO — SÓ O CONTRATO (VERSÃO LIMPA E ÚNICA)
+   ============================================================ */
 @media print {
-  /* Esconde TUDO que não é o contrato */
-  body * { visibility: hidden; }
-  #modal-visualizar-contrato, #modal-visualizar-contrato * { visibility: visible; }
-  #contrato-preview-content, #contrato-preview-content * { visibility: visible; }
-
-  /* Posiciona o modal no topo */
-  #modal-visualizar-contrato {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    height: auto !important;
-    background: white !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: block !important;
-    overflow: visible !important;
-    z-index: 99999 !important;
-  }
-  #modal-visualizar-contrato .modal-visualizar-conteudo {
-    box-shadow: none !important;
-    max-width: 100% !important;
-    max-height: none !important;
-    width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: visible !important;
-  }
-  .visualizador-contrato-scroll {
-    max-height: none !important;
-    overflow: visible !important;
-    padding: 0 !important;
-    background: white !important;
-  }
-  #contrato-preview-content {
-    padding: 0 !important;
-    margin: 0 !important;
-    background: white !important;
-    width: 100% !important;
+  @page {
+    size: A4 portrait;
+    margin: 15mm 12mm;
   }
 
-  /* Esconde a Lalá, botões e outros */
-  .lala-fab, .lala-janela { display: none !important; }
-  .no-print, button { display: none !important; }
+  /* Esconde TUDO por padrão */
+  body * {
+    visibility: hidden;
+  }
 
-  /* Força página A4 */
-  @page { size: A4 portrait; margin: 0; }
-  html, body {
-    background: white !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 210mm !important;
-  }
-  .pagina-contrato {
-    width: 210mm !important;
-    min-height: auto !important;
-    padding: 15mm 16mm !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-  }
-  .pagina-contrato:last-child {
-    page-break-after: auto !important;
-  }
-}
-
-/* ============ IMPRESSÃO — SÓ O CONTRATO ============ */
-@media print {
-  body * { visibility: hidden; }
+  /* Mostra SÓ o modal de contrato e seus filhos */
   #modal-visualizar-contrato,
-  #modal-visualizar-contrato * { visibility: visible; }
-  #contrato-preview-content,
-  #contrato-preview-content * { visibility: visible; }
+  #modal-visualizar-contrato * {
+    visibility: visible;
+  }
 
+  /* Esconde elementos de UI (botões, Lalá, headers) */
+  #modal-visualizar-contrato > .modal-visualizar-conteudo > div:first-child,
+  .no-print,
+  button,
+  .lala-fab,
+  .lala-janela,
+  #modal-visualizar-contrato button {
+    display: none !important;
+  }
+
+  /* Posiciona o modal no topo da página */
   #modal-visualizar-contrato {
     position: absolute !important;
-    left: 0 !important;
     top: 0 !important;
+    left: 0 !important;
     width: 100% !important;
     height: auto !important;
     background: white !important;
@@ -447,7 +432,10 @@ h4 { color: var(--primary-dark); font-size: 15px; font-weight: 600; }
     display: block !important;
     overflow: visible !important;
     z-index: 99999 !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
   }
+
   #modal-visualizar-contrato .modal-visualizar-conteudo {
     box-shadow: none !important;
     max-width: 100% !important;
@@ -456,13 +444,17 @@ h4 { color: var(--primary-dark); font-size: 15px; font-weight: 600; }
     padding: 0 !important;
     margin: 0 !important;
     overflow: visible !important;
+    background: white !important;
+    border-radius: 0 !important;
   }
+
   .visualizador-contrato-scroll {
     max-height: none !important;
     overflow: visible !important;
     padding: 0 !important;
     background: white !important;
   }
+
   #contrato-preview-content {
     padding: 0 !important;
     margin: 0 !important;
@@ -470,22 +462,17 @@ h4 { color: var(--primary-dark); font-size: 15px; font-weight: 600; }
     width: 100% !important;
   }
 
-  /* Esconde o cabeçalho "Visualização do Contrato" e os botões */
-  #modal-visualizar-contrato > .modal-visualizar-conteudo > div:first-child {
-    display: none !important;
-  }
-  .no-print, button,
-  .lala-fab, .lala-janela {
-    display: none !important;
-  }
-
-  @page { size: A4 portrait; margin: 0; }
+  /* Reset de página */
   html, body {
     background: white !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 210mm !important;
+    height: auto !important;
+    overflow: visible !important;
   }
+
+  /* Página do contrato */
   .pagina-contrato {
     width: 210mm !important;
     min-height: auto !important;
@@ -493,7 +480,29 @@ h4 { color: var(--primary-dark); font-size: 15px; font-weight: 600; }
     margin: 0 !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-    page-break-after: avoid !important;
-    break-after: avoid !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
+    transform: none !important;
+    position: static !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+  }
+
+  /* Não cortar elementos importantes */
+  .nota-promissoria,
+  .assinatura,
+  .rodape-loja,
+  .tabela-itens,
+  .resumo-pagamento,
+  .clausula-titulo {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Cores preservadas na impressão */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
