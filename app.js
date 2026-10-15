@@ -2602,6 +2602,12 @@ window.ImprimirContrato = function() {
   var pagina = preview.querySelector('.pagina-contrato');
   if (!pagina) return Utils.showToast("Contrato não encontrado.", "warning");
 
+  var modal = document.getElementById("modal-visualizar-contrato");
+  if (!modal) return Utils.showToast("Modal de contrato não encontrado.", "error");
+  if (!modal.classList.contains("ativo")) modal.classList.add("ativo");
+
+  setTimeout(function() { window.print(); }, 300);
+};
   // ===== 1. COLETA OS ESTILOS =====
   var estilos = "";
   try {
@@ -2706,7 +2712,6 @@ window.ImprimirContrato = function() {
     };
   }
 };
-
 // ============================================================
 // PDF — com html2canvas + jsPDF puro
 // ============================================================
