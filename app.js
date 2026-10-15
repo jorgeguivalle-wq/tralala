@@ -379,6 +379,7 @@ const Database = {
 
 window.adicionarCategoria = function(nome) { return Database.salvarCategoriaNuvem(nome); };
 window.removerCategoria = function(nome) { return Database.removerCategoriaNuvem(nome); };
+
 // ============================================================
 // LISTENERS
 // ============================================================
@@ -730,18 +731,16 @@ function abrirModalPecas(contexto) {
 
 // ============================================================
 // OBJETO GLOBAL QUE GUARDA A SELEÇÃO TEMPORÁRIA DO MODAL
-// (evita perder peças marcadas ao trocar o filtro)
 // ============================================================
 window.__selecaoTempModalPecas = {
-  selecionadas: [],   // array de nomes marcados
-  quantidades: {}     // { nomePeca: qtd }
+  selecionadas: [],
+  quantidades: {}
 };
 
 function renderizarListaPecasModal(contexto, filtro) {
   var container = document.getElementById("lista-pecas-checkbox");
   if (!container) return;
 
-  // ====== 1. CARREGA O QUE JÁ ESTAVA SALVO NO STATE ======
   var selecionadasAtuais = [];
   var qtdAtuais = {};
 
@@ -759,30 +758,23 @@ function renderizarListaPecasModal(contexto, filtro) {
     qtdAtuais = State.pecasQtdKit[State.kitAtual] || {};
   }
 
-  // ====== 2. SE JÁ TEM SELEÇÃO TEMPORÁRIA, USA ELA COMO BASE ======
-  // (isso preserva o que foi marcado em filtros anteriores)
   var temp = window.__selecaoTempModalPecas;
   if (temp.selecionadas && temp.selecionadas.length > 0) {
-    // Mescla: mantém tudo que estava no state + tudo que foi marcado no temp
     selecionadasAtuais.forEach(function(nome) {
       if (temp.selecionadas.indexOf(nome) === -1) {
         temp.selecionadas.push(nome);
       }
     });
-    // Mantém as quantidades mais recentes
     Object.keys(qtdAtuais).forEach(function(k) {
       if (!temp.quantidades[k]) temp.quantidades[k] = qtdAtuais[k];
     });
     selecionadasAtuais = temp.selecionadas;
     qtdAtuais = temp.quantidades;
   } else {
-    // Primeira abertura: inicializa o temp com o state
     temp.selecionadas = selecionadasAtuais.slice();
     temp.quantidades = Object.assign({}, qtdAtuais);
   }
 
-  // ====== 3. ANTES DE RE-RENDERIZAR, SALVA O QUE ESTÁ NA TELA ======
-  // (checkbox marcados agora, mesmo os que vão sumir com o filtro)
   var checkboxesAtuais = container.querySelectorAll('.chk-peca-modal');
   checkboxesAtuais.forEach(function(cb) {
     var nome = cb.value;
@@ -793,14 +785,12 @@ function renderizarListaPecasModal(contexto, filtro) {
       }
       temp.quantidades[nome] = inpQtd ? (parseInt(inpQtd.value) || 1) : 1;
     } else {
-      // Se desmarcou, remove do temp
       var idx = temp.selecionadas.indexOf(nome);
       if (idx !== -1) temp.selecionadas.splice(idx, 1);
       delete temp.quantidades[nome];
     }
   });
 
-  // ====== 4. FILTRA E MONTA A LISTA ======
   var fNorm = Utils.normalizar(filtro);
   var pecas = State.estoqueArray.filter(function(item) {
     if (!filtro.trim()) return true;
@@ -837,7 +827,6 @@ function renderizarListaPecasModal(contexto, filtro) {
 
     itens.forEach(function(item) {
       var nome = item.nome || "Sem nome";
-      // Verifica se está marcado no temp (mesmo se veio de outro filtro)
       var checked = temp.selecionadas.indexOf(nome) !== -1 ? "checked" : "";
       var preco = Utils.formatCurrency(item.preco || 0);
       var categoria = item.categoria || "Geral";
@@ -873,7 +862,6 @@ function renderizarListaPecasModal(contexto, filtro) {
     var nomePeca = cb.value;
     var inputQtd = container.querySelector('.qtd-peca-modal[data-peca="' + nomePeca.replace(/"/g, '\\"') + '"]');
     cb.onchange = function() {
-      // ====== ATUALIZA O TEMP ======
       if (cb.checked) {
         if (temp.selecionadas.indexOf(nomePeca) === -1) {
           temp.selecionadas.push(nomePeca);
@@ -899,7 +887,6 @@ function renderizarListaPecasModal(contexto, filtro) {
       var val = parseInt(inp.value) || 0;
       if (val > max) { inp.value = max; Utils.showToast("⚠️ Máximo disponível: " + max, "warning"); }
       if (val < 1) inp.value = 1;
-      // Atualiza o temp
       var nomePeca = inp.getAttribute("data-peca");
       if (temp.selecionadas.indexOf(nomePeca) !== -1) {
         temp.quantidades[nomePeca] = parseInt(inp.value) || 1;
@@ -907,15 +894,14 @@ function renderizarListaPecasModal(contexto, filtro) {
     };
   });
 }
+
 function confirmarModalPecas() {
   var container = document.getElementById("lista-pecas-checkbox");
   var selecionadas = [];
   var qtdSelecionadas = {};
 
-  // ====== USA O TEMP COMO BASE (pega tudo que foi marcado, mesmo fora do filtro atual) ======
   var temp = window.__selecaoTempModalPecas;
 
-  // Atualiza o temp com o que está visível na tela agora
   if (container) {
     container.querySelectorAll('.chk-peca-modal').forEach(function(cb) {
       var nome = cb.value;
@@ -935,11 +921,9 @@ function confirmarModalPecas() {
     });
   }
 
-  // Agora usa o temp como fonte da verdade
   selecionadas = temp.selecionadas.slice();
   qtdSelecionadas = Object.assign({}, temp.quantidades);
 
-  // ====== APLICA NOS STATES CONFORME O CONTEXTO ======
   if (modalPecasContexto === "kit") {
     State.kitCriando.pecas = selecionadas;
     State.kitCriando.pecasQtd = qtdSelecionadas;
@@ -983,11 +967,11 @@ function confirmarModalPecas() {
     Utils.showToast("✅ " + selecionadas.length + " peça(s) salva(s) no " + State.kitAtual, "success");
   }
 
-  // ====== LIMPA O TEMP AO FECHAR ======
   window.__selecaoTempModalPecas = { selecionadas: [], quantidades: {} };
 
   document.getElementById("modal-pecas").classList.remove("ativo");
 }
+
 // ============================================================
 // MODAL DE TEMA
 // ============================================================
@@ -1274,6 +1258,7 @@ window.SalvarEditarReserva = function() {
       ModalStatus.erro("Erro ao salvar.");
     });
 };
+
 // ============================================================
 // GERAR CONTRATO DA RESERVA
 // ============================================================
@@ -1290,6 +1275,8 @@ window.GerarContratoReserva = function(idReserva) {
     nome: safe(res.cliente), cpf: safe(res.cpf), telefone: safe(res.telefone),
     endereco: safe(res.endereco), local: safe(res.local), data: safe(res.data),
     horario: "", valor: parseFloat(res.total) || 0,
+    sinal: parseFloat(res.sinal) || 0,
+    frete: parseFloat(res.frete) || 0,
     pecas: Array.isArray(res.pecas) ? res.pecas : [],
     pecasQtd: res.pecasQtd || null,
     tema: safe(res.tema), obs: safe(res.obs)
@@ -1501,6 +1488,7 @@ function renderRelatorioGeralPontos(dadosPontos) {
   }
   container.innerHTML = tem ? html : '<tr><td colspan="4" style="text-align:center; color:#999;">Nenhum ponto registrado.</td></tr>';
 }
+
 // ============================================================
 // CONTRATO 1 — PEGUE E MONTE
 // ============================================================
@@ -1561,7 +1549,6 @@ function gerarContratoPegueMonteLoja(dados) {
   var endereco = dados.endereco || "_________________________";
   var telefone = dados.telefone || "(61) ________________";
 
-  // ===== NOVO: Captura sinal, frete e total =====
   var totalNum = parseFloat(dados.valor) || 0;
   var sinalNum = parseFloat(dados.sinal) || 0;
   var freteNum = parseFloat(dados.frete) || 0;
@@ -1573,12 +1560,8 @@ function gerarContratoPegueMonteLoja(dados) {
   var faltaFmt = faltaPagar.toFixed(2).replace('.', ',');
   var freteFmt = freteNum.toFixed(2).replace('.', ',');
 
-  // ============================================================
-  // FUNÇÃO INTERNA — VALOR POR EXTENSO
-  // ============================================================
   function valorPorExtenso(valor) {
     if (!valor || valor === 0) return "zero reais";
-
     var unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"];
     var especiais = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
     var dezenas = ["", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
@@ -1637,9 +1620,6 @@ function gerarContratoPegueMonteLoja(dados) {
     return texto;
   }
 
-  // ============================================================
-  // TABELA DE ITENS
-  // ============================================================
   var linhasTabela = "";
   if (dados.pecas && dados.pecas.length > 0) {
     dados.pecas.forEach(function(nomePeca) {
@@ -1666,9 +1646,6 @@ function gerarContratoPegueMonteLoja(dados) {
     }
   }
 
-  // ============================================================
-  // HTML DO CONTRATO
-  // ============================================================
   return '<div class="pagina-contrato">' +
     '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
     '<div class="titulo-contrato">CONTRATO DE LOCAÇÃO PEGUE & MONTE</div>' +
@@ -1688,7 +1665,6 @@ function gerarContratoPegueMonteLoja(dados) {
     '<div class="clausula-texto"><span class="negrito">Clausula 1ª.</span> É objeto do presente contrato a prestação de serviço de Locação de:</div>' +
     '<table class="tabela-itens"><thead><tr><th style="width:60px;">QTDE.</th><th>DESCRIÇÃO DO PRODUTO</th><th style="width:110px;">VALOR UNITÁRIO</th><th style="width:110px;">VALOR TOTAL</th></tr></thead><tbody>' + linhasTabela + '</tbody></table>' +
 
-    // ===== CLÁUSULA DE PAGAMENTO REFORMULADA =====
     '<div class="clausula-titulo" style="margin-top: 12px;">DO PAGAMENTO</div>' +
     '<div class="clausula-texto">' +
       'O serviço contratado no presente instrumento será remunerado pela quantia total de ' +
@@ -1696,7 +1672,6 @@ function gerarContratoPegueMonteLoja(dados) {
       'referente à locação dos itens e serviços descritos neste contrato. ' +
     '</div>' +
 
-    // Resumo financeiro em bloco destacado
     '<div class="resumo-pagamento">' +
       '<div class="linha-pagamento">' +
         '<span class="label-pag">Valor total do contrato:</span>' +
@@ -1752,91 +1727,6 @@ function gerarContratoPegueMonteLoja(dados) {
   '</div>';
 }
 
-  // ============================================================
-  // TABELA DE ITENS
-  // ============================================================
-  var linhasTabela = "";
-  if (dados.pecas && dados.pecas.length > 0) {
-    dados.pecas.forEach(function(nomePeca) {
-      var item = State.estoqueMap[nomePeca];
-      var qtd = dados.pecasQtd && dados.pecasQtd[nomePeca] ? parseInt(dados.pecasQtd[nomePeca]) : 1;
-      var preco = item ? (parseFloat(item.preco) || 0) : 0;
-      var descricao = nomePeca;
-      if (item) {
-        var partes = [];
-        if (item.categoria) partes.push(item.categoria);
-        if (item.modelo) partes.push(item.modelo);
-        if (partes.length > 0) descricao += " (" + partes.join(" — ") + ")";
-      }
-      linhasTabela += '<tr><td style="text-align:center;">' + qtd + '</td><td>' + descricao + '</td>' +
-        '<td style="text-align:center;">R$ ' + preco.toFixed(2).replace('.', ',') + '</td>' +
-        '<td style="text-align:center;">R$ ' + (preco * qtd).toFixed(2).replace('.', ',') + '</td></tr>';
-    });
-  } else {
-    for (var i = 0; i < 3; i++) {
-      linhasTabela += '<tr><td style="text-align:center; height:24px;">&nbsp;</td><td>&nbsp;</td><td style="text-align:center;">&nbsp;</td><td style="text-align:center;">&nbsp;</td></tr>';
-    }
-  }
-
-  // ============================================================
-  // HTML DO CONTRATO
-  // ============================================================
-  return '<div class="pagina-contrato">' +
-    '<div class="logo-container"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2qBAlvPlxMFaok_zho9se2IT9smgKtY9Dvg&s" class="logo-contrato"></div>' +
-    '<div class="titulo-contrato">CONTRATO DE LOCAÇÃO PEGUE & MONTE</div>' +
-    '<div class="dados-contratada"><span class="negrito">CONTRATADA:</span> TRALALÁ DECORAÇÕES DE FESTAS</div>' +
-    '<div class="dados-contratada"><span class="negrito">CNPJ:</span> 21.918.863/0001-12</div>' +
-    '<div class="dados-contratada"><span class="negrito">E-MAIL:</span> tralaladecoracoes@gmail.com</div><br>' +
-    '<div class="dados-contratante"><span class="negrito">CONTRATANTE:</span> ' + nome + '</div>' +
-    '<div class="dados-contratante"><span class="negrito">CPF:</span> ' + cpf + '</div>' +
-    '<div class="dados-contratante"><span class="negrito">ENDEREÇO CLIENTE:</span> ' + endereco + '</div>' +
-    '<div class="dados-contratante"><span class="negrito">TELEFONE:</span> ' + telefone + '</div>' +
-    '<div class="dados-contratante"><span class="negrito">DATA DA FESTA:</span> ' + dataFmt + '</div>' +
-    '<div class="dados-contratante"><span class="negrito">RETIRADA DOS ITENS:</span> ____/____/______, ATÉ AS ____:____</div>' +
-    '<div class="dados-contratante"><span class="negrito">DEVOLUÇÃO DOS ITENS:</span> ____/____/______, ATÉ AS 11H00 (caso não seja entregue na data e horário combinado será cobrado o valor de uma locação para cada dia de atraso).</div>' +
-    '<p style="margin-top:6px;">As partes acima identificadas têm, entre si, justo e acertado o presente contrato de prestação de serviços, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente contrato.</p>' +
-    '<div class="clausula-titulo">DO OBJETO DO CONTRATO</div>' +
-    '<div class="clausula-texto"><span class="negrito">Clausula 1ª.</span> É objeto do presente contrato a prestação de serviço de Locação de:</div>' +
-    '<table class="tabela-itens"><thead><tr><th style="width:60px;">QTDE.</th><th>DESCRIÇÃO DO PRODUTO</th><th style="width:110px;">VALOR UNITÁRIO</th><th style="width:110px;">VALOR TOTAL</th></tr></thead><tbody>' + linhasTabela + '</tbody></table>' +
-
-    // ===== CLÁUSULA DE PAGAMENTO =====
-    '<div class="clausula-titulo" style="margin-top: 12px;">DO PAGAMENTO</div>' +
-    '<div class="clausula-texto">' +
-      'O serviço contratado no presente instrumento será remunerado pela quantia total de ' +
-      '<b>R$ ' + valorFmt + ' (' + valorPorExtenso(valorNum) + ')</b>, referente à locação dos itens e serviços descritos neste contrato. ' +
-      'A CONTRATANTE declara estar ciente do valor acordado e compromete-se a efetuar o pagamento conforme as condições previamente estabelecidas entre as partes.' +
-    '</div>' +
-    // ===== FIM DA CLÁUSULA DE PAGAMENTO =====
-
-    '<div class="paragrafo">Parágrafo primeiro. A CONTRATANTE não poderá, sem prévia autorização da CONTRATADA, sublocar, emprestar, ou ceder os móveis locados.</div>' +
-    '<div class="clausula-titulo">OBRIGAÇÃO DA CONTRATADA</div>' +
-    '<div class="clausula-texto"><span class="negrito">Clausula 2ª.</span> O serviço contratado no presente instrumento deverá ser pago no ato da reserva.</div>' +
-    '<div class="clausula-texto"><span class="negrito">Clausula 3ª.</span> É dever da CONTRATADA oferecer os itens de acordo com as especificações do contrato.</div>' +
-    '<div class="clausula-texto">Em dinheiro ou depósito bancário (Caixa Econômica Federal, Agencia: 2403, Op.001 Conta corrente: 21702-0 em nome de Aline Alves de Araújo do Valle, CPF: 864.331.211-87 pix).</div>' +
-    '<div class="paragrafo">Parágrafo primeiro. Não será aceito, sob hipótese alguma, pagamento pós-festa.</div>' +
-    '<div class="clausula-texto"><span class="negrito">Cláusula 4ª.</span> O recibo do depósito da transferência bancária ou pix, referente ao valor, efetuada na conta informada pela CONTRATADA, servirá para a CONTRATANTE como comprovante de cumprimento da obrigação de pagar.</div>' +
-    '<div class="clausula-texto"><span class="negrito">Clausula 5ª.</span> É dever da CONTRATANTE devolver o(s) produto(s) de acordo com o que foi locado no dia informado neste contrato.</div>' +
-    '<div class="paragrafo">Parágrafo único. A CONTRATANTE deverá retirar e entregar os itens no endereço no seguinte endereço Qn 508 CONJUNTO 03 Loja 06, Samambaia Sul, munido de cópia do comprovante de residência em seu nome, cópia ou foto CPF e RG documentos necessários para a retiradas das peças.</div>' +
-    '<div class="clausula-titulo">DA DEVOLUÇÃO</div>' +
-    '<div class="clausula-texto"><span class="negrito">Cláusula 6ª.</span> Caso Haja perda, Danos, Quebra ou não devolução dos itens, a CONTRATANTE arcará com 50% do valor de uma peça nova para reposição (caso haja recuperação) NÃO Havendo recuperação, será cobrado o valor de mercado por cada item, em dinheiro ou outra forma que convier às PARTES. Em caso de quebra ou extravio de peças a CONTRATANTE assinará uma nota promissória se comprometendo-se com o pagamento que será devolvida após a quitação do debito.</div>' +
-    '<div class="paragrafo">Parágrafo primeiro: É dever da CONTRATANTE devolver as peças como foi entregue, no dia e horário marcado, será cobrado multa de uma diária dos itens alocados com cada dia de atraso da devolução.</div>' +
-    '<div class="paragrafo">OBS: É proibido, furar o bolo cenográfico, usar cola quente no painel, peças e mesas, usar confeitos coloridos, vela faísca estes itens danificam e mancham peças e mobília (uso estará sujeito em caso de avarias, pagar pela recuperação ou peça nova caso não seja possível recuperação).</div>' +
-    '<div class="paragrafo">O tapete deverá ser devolvido com foi entregue sem doces e bolos, caso contrário pagará multa de limpeza de R$ 40,00 (quarenta reais).</div>' +
-    '<div class="paragrafo">Parágrafo Segundo: É dever da CONTRATANTE devolver o kit ou itens na data informada neste contrato, caso contrato será cobrado o valor de uma locação por cada dia de atraso.</div>' +
-    '<div class="clausula-titulo">DO CANCELAMENTO</div>' +
-    '<div class="clausula-texto"><span class="negrito">Clausula 7ª.</span> Em caso de desistência a CONTRATANTE arcará com a multa de quebra de contrato, 50% do valor total do seu contrato. Parágrafo primeiro: Em caso de força maior, a CONTRATANTE, poderá solicitar uma carta credito na quantia paga, para utilização de até um ano a partir da data da notificação. Sendo que essa carta crédito não poderá ser transferida para outro titular, nem prorrogada. Cabendo a CONTRATADA confirmar disponibilidade de peças e data. A CONTRATANTE deverá comprovar o fato ocorrido com documentos oficiais.</div>' +
-    '<div class="paragrafo">Parágrafo Segundo. A Parte impossibilitada de cumprir sua obrigação deverá notificar a outra, de imediato, acerca da extensão do problema e o prazo estimado para remarcação da nova data.</div>' +
-    '<div class="clausula-titulo">DAS CONDIÇÕES GERAIS</div>' +
-    '<div class="clausula-titulo">DO FORO</div>' +
-    '<div class="clausula-texto">As Partes elegem o foro da Circunscrição Judiciária de Brasília – DF para dirimir os conflitos que porventura venham a surgir em decorrência da execução do presente contrato, com renúncia de qualquer outro, por mais privilegiado que seja.</div>' +
-    '<div class="clausula-texto">E por assim estarem de acordo, o contrato será sendo assinado de forma digitalizada, sendo as vias compartilhadas em meio eletrônico e permitida a assinatura híbrida (física e digital).</div>' +
-    '<div id="espaco-nota-promissoria-loja"></div>' +
-    '<div style="text-align:center; margin-top:8px;">Brasília-DF, ' + dataAtual + '.</div>' +
-    '<div class="assinatura"><div class="assinatura-nome">CONTRATADA:</div><div class="linha-assinatura"></div><div class="assinatura-nome">TRALALÁ DECORAÇÕES DE FESTA — CNPJ: 21.918.863/0001-12</div><div class="assinatura-nome" style="font-size:9pt; margin-top:4px;">REPRESENTANTE LEGAL: ALINE ARAUJO DO VALLE</div></div>' +
-    '<div class="assinatura"><div class="assinatura-nome">CONTRATANTE:</div><div class="linha-assinatura"></div><div class="assinatura-nome">' + nome + ' — CPF: ' + cpf + '</div></div>' +
-    '<div class="rodape-loja">TRALALÁ DECORAÇÕES DE FESTAS — QN 508 CONJUNTO 03 LOJA 06, SAMAMBAIA SUL. (61) 9. 8191-9559</div>' +
-  '</div>';
-}
 // ============================================================
 // CONTRATO 2 — COM FRETE
 // ============================================================
@@ -2002,6 +1892,7 @@ function gerarContratoAvulso(gerarPdf) {
   if (modalVis) modalVis.classList.add("ativo");
   if (gerarPdf) setTimeout(function() { gerarContratoPDF(); }, 300);
 }
+
 // ============================================================
 // KITS
 // ============================================================
@@ -2333,6 +2224,7 @@ function handleSalvarOrcamento() {
   }).then(function() { Utils.showToast("Orçamento salvo!", "success"); })
     .catch(function() { Utils.showToast("Erro ao salvar orçamento.", "error"); });
 }
+
 // ============================================================
 // BIND EVENTOS
 // ============================================================
@@ -2594,7 +2486,7 @@ window.EditarPecasReserva = function(idReserva) {
 };
 
 // ============================================================
-// IMPRESSÃO — só o contrato 
+// IMPRESSÃO — só o contrato
 // ============================================================
 window.ImprimirContrato = function() {
   var preview = document.getElementById("contrato-preview-content");
@@ -2608,110 +2500,7 @@ window.ImprimirContrato = function() {
 
   setTimeout(function() { window.print(); }, 300);
 };
-  // ===== 1. COLETA OS ESTILOS =====
-  var estilos = "";
-  try {
-    document.querySelectorAll('style, link[rel="stylesheet"]').forEach(function(el) {
-      if (el.tagName === 'STYLE') {
-        estilos += '<style>' + el.innerHTML + '</style>';
-      } else if (el.tagName === 'LINK') {
-        estilos += '<link rel="stylesheet" href="' + el.href + '">';
-      }
-    });
-  } catch (e) { console.warn(e); }
 
-  // ===== 2. MONTA O HTML DA JANELA DE IMPRESSÃO =====
-  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Contrato</title>' +
-    estilos +
-    '<style>' +
-    '@page { size: A4 portrait; margin: 0; }' +
-    'html, body { margin: 0 !important; padding: 0 !important; background: white !important; }' +
-    '.pagina-contrato {' +
-    '  box-shadow: none !important;' +
-    '  margin: 0 auto !important;' +
-    '  page-break-after: avoid !important;' +
-    '  break-after: avoid !important;' +
-    '  transform: none !important;' +
-    '  position: static !important;' +
-    '  opacity: 1 !important;' +
-    '  visibility: visible !important;' +
-    '  display: block !important;' +
-    '}' +
-    '.nota-promissoria { page-break-inside: avoid !important; }' +
-    '* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }' +
-    '</style>' +
-    '</head><body>' +
-    pagina.outerHTML +
-    '</body></html>';
-
-  // ===== 3. ABRE A JANELA E ESCREVE =====
-  var janelaPrint = window.open('', '_blank', 'width=900,height=700');
-  if (!janelaPrint) return Utils.showToast("⚠️ Permita popups para imprimir.", "warning");
-
-  janelaPrint.document.open();
-  janelaPrint.document.write(html);
-  janelaPrint.document.close();
-
-  // ===== 4. ESPERA AS IMAGENS CARREGAREM ANTES DE IMPRIMIR =====
-  function esperarImagensEDepoisImprimir() {
-    var imgs = janelaPrint.document.querySelectorAll('img');
-    var total = imgs.length;
-    var carregadas = 0;
-
-    // Se não tem imagem, imprime direto
-    if (total === 0) {
-      janelaPrint.focus();
-      janelaPrint.print();
-      return;
-    }
-
-    // Conta cada imagem que carregar
-    imgs.forEach(function(img) {
-      if (img.complete) {
-        carregadas++;
-        if (carregadas === total) {
-          setTimeout(function() {
-            janelaPrint.focus();
-            janelaPrint.print();
-          }, 200);
-        }
-      } else {
-        img.onload = function() {
-          carregadas++;
-          if (carregadas === total) {
-            setTimeout(function() {
-              janelaPrint.focus();
-              janelaPrint.print();
-            }, 200);
-          }
-        };
-        img.onerror = function() {
-          carregadas++;
-          if (carregadas === total) {
-            setTimeout(function() {
-              janelaPrint.focus();
-              janelaPrint.print();
-            }, 200);
-          }
-        };
-      }
-    });
-
-    // Failsafe: se demorar muito, imprime de qualquer forma
-    setTimeout(function() {
-      try { janelaPrint.focus(); janelaPrint.print(); } catch(e) {}
-    }, 3000);
-  }
-
-  // Espera o DOM da janela estar pronto e chama
-  if (janelaPrint.document.readyState === 'complete') {
-    setTimeout(esperarImagensEDepoisImprimir, 300);
-  } else {
-    janelaPrint.onload = function() {
-      setTimeout(esperarImagensEDepoisImprimir, 300);
-    };
-  }
-};
 // ============================================================
 // PDF — com html2canvas + jsPDF puro
 // ============================================================
@@ -2805,7 +2594,6 @@ window.BaixarPDFContrato = function() {
   }, 400);
 };
 
-// Aliases para compatibilidade
 window.gerarContratoPDF = window.BaixarPDFContrato;
 
 // ============================================================
@@ -2921,9 +2709,6 @@ document.addEventListener('DOMContentLoaded', function() {
   listenKits();
   bindTudo();
 
-  // ============================================================
-  // CAMPO DE BUSCA DE CLIENTE NO RELATÓRIO DE AGENDAMENTOS
-  // ============================================================
   var listaReservas = document.getElementById("lista-reservas-render");
   if (listaReservas && !document.getElementById("busca-cliente-reservas")) {
     var buscaWrapper = document.createElement("div");
