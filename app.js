@@ -4,7 +4,7 @@
 
 const CONFIG = {
   usuarios: {
-    "jorgeguivalle@gmail.com": "Viperrt11",
+    "neoflux2012@gmail.com": "Viperrt11",
     "leonardodovalle@gmail.com": "Viperrt11@",
     "tralaladecoracoes@gmail.com": "tralala123"
   },
@@ -2480,7 +2480,7 @@ window.EditarPecasReserva = function(idReserva) {
 };
 
 // ============================================================
-// IMPRESSÃO — só o contrato
+// IMPRESSÃO — só o contrato 
 // ============================================================
 window.ImprimirContrato = function() {
   var preview = document.getElementById("contrato-preview-content");
@@ -2488,9 +2488,7 @@ window.ImprimirContrato = function() {
   var pagina = preview.querySelector('.pagina-contrato');
   if (!pagina) return Utils.showToast("Contrato não encontrado.", "warning");
 
-  var janelaPrint = window.open('', '_blank', 'width=900,height=700');
-  if (!janelaPrint) return Utils.showToast("Permita popups para imprimir.", "warning");
-
+  // ===== 1. COLETA OS ESTILOS =====
   var estilos = "";
   try {
     document.querySelectorAll('style, link[rel="stylesheet"]').forEach(function(el) {
@@ -2502,22 +2500,97 @@ window.ImprimirContrato = function() {
     });
   } catch (e) { console.warn(e); }
 
+  // ===== 2. MONTA O HTML DA JANELA DE IMPRESSÃO =====
   var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Contrato</title>' +
     estilos +
     '<style>' +
     '@page { size: A4 portrait; margin: 0; }' +
-    'body { margin: 0; padding: 0; background: white; }' +
-    '.pagina-contrato { box-shadow: none !important; margin: 0 auto !important; page-break-after: avoid !important; }' +
+    'html, body { margin: 0 !important; padding: 0 !important; background: white !important; }' +
+    '.pagina-contrato {' +
+    '  box-shadow: none !important;' +
+    '  margin: 0 auto !important;' +
+    '  page-break-after: avoid !important;' +
+    '  break-after: avoid !important;' +
+    '  transform: none !important;' +
+    '  position: static !important;' +
+    '  opacity: 1 !important;' +
+    '  visibility: visible !important;' +
+    '  display: block !important;' +
+    '}' +
+    '.nota-promissoria { page-break-inside: avoid !important; }' +
+    '* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }' +
     '</style>' +
     '</head><body>' +
     pagina.outerHTML +
     '</body></html>';
 
+  // ===== 3. ABRE A JANELA E ESCREVE =====
+  var janelaPrint = window.open('', '_blank', 'width=900,height=700');
+  if (!janelaPrint) return Utils.showToast("⚠️ Permita popups para imprimir.", "warning");
+
   janelaPrint.document.open();
   janelaPrint.document.write(html);
   janelaPrint.document.close();
-  janelaPrint.focus();
-  setTimeout(function() { janelaPrint.print(); }, 500);
+
+  // ===== 4. ESPERA AS IMAGENS CARREGAREM ANTES DE IMPRIMIR =====
+  function esperarImagensEDepoisImprimir() {
+    var imgs = janelaPrint.document.querySelectorAll('img');
+    var total = imgs.length;
+    var carregadas = 0;
+
+    // Se não tem imagem, imprime direto
+    if (total === 0) {
+      janelaPrint.focus();
+      janelaPrint.print();
+      return;
+    }
+
+    // Conta cada imagem que carregar
+    imgs.forEach(function(img) {
+      if (img.complete) {
+        carregadas++;
+        if (carregadas === total) {
+          setTimeout(function() {
+            janelaPrint.focus();
+            janelaPrint.print();
+          }, 200);
+        }
+      } else {
+        img.onload = function() {
+          carregadas++;
+          if (carregadas === total) {
+            setTimeout(function() {
+              janelaPrint.focus();
+              janelaPrint.print();
+            }, 200);
+          }
+        };
+        img.onerror = function() {
+          carregadas++;
+          if (carregadas === total) {
+            setTimeout(function() {
+              janelaPrint.focus();
+              janelaPrint.print();
+            }, 200);
+          }
+        };
+      }
+    });
+
+    // Failsafe: se demorar muito, imprime de qualquer forma
+    setTimeout(function() {
+      try { janelaPrint.focus(); janelaPrint.print(); } catch(e) {}
+    }, 3000);
+  }
+
+  // Espera o DOM da janela estar pronto e chama
+  if (janelaPrint.document.readyState === 'complete') {
+    setTimeout(esperarImagensEDepoisImprimir, 300);
+  } else {
+    janelaPrint.onload = function() {
+      setTimeout(esperarImagensEDepoisImprimir, 300);
+    };
+  }
 };
 
 // ============================================================
