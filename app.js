@@ -1144,67 +1144,68 @@ function aplicarDesconto() {
 // ============================================================
 // RESERVAS — COM BOTÕES EDITAR/PEÇAS
 // ============================================================
-function renderReservas(filtro) {
-  if (!filtro) filtro = "";
-  var container = document.getElementById("lista-reservas-render");
-  if (!container) return;
-  container.innerHTML = "";
-  if (State.carregando) { container.innerHTML = "<div style='text-align:center; padding:20px;'>⌛ Carregando...</div>"; return; }
-  if (State.reservas.length === 0) { container.innerHTML = "<div style='text-align:center; padding:20px; color:#777;'>Nenhum agendamento.</div>"; return; }
-  var arr = State.reservas.slice().sort(function(a, b) { return new Date(a.data || 0) - new Date(b.data || 0); });
-  if (filtro.trim() !== "") {
-    var f = Utils.normalizar(filtro);
-    arr = arr.filter(function(r) { return Utils.normalizar(r.cliente).indexOf(f) !== -1 || Utils.normalizar(r.tema).indexOf(f) !== -1; });
-  }
-  arr.forEach(function(res) {
-    var card = document.createElement("div");
-    card.className = "card-reserva";
-    var total = parseFloat(res.total) || 0;
-    var sinal = parseFloat(res.sinal) || 0;
-    var frete = parseFloat(res.frete) || 0;
-    var totGeral = total + frete;
-    var devedor = totGeral - sinal;
-    var quitado = devedor <= 0;
-    var pecas = Array.isArray(res.pecas) ? res.pecas : [];
-    var pecasHtml = "";
-    if (pecas.length > 0) {
-      pecasHtml = '<div style="margin-top:10px; padding-top:10px; border-top:1px dashed #e1cbd4;">' +
-        '<p style="margin:0 0 6px 0; font-size:12px; color:var(--text-muted);"><b>🧩 Peças do tema:</b></p><div style="display:flex; flex-wrap:wrap; gap:5px;">';
-      pecas.forEach(function(nome) {
-        var item = State.estoqueMap[nome];
-        var qtdReservada = res.pecasQtd && res.pecasQtd[nome] ? res.pecasQtd[nome] : 1;
-        var img = item && item.imagem ? '<img src="' + item.imagem + '" style="width:30px;height:30px;border-radius:4px;object-fit:cover;flex-shrink:0;">' : '<div style="width:30px;height:30px;background:#eee;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#888;flex-shrink:0;">?</div>';
-        pecasHtml += '<div style="display:inline-flex; align-items:center; gap:5px; background:#f8f0f2; padding:4px 8px; border-radius:14px; font-size:11px; border:1px solid #e1cbd4;">' + img + '<span>' + nome + ' <b>(' + qtdReservada + 'x)</b></span></div>';
-      });
-      pecasHtml += '</div></div>';
-    }
-    card.innerHTML = '<div class="reserva-header"><strong>👶 ' + (res.cliente || '') + '</strong>' +
-      '<span class="reserva-badge" style="background:' + (quitado ? '#27ae60' : '#e67e22') + ';">' + (quitado ? 'PAGO 100%' : 'PENDENTE') + '</span></div>' +
-      '<div class="reserva-body">' +
-      '<p>📅 Data: <b>' + Utils.formatDateBR(res.data) + '</b></p>' +
-      '<p>🆔 CPF: <b>' + (res.cpf || '—') + '</b></p>' +
-      '<p>🎨 Tema: <b style="color:var(--primary);">' + (res.tema || '') + '</b></p>' +
-      '<p>🛍️ Kit: <b>' + (res.kit || 'Não informado') + '</b></p>' +
-      (res.montarNoLocal ? '<p>🛠️ Montagem: <b style="color:#27ae60;">SIM</b></p>' : '') +
-      '<p>🚚 Frete: <b>' + Utils.formatCurrency(frete) + '</b></p>' +
-      '<p>💰 Total: <b>' + Utils.formatCurrency(totGeral) + '</b></p>' +
-      '<p>💵 Sinal: <b>' + Utils.formatCurrency(sinal) + '</b></p>' +
-      '<p style="color:' + (quitado ? 'green' : 'red') + '">⚠️ Falta: <b>' + Utils.formatCurrency(devedor) + '</b></p>' +
-      pecasHtml + '</div>' +
-      '<div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">' +
-      '<button type="button" style="flex:2; min-width:120px; padding:11px; background:#e67e22; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.GerarContratoReserva(\'' + res.id + '\')">✍️ Gerar Contrato</button>' +
-      '<button type="button" style="flex:1; min-width:90px; padding:11px; background:#9b59b6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.EditarPecasReserva(\'' + res.id + '\')" title="Editar Peças">🍽️ Peças</button>' +
-      '<button type="button" style="flex:1; min-width:70px; padding:11px; background:#3498db; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.AbrirEditarReserva(\'' + res.id + '\')" title="Editar">✏️ Editar</button>' +
-      '<button type="button" style="flex:1; min-width:70px; padding:11px; background:var(--error); color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;" onclick="window.DeletarReserva(\'' + res.id + '\')" title="Excluir">🗑️</button>' +
-      '</div>';
-    container.appendChild(card);
-  });
-}
+// ============================================================
+// REGISTRAR DEVOLUÇÃO DE PEÇAS
+// ============================================================
+window.RegistrarDevolucao = function(idReserva) {
+  var res = State.reservas.filter(function(r) { return r.id === idReserva; })[0];
+  if (!res) return Utils.showToast("Reserva não encontrada.", "error");
 
-window.DeletarReserva = function(idReserva) {
-  if (confirm("Excluir este agendamento?")) {
-    Database.excluirReservaNuvem(idReserva).then(function() { Utils.showToast("Agendamento removido!", "success"); }).catch(function() { Utils.showToast("Falha ao remover.", "error"); });
+  if (res.itensDevolvidos) {
+    return Utils.showToast("Essa reserva já foi devolvida.", "info");
   }
+
+  var pecas = Array.isArray(res.pecas) ? res.pecas : [];
+  if (pecas.length === 0) {
+    ModalStatus.exibir("MARCANDO COMO DEVOLVIDO...", res.cliente);
+    Database.atualizarReservaNuvem(idReserva, {
+      itensDevolvidos: true,
+      dataDevolucao: Utils.getHojeDataString(),
+      atualizadoEm: Date.now()
+    }).then(function() {
+      ModalStatus.sucesso("✓ ITENS DEVOLVIDOS");
+    }).catch(function(err) {
+      console.error(err);
+      ModalStatus.erro("Erro ao registrar devolução.");
+    });
+    return;
+  }
+
+  if (!confirm('📦 Confirmar devolução das peças?\n\n' +
+    pecas.map(function(nome) {
+      var qtd = res.pecasQtd && res.pecasQtd[nome] ? res.pecasQtd[nome] : 1;
+      return '• ' + nome + ' (' + qtd + 'x)';
+    }).join('\n') +
+    '\n\nTodas as peças voltarão ao estoque.')) {
+    return;
+  }
+
+  ModalStatus.exibir("DEVOLVENDO PEÇAS...", res.cliente);
+
+  var promises = [];
+  pecas.forEach(function(nomePeca) {
+    var item = State.estoqueMap[nomePeca];
+    if (item && item.idFirebase) {
+      var qtdDevolvida = res.pecasQtd && res.pecasQtd[nomePeca] ? parseInt(res.pecasQtd[nomePeca]) : 1;
+      var qtdAtual = parseInt(item.quantidade) || 0;
+      var novaQtd = qtdAtual + qtdDevolvida;
+      promises.push(Database.atualizarPecaNuvem(item.idFirebase, { quantidade: novaQtd }));
+    }
+  });
+
+  Promise.all(promises).then(function() {
+    return Database.atualizarReservaNuvem(idReserva, {
+      itensDevolvidos: true,
+      dataDevolucao: Utils.getHojeDataString(),
+      atualizadoEm: Date.now()
+    });
+  }).then(function() {
+    ModalStatus.sucesso("✓ ITENS DEVOLVIDOS AO ESTOQUE");
+    Utils.showToast("✅ " + pecas.length + " peça(s) devolvida(s) ao estoque!", "success", 4000);
+  }).catch(function(err) {
+    console.error(err);
+    ModalStatus.erro("Erro ao devolver peças.");
+  });
 };
 
 // ============================================================
